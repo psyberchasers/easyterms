@@ -1,65 +1,431 @@
-import Image from "next/image";
+"use client";
+
+import { Button } from "@/components/ui/button";
+import { Navbar } from "@/components/Navbar";
+import {
+  FileText,
+  Shield,
+  Zap,
+  ChevronDown,
+  DollarSign,
+  Clock,
+  CheckCircle2,
+  ArrowRight,
+  Sparkles,
+  Lock,
+  TrendingUp,
+  FileSearch,
+  BookOpen,
+  Eye,
+  AlertTriangle,
+  Scale,
+} from "lucide-react";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { 
+  MusicNote02Icon, 
+  ChampionIcon, 
+  YoutubeIcon, 
+  GameboyIcon, 
+  WorkIcon, 
+  Home01Icon 
+} from "@hugeicons-pro/core-stroke-rounded";
+import Link from "next/link";
+import { cn } from "@/lib/utils";
+
+// Industry configurations with Hugeicons
+const industries = [
+  {
+    id: "music",
+    name: "Music",
+    tagline: "Recording & Publishing",
+    icon: MusicNote02Icon,
+    color: "amber",
+    contracts: ["Recording Deals", "Publishing", "Sync", "Management"],
+  },
+  {
+    id: "nil",
+    name: "NIL",
+    tagline: "Athletes & Endorsements",
+    icon: ChampionIcon,
+    color: "blue",
+    contracts: ["Endorsements", "Sponsorships", "Appearances", "Social Media"],
+  },
+  {
+    id: "creator",
+    name: "Creator",
+    tagline: "Brand Deals & Sponsorships",
+    icon: YoutubeIcon,
+    color: "pink",
+    contracts: ["Brand Deals", "Affiliate", "UGC", "MCN"],
+  },
+  {
+    id: "esports",
+    name: "Esports",
+    tagline: "Team & Tournament",
+    icon: GameboyIcon,
+    color: "purple",
+    contracts: ["Player Contracts", "Streaming", "Tournament", "Content"],
+  },
+  {
+    id: "freelance",
+    name: "Freelance",
+    tagline: "Consulting & Contractor",
+    icon: WorkIcon,
+    color: "green",
+    contracts: ["Consulting", "Work for Hire", "NDA", "MSA"],
+  },
+  {
+    id: "real-estate",
+    name: "Leases",
+    tagline: "Rental & Real Estate",
+    icon: Home01Icon,
+    color: "orange",
+    contracts: ["Residential", "Commercial", "Sublease", "Roommate"],
+  },
+];
 
 export default function Home() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
+    <main className="min-h-screen gradient-bg">
+      <Navbar />
+
+      {/* Hero Section */}
+      <section className="relative min-h-[90vh] flex flex-col items-center justify-center px-4 py-16 pt-28">
+        {/* Background Elements */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/5 rounded-full blur-3xl" />
+          <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-primary/5 rounded-full blur-3xl" />
+        </div>
+
+        <div className="relative z-10 max-w-4xl mx-auto text-center space-y-8">
+          {/* Logo/Brand */}
+          <div className="flex items-center justify-center gap-3 animate-fade-in-up">
+            <div className="p-3 rounded-2xl bg-primary/10 glow-amber">
+              <Scale className="w-10 h-10 text-primary" />
+            </div>
+          </div>
+
+          {/* Headline */}
+          <div className="space-y-4 animate-fade-in-up stagger-1">
+            <h1 className="text-5xl md:text-7xl font-bold tracking-tight">
+              <span className="text-gradient">EasyTerms</span>
           </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+            <p className="text-xl md:text-2xl text-muted-foreground font-light">
+              AI Contract Analysis for Creators & Talent
+            </p>
+          </div>
+
+          {/* Subheadline */}
+          <p className="text-lg text-foreground/80 max-w-2xl mx-auto leading-relaxed animate-fade-in-up stagger-2">
+            Upload any contract and get an instant breakdown in plain English. 
+            Spot red flags, understand key terms, and negotiate with confidence.
           </p>
+
+          {/* CTA Button */}
+          <div className="pt-4 animate-fade-in-up stagger-3 flex justify-center">
+            <Link href="/analyze">
+              <Button
+                size="lg"
+                className="px-8 py-6 text-lg font-semibold rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground glow-amber transition-all duration-300 hover:scale-105"
+              >
+                <Scale className="w-5 h-5 mr-2" />
+                Analyze Your Contract
+                <ArrowRight className="w-5 h-5 ml-2" />
+              </Button>
+            </Link>
+          </div>
+
+          {/* Industry Selector */}
+          <div className="grid grid-cols-3 md:grid-cols-6 gap-3 pt-6 animate-fade-in-up stagger-4 max-w-3xl mx-auto">
+            {industries.map((industry) => (
+              <button
+                key={industry.id}
+                className={cn(
+                  "flex flex-col items-center gap-2 p-3 rounded-xl border transition-all duration-300",
+                  "bg-card/50 border-border/50 hover:border-primary/50 hover:bg-primary/5",
+                  "group cursor-pointer"
+                )}
+              >
+                <HugeiconsIcon 
+                  icon={industry.icon} 
+                  size={20} 
+                  className={cn(
+                    "transition-colors",
+                    `text-${industry.color}-400 group-hover:text-${industry.color}-300`
+                  )}
+                />
+                <span className="text-xs font-medium text-foreground/80 group-hover:text-foreground">
+                  {industry.name}
+                </span>
+              </button>
+            ))}
+          </div>
+
+          {/* Scroll Indicator */}
+          <div className="pt-16 animate-fade-in-up stagger-5 flex justify-center">
+            <ChevronDown className="w-8 h-8 animate-bounce text-muted-foreground" />
+          </div>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+      </section>
+
+      {/* Stats Section */}
+      <section className="py-16 px-4 bg-gradient-to-b from-transparent via-primary/3 to-transparent">
+        <div className="max-w-6xl mx-auto">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+            {[
+              { value: "30s", label: "Average Analysis Time", icon: Clock },
+              { value: "50+", label: "Clause Types Detected", icon: FileSearch },
+              { value: "99%", label: "Accuracy Rate", icon: CheckCircle2 },
+              { value: "24/7", label: "Always Available", icon: Sparkles },
+            ].map((stat, i) => (
+              <div key={i} className="text-center group">
+                <div className="inline-flex p-3 rounded-2xl bg-primary/10 mb-3 group-hover:bg-primary/20 transition-colors">
+                  <stat.icon className="w-6 h-6 text-primary" />
+                </div>
+                <div className="text-3xl md:text-4xl font-bold text-gradient mb-1">{stat.value}</div>
+                <div className="text-sm text-muted-foreground">{stat.label}</div>
+              </div>
+            ))}
+          </div>
         </div>
+      </section>
+
+      {/* Features Section - Redesigned */}
+      <section className="py-24 px-4 relative">
+        {/* Background decoration - extended and extra blur to avoid sharp edges */}
+        <div className="absolute inset-0 pointer-events-none overflow-visible">
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[1400px] h-[900px] bg-primary/[0.04] rounded-full blur-[150px]" />
+        </div>
+        
+        <div className="max-w-6xl mx-auto relative">
+          <div className="text-center mb-16">
+            <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-medium mb-4">
+              <Sparkles className="w-4 h-4" />
+              Powerful Features
+            </span>
+            <h2 className="text-4xl md:text-5xl font-bold text-foreground mb-4">
+              Why Artists Choose <span className="text-gradient">EasyTerms</span>
+            </h2>
+            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+              Don&apos;t sign away your rights. Get the clarity you need before putting pen to paper.
+            </p>
+          </div>
+
+          {/* Main Features Grid */}
+          <div className="grid lg:grid-cols-2 gap-6 mb-12">
+            {/* Large Feature Card - AI Analysis */}
+            <div className="lg:row-span-2 p-8 rounded-3xl bg-gradient-to-br from-primary/20 via-primary/10 to-transparent border border-primary/30 relative overflow-hidden group">
+              <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 rounded-full blur-3xl group-hover:bg-primary/20 transition-colors" />
+              <div className="relative">
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="p-4 rounded-2xl bg-primary/20">
+                    <Eye className="w-8 h-8 text-primary" />
+                  </div>
+                  <div>
+                    <h3 className="text-2xl font-bold text-foreground">AI-Powered Deep Analysis</h3>
+                    <p className="text-primary">GPT-4 Intelligence</p>
+                  </div>
+                </div>
+                <p className="text-foreground/80 text-lg mb-6 leading-relaxed">
+                  Our AI doesn&apos;t just scan for keywords—it understands context, industry standards, 
+                  and the subtle implications that could cost you thousands.
+                </p>
+                <div className="space-y-3">
+                  {[
+                    "Identifies hidden perpetuity clauses",
+                    "Catches cross-collateralization traps",
+                    "Flags unfair 360 deal terms",
+                    "Detects vague royalty language",
+                  ].map((item, i) => (
+                    <div key={i} className="flex items-center gap-3 text-foreground/80">
+                      <CheckCircle2 className="w-5 h-5 text-primary shrink-0" />
+                      <span>{item}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Risk Detection Card */}
+            <div className="p-6 rounded-3xl bg-gradient-to-br from-red-500/10 to-transparent border border-red-500/20 group hover:border-red-500/40 transition-colors">
+              <div className="flex items-start gap-4">
+                <div className="p-3 rounded-2xl bg-red-500/20 group-hover:bg-red-500/30 transition-colors">
+                  <AlertTriangle className="w-6 h-6 text-red-400" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold text-foreground mb-2">Red Flag Detection</h3>
+                  <p className="text-muted-foreground mb-4">
+                    Instantly identify problematic clauses that labels hope you&apos;ll miss. 
+                    Get warned before it&apos;s too late.
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {["Ownership Traps", "Hidden Fees", "Term Extensions"].map((tag) => (
+                      <span key={tag} className="px-3 py-1 rounded-full bg-red-500/10 text-red-400 text-xs font-medium">
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Financial Breakdown Card */}
+            <div className="p-6 rounded-3xl bg-gradient-to-br from-green-500/10 to-transparent border border-green-500/20 group hover:border-green-500/40 transition-colors">
+              <div className="flex items-start gap-4">
+                <div className="p-3 rounded-2xl bg-green-500/20 group-hover:bg-green-500/30 transition-colors">
+                  <DollarSign className="w-6 h-6 text-green-400" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold text-foreground mb-2">Financial Clarity</h3>
+                  <p className="text-muted-foreground mb-4">
+                    Understand exactly where your money goes. Advances, royalties, recoupment—all 
+                    broken down in plain terms.
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {["Royalty Rates", "Recoupment", "Payment Terms"].map((tag) => (
+                      <span key={tag} className="px-3 py-1 rounded-full bg-green-500/10 text-green-400 text-xs font-medium">
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Secondary Features Row - Enhanced */}
+          <div className="grid md:grid-cols-3 gap-8 mt-4">
+            {[
+              {
+                icon: BookOpen,
+                title: "Plain English Mode",
+                description: "Every paragraph translated from legalese to language you actually understand.",
+                highlight: "No law degree required",
+                gradient: "from-cyan-500/20 to-blue-500/20",
+                iconBg: "bg-cyan-500/20",
+                iconColor: "text-cyan-400",
+                borderHover: "hover:border-cyan-500/40",
+                pillBg: "bg-cyan-500/10",
+                pillText: "text-cyan-400",
+              },
+              {
+                icon: Lock,
+                title: "Private & Secure",
+                description: "Your contracts are never stored. Analysis happens in real-time.",
+                highlight: "Zero data retention",
+                gradient: "from-emerald-500/20 to-green-500/20",
+                iconBg: "bg-emerald-500/20",
+                iconColor: "text-emerald-400",
+                borderHover: "hover:border-emerald-500/40",
+                pillBg: "bg-emerald-500/10",
+                pillText: "text-emerald-400",
+              },
+              {
+                icon: TrendingUp,
+                title: "Industry Benchmarks",
+                description: "Know if your deal is fair. Compare your terms against market standards.",
+                highlight: "Data from 1,000+ contracts",
+                gradient: "from-purple-500/20 to-pink-500/20",
+                iconBg: "bg-purple-500/20",
+                iconColor: "text-purple-400",
+                borderHover: "hover:border-purple-500/40",
+                pillBg: "bg-purple-500/10",
+                pillText: "text-purple-400",
+              },
+            ].map((feature, i) => (
+              <div 
+                key={i}
+                className={`group relative p-8 rounded-3xl bg-gradient-to-br from-card/80 to-card/40 border border-border/50 ${feature.borderHover} transition-all duration-300 hover:-translate-y-1`}
+              >
+                {/* Subtle gradient glow on hover */}
+                <div className={`absolute inset-0 rounded-3xl bg-gradient-to-br ${feature.gradient} opacity-0 group-hover:opacity-100 transition-opacity duration-300 blur-xl -z-10`} />
+                
+                {/* Icon with ring */}
+                <div className={`inline-flex p-4 rounded-2xl ${feature.iconBg} mb-6 ring-1 ring-white/10`}>
+                  <feature.icon className={`w-7 h-7 ${feature.iconColor}`} />
+                </div>
+                
+                {/* Content */}
+                <h3 className="text-xl font-semibold text-foreground mb-3">{feature.title}</h3>
+                <p className="text-muted-foreground mb-4 leading-relaxed">
+                  {feature.description}
+                </p>
+                
+                {/* Highlight badge */}
+                <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full ${feature.pillBg} ${feature.pillText} text-xs font-medium`}>
+                  <CheckCircle2 className="w-3.5 h-3.5" />
+                  {feature.highlight}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* How It Works Section */}
+      <section className="py-20 px-4 border-t border-border/30 bg-muted/30">
+        <div className="max-w-5xl mx-auto">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
+              How It Works
+            </h2>
+            <p className="text-muted-foreground">Three steps to contract clarity</p>
+          </div>
+          
+          <div className="grid md:grid-cols-3 gap-8 relative">
+            {/* Connection line */}
+            <div className="hidden md:block absolute top-12 left-1/4 right-1/4 h-0.5 bg-gradient-to-r from-primary/50 via-primary to-primary/50" />
+            
+            {[
+              {
+                step: "01",
+                title: "Upload",
+                description: "Drop your contract in any format—PDF, Word, or plain text. We handle the rest.",
+                icon: FileText,
+              },
+              {
+                step: "02", 
+                title: "Analyze",
+                description: "Our AI scans every clause, identifies risks, and extracts key terms in seconds.",
+                icon: Zap,
+              },
+              {
+                step: "03",
+                title: "Understand",
+                description: "Get a complete breakdown with actionable insights and negotiation points.",
+                icon: CheckCircle2,
+              },
+            ].map((item, i) => (
+              <div key={i} className="relative text-center">
+                <div className="w-24 h-24 mx-auto rounded-3xl bg-card border border-border flex items-center justify-center mb-6 relative z-10">
+                  <item.icon className="w-10 h-10 text-primary" />
+                  <span className="absolute -top-2 -right-2 w-8 h-8 rounded-full bg-primary text-primary-foreground text-sm font-bold flex items-center justify-center">
+                    {item.step}
+                  </span>
+                </div>
+                <h3 className="text-xl font-semibold text-foreground mb-2">{item.title}</h3>
+                <p className="text-muted-foreground text-sm">{item.description}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Footer */}
+      <footer className="py-12 px-4 border-t border-border/30">
+        <div className="max-w-6xl mx-auto">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+            <div className="flex items-center gap-2">
+              <Scale className="w-5 h-5 text-primary" />
+              <span className="font-semibold text-foreground">EasyTerms</span>
+            </div>
+            <p className="text-sm text-muted-foreground text-center">
+              AI-powered analysis is not a substitute for professional legal advice. 
+              Always consult with a qualified attorney for your situation.
+            </p>
+          </div>
+        </div>
+      </footer>
       </main>
-    </div>
   );
 }
