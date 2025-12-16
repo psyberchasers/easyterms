@@ -60,3 +60,4 @@ CREATE TRIGGER on_subscription_change
   FOR EACH ROW
   EXECUTE FUNCTION log_subscription_change();
 
+

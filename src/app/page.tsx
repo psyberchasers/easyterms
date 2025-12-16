@@ -1,6 +1,8 @@
 "use client";
 
+import { useState, useRef, useCallback } from "react";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Navbar } from "@/components/Navbar";
 import {
   FileText,
@@ -19,72 +21,53 @@ import {
   Eye,
   AlertTriangle,
   Scale,
+  Upload,
 } from "lucide-react";
-import { HugeiconsIcon } from "@hugeicons/react";
-import { 
-  MusicNote02Icon, 
-  ChampionIcon, 
-  YoutubeIcon, 
-  GameboyIcon, 
-  WorkIcon, 
-  Home01Icon 
-} from "@hugeicons-pro/core-stroke-rounded";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 
-// Industry configurations with Hugeicons
-const industries = [
-  {
-    id: "music",
-    name: "Music",
-    tagline: "Recording & Publishing",
-    icon: MusicNote02Icon,
-    color: "amber",
-    contracts: ["Recording Deals", "Publishing", "Sync", "Management"],
-  },
-  {
-    id: "nil",
-    name: "NIL",
-    tagline: "Athletes & Endorsements",
-    icon: ChampionIcon,
-    color: "blue",
-    contracts: ["Endorsements", "Sponsorships", "Appearances", "Social Media"],
-  },
-  {
-    id: "creator",
-    name: "Creator",
-    tagline: "Brand Deals & Sponsorships",
-    icon: YoutubeIcon,
-    color: "pink",
-    contracts: ["Brand Deals", "Affiliate", "UGC", "MCN"],
-  },
-  {
-    id: "esports",
-    name: "Esports",
-    tagline: "Team & Tournament",
-    icon: GameboyIcon,
-    color: "purple",
-    contracts: ["Player Contracts", "Streaming", "Tournament", "Content"],
-  },
-  {
-    id: "freelance",
-    name: "Freelance",
-    tagline: "Consulting & Contractor",
-    icon: WorkIcon,
-    color: "green",
-    contracts: ["Consulting", "Work for Hire", "NDA", "MSA"],
-  },
-  {
-    id: "real-estate",
-    name: "Leases",
-    tagline: "Rental & Real Estate",
-    icon: Home01Icon,
-    color: "orange",
-    contracts: ["Residential", "Commercial", "Sublease", "Roommate"],
-  },
-];
-
 export default function Home() {
+  const router = useRouter();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isDragging, setIsDragging] = useState(false);
+
+  const handleFileSelect = useCallback((file: File) => {
+    // Store file in sessionStorage for the analyze page to pick up
+    const reader = new FileReader();
+    reader.onload = () => {
+      sessionStorage.setItem("pendingFile", JSON.stringify({
+        name: file.name,
+        type: file.type,
+        data: reader.result,
+      }));
+      router.push("/analyze");
+    };
+    reader.readAsDataURL(file);
+  }, [router]);
+
+  const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) handleFileSelect(file);
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+    const file = e.dataTransfer.files[0];
+    if (file) handleFileSelect(file);
+  };
+
   return (
     <main className="min-h-screen gradient-bg">
       <Navbar />
@@ -121,44 +104,44 @@ export default function Home() {
             Spot red flags, understand key terms, and negotiate with confidence.
           </p>
 
-          {/* CTA Button */}
-          <div className="pt-4 animate-fade-in-up stagger-3 flex justify-center">
-            <Link href="/analyze">
-              <Button
-                size="lg"
-                className="px-8 py-6 text-lg font-semibold rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground glow-amber transition-all duration-300 hover:scale-105"
-              >
-                <Scale className="w-5 h-5 mr-2" />
-                Analyze Your Contract
-                <ArrowRight className="w-5 h-5 ml-2" />
-              </Button>
-            </Link>
-          </div>
-
-          {/* Industry Selector */}
-          <div className="grid grid-cols-3 md:grid-cols-6 gap-3 pt-6 animate-fade-in-up stagger-4 max-w-3xl mx-auto">
-            {industries.map((industry) => (
-              <button
-                key={industry.id}
-                className={cn(
-                  "flex flex-col items-center gap-2 p-3 rounded-xl border transition-all duration-300",
-                  "bg-card/50 border-border/50 hover:border-primary/50 hover:bg-primary/5",
-                  "group cursor-pointer"
-                )}
-              >
-                <HugeiconsIcon 
-                  icon={industry.icon} 
-                  size={20} 
-                  className={cn(
-                    "transition-colors",
-                    `text-${industry.color}-400 group-hover:text-${industry.color}-300`
-                  )}
-                />
-                <span className="text-xs font-medium text-foreground/80 group-hover:text-foreground">
-                  {industry.name}
-                </span>
-              </button>
-            ))}
+          {/* Upload Widget */}
+          <div className="pt-6 animate-fade-in-up stagger-3 w-full max-w-xl mx-auto">
+            <div
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+              onDrop={handleDrop}
+              onClick={() => fileInputRef.current?.click()}
+              className={cn(
+                "relative border-2 border-dashed rounded-2xl p-8 text-center transition-all cursor-pointer group",
+                isDragging 
+                  ? "border-primary bg-primary/10 scale-[1.02]" 
+                  : "border-border/50 hover:border-primary/50 hover:bg-primary/5"
+              )}
+            >
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".pdf,.doc,.docx,.txt"
+                onChange={handleFileInput}
+                className="hidden"
+              />
+              <div className={cn(
+                "p-4 rounded-2xl w-fit mx-auto mb-4 transition-all",
+                isDragging ? "bg-primary/20" : "bg-muted/50 group-hover:bg-primary/10"
+              )}>
+                <Upload className={cn(
+                  "w-8 h-8 transition-colors",
+                  isDragging ? "text-primary" : "text-muted-foreground group-hover:text-primary"
+                )} />
+              </div>
+              <p className="text-lg font-medium mb-2">Drop your contract here</p>
+              <p className="text-muted-foreground text-sm mb-4">or click to browse</p>
+              <div className="flex justify-center gap-2">
+                {["PDF", "Word", "TXT"].map((format) => (
+                  <Badge key={format} variant="secondary" className="text-xs">{format}</Badge>
+                ))}
+              </div>
+            </div>
           </div>
 
           {/* Scroll Indicator */}

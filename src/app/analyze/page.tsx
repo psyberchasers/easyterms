@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -26,14 +26,6 @@ import {
   Mail,
 } from "lucide-react";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { 
-  MusicNote02Icon, 
-  ChampionIcon, 
-  YoutubeIcon, 
-  GameboyIcon, 
-  WorkIcon, 
-  Home01Icon 
-} from "@hugeicons-pro/core-stroke-rounded";
 import {
   LegalDocument01Icon,
   Coins01Icon,
@@ -48,7 +40,6 @@ import searchAnimation from "@/../public/search.json";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import dynamic from "next/dynamic";
-import { IndustryType } from "@/config/industries";
 import { FinancialCalculator } from "@/components/FinancialCalculator";
 import { NegotiationAssistant } from "@/components/NegotiationAssistant";
 
@@ -89,7 +80,6 @@ export default function AnalyzePage() {
   // UI state
   const [showDocument, setShowDocument] = useState(false);
   const [highlightedClause, setHighlightedClause] = useState<string | null>(null);
-  const [selectedIndustry, setSelectedIndustry] = useState<IndustryType>("music");
   const [showELI5Modal, setShowELI5Modal] = useState(false);
   const [showCounterOfferModal, setShowCounterOfferModal] = useState(false);
   
@@ -101,15 +91,29 @@ export default function AnalyzePage() {
   
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Industry options
-  const industries = [
-    { id: "music" as IndustryType, name: "Music", icon: MusicNote02Icon },
-    { id: "nil" as IndustryType, name: "NIL", icon: ChampionIcon },
-    { id: "creator" as IndustryType, name: "Creator", icon: YoutubeIcon },
-    { id: "esports" as IndustryType, name: "Esports", icon: GameboyIcon },
-    { id: "freelance" as IndustryType, name: "Freelance", icon: WorkIcon },
-    { id: "real-estate" as IndustryType, name: "Leases", icon: Home01Icon },
-  ];
+  // Check for pending file from homepage upload
+  useEffect(() => {
+    const pendingFileData = sessionStorage.getItem("pendingFile");
+    if (pendingFileData) {
+      sessionStorage.removeItem("pendingFile");
+      try {
+        const { name, type, data } = JSON.parse(pendingFileData);
+        // Convert base64 back to File
+        const byteString = atob(data.split(",")[1]);
+        const mimeType = type || "application/pdf";
+        const ab = new ArrayBuffer(byteString.length);
+        const ia = new Uint8Array(ab);
+        for (let i = 0; i < byteString.length; i++) {
+          ia[i] = byteString.charCodeAt(i);
+        }
+        const blob = new Blob([ab], { type: mimeType });
+        const file = new File([blob], name, { type: mimeType });
+        handleFileSelect(file);
+      } catch (err) {
+        console.error("Error processing pending file:", err);
+      }
+    }
+  }, []);
 
 
   // Handle file selection
@@ -129,7 +133,7 @@ export default function AnalyzePage() {
 
       const formData = new FormData();
       formData.append("file", file);
-      formData.append("industry", selectedIndustry);
+      formData.append("industry", "music"); // Default to music, AI will auto-detect
 
       const response = await fetch("/api/analyze", {
         method: "POST",
@@ -160,7 +164,7 @@ export default function AnalyzePage() {
       setError(err instanceof Error ? err.message : "Analysis failed");
       setStatus("error");
     }
-  }, [selectedIndustry, user]);
+  }, [user]);
 
   // Save contract
   const saveContract = useCallback(async (analysisData: ContractAnalysis, file: File) => {
@@ -178,7 +182,7 @@ export default function AnalyzePage() {
         analysis: analysisData,
         contractType: analysisData.contractType,
         overallRisk: analysisData.overallRiskAssessment,
-        industry: selectedIndustry,
+        industry: "music",
       }));
 
       const response = await fetch("/api/contracts/upload", {
@@ -198,7 +202,7 @@ export default function AnalyzePage() {
     } finally {
       setSaving(false);
     }
-  }, [user, selectedIndustry]);
+  }, [user]);
 
   // Download report
   const handleDownloadReport = useCallback(async () => {
@@ -297,22 +301,6 @@ export default function AnalyzePage() {
               <p className="text-muted-foreground">
                 Upload a contract to get instant AI-powered analysis
               </p>
-            </div>
-
-            {/* Industry Selector */}
-            <div className="flex justify-center gap-2 flex-wrap">
-              {industries.map((industry) => (
-                <Button
-                  key={industry.id}
-                  variant={selectedIndustry === industry.id ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setSelectedIndustry(industry.id)}
-                  className="gap-2"
-                >
-                  <HugeiconsIcon icon={industry.icon} className="w-4 h-4" />
-                  {industry.name}
-                </Button>
-              ))}
             </div>
 
             {/* Upload Zone */}

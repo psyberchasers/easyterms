@@ -201,3 +201,4 @@ export function canAnalyzeMore(tier: SubscriptionTier, currentCount: number): bo
   return currentCount < limit;
 }
 
+
