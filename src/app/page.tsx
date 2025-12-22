@@ -145,14 +145,14 @@ export default function Home() {
           </div>
 
           {/* Scroll Indicator */}
-          <div className="pt-16 animate-fade-in-up stagger-5 flex justify-center">
+          <div className="pt-24 pb-8 animate-fade-in-up stagger-5 flex justify-center">
             <ChevronDown className="w-8 h-8 animate-bounce text-muted-foreground" />
           </div>
         </div>
       </section>
 
       {/* Stats Section */}
-      <section className="py-16 px-4 bg-gradient-to-b from-transparent via-primary/3 to-transparent">
+      <section className="pt-24 pb-16 px-4 bg-gradient-to-b from-transparent via-primary/3 to-transparent">
         <div className="max-w-6xl mx-auto">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
             {[

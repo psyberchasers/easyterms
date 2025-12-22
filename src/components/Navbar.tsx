@@ -1,8 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { useAuth } from "@/components/providers/AuthProvider";
-import { Button } from "@/components/ui/button";
+import { usePathname } from "next/navigation";
+import { createClient } from "@/lib/supabase/client";
+import { useEffect, useState } from "react";
+import { User } from "@supabase/supabase-js";
+import { cn } from "@/lib/utils";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -10,132 +13,119 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
-  Scale,
-  Plus,
-  LogIn,
-  UserPlus,
-  LogOut,
-  Settings,
-  User,
-  LayoutDashboard,
-  Calendar,
-  GitCompare,
-  Sparkles,
-} from "lucide-react";
+import { LogOut, User as UserIcon, LayoutDashboard } from "lucide-react";
 
-interface NavbarProps {
-  showNewAnalysis?: boolean;
-}
+export function Navbar() {
+  const pathname = usePathname();
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
+  const supabase = createClient();
 
-export function Navbar({ showNewAnalysis = true }: NavbarProps) {
-  const { user, profile, loading, signOut } = useAuth();
+  useEffect(() => {
+    const getUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      setUser(user);
+      setLoading(false);
+    };
+    getUser();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+    });
+
+    return () => subscription.unsubscribe();
+  }, [supabase.auth]);
+
+  const handleSignOut = async () => {
+    await supabase.auth.signOut();
+    window.location.href = "/";
+  };
+
+  const isAuthPage = pathname?.startsWith("/login") || pathname?.startsWith("/signup");
+
+  if (isAuthPage) return null;
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 border-b border-border/30 bg-background/80 backdrop-blur-lg">
-      <div className="max-w-full mx-auto px-4 py-3 flex items-center justify-between">
-        <Link href="/" className="flex items-center gap-2">
-          <div className="p-1.5 rounded-lg bg-primary/10">
-            <Scale className="w-5 h-5 text-primary" />
-          </div>
-          <span className="font-semibold text-lg">EasyTerms</span>
-        </Link>
+    <nav className="fixed top-0 left-0 right-0 z-50 border-b border-[#262626] bg-[#0a0a0a]">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex items-center justify-between h-14">
+          {/* Logo */}
+          <Link href="/" className="flex items-center gap-2">
+            <span className="text-sm font-medium text-white">EasyTerms</span>
+          </Link>
 
-        <nav className="flex items-center gap-3">
-          {loading ? (
-            <div className="w-8 h-8 rounded-full bg-muted animate-pulse" />
-          ) : user ? (
-            <>
-              {showNewAnalysis && (
-                <Link href="/analyze">
-                  <Button size="sm">
-                    <Plus className="w-4 h-4 mr-2" />
-                    New Analysis
-                  </Button>
-                </Link>
-              )}
-              <Link href="/dashboard">
-                <Button variant="ghost" size="sm">
-                  <LayoutDashboard className="w-4 h-4 mr-2" />
+          {/* Right side */}
+          <div className="flex items-center gap-4">
+            {loading ? (
+              <div className="w-20 h-7 bg-[#1a1a1a] animate-pulse" />
+            ) : user ? (
+              <>
+                <Link
+                  href="/dashboard"
+                  className={cn(
+                    "text-xs transition-colors",
+                    pathname === "/dashboard" ? "text-white" : "text-[#878787] hover:text-white"
+                  )}
+                >
                   Dashboard
-                </Button>
-              </Link>
-              <Link href="/calendar">
-                <Button variant="ghost" size="sm">
-                  <Calendar className="w-4 h-4 mr-2" />
-                  Calendar
-                </Button>
-              </Link>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon" className="rounded-full">
-                    <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center">
-                      <User className="w-4 h-4 text-primary" />
+                </Link>
+                <Link
+                  href="/analyze"
+                  className={cn(
+                    "text-xs transition-colors",
+                    pathname === "/analyze" ? "text-white" : "text-[#878787] hover:text-white"
+                  )}
+                >
+                  Analyze
+                </Link>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <button className="w-7 h-7 border border-[#262626] flex items-center justify-center text-[#878787] hover:text-white hover:border-[#404040] transition-colors">
+                      <UserIcon className="w-3.5 h-3.5" />
+                    </button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-48 bg-[#0a0a0a] border-[#262626]">
+                    <div className="px-2 py-1.5">
+                      <p className="text-xs text-[#878787] truncate">{user.email}</p>
                     </div>
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56">
-                  <div className="px-2 py-1.5">
-                    <p className="font-medium">{profile?.full_name || "User"}</p>
-                    <p className="text-sm text-muted-foreground">{user.email}</p>
-                  </div>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem asChild>
-                    <Link href="/dashboard">
-                      <LayoutDashboard className="w-4 h-4 mr-2" />
-                      Dashboard
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link href="/calendar">
-                      <Calendar className="w-4 h-4 mr-2" />
-                      Calendar
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link href="/compare">
-                      <GitCompare className="w-4 h-4 mr-2" />
-                      Compare
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem asChild>
-                    <Link href="/pricing">
-                      <Sparkles className="w-4 h-4 mr-2" />
-                      Upgrade
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem>
-                    <Settings className="w-4 h-4 mr-2" />
-                    Settings
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={signOut} className="text-red-400">
-                    <LogOut className="w-4 h-4 mr-2" />
-                    Sign out
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </>
-          ) : (
-            <>
-              <Link href="/login">
-                <Button variant="ghost" size="sm">
-                  <LogIn className="w-4 h-4 mr-2" />
-                  Log In
-                </Button>
-              </Link>
-              <Link href="/signup">
-                <Button size="sm">
-                  <UserPlus className="w-4 h-4 mr-2" />
-                  Sign Up
-                </Button>
-              </Link>
-            </>
-          )}
-        </nav>
+                    <DropdownMenuSeparator className="bg-[#262626]" />
+                    <DropdownMenuItem asChild>
+                      <Link href="/dashboard" className="flex items-center gap-2 text-xs text-[#878787] hover:text-white cursor-pointer">
+                        <LayoutDashboard className="w-3.5 h-3.5" />
+                        Dashboard
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator className="bg-[#262626]" />
+                    <DropdownMenuItem 
+                      onClick={handleSignOut}
+                      className="flex items-center gap-2 text-xs text-[#878787] hover:text-white cursor-pointer"
+                    >
+                      <LogOut className="w-3.5 h-3.5" />
+                      Sign out
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </>
+            ) : (
+              <>
+                <Link
+                  href="/login"
+                  className="text-xs text-[#878787] hover:text-white transition-colors"
+                >
+                  Sign in
+                </Link>
+                <Link
+                  href="/signup"
+                  className="h-7 px-3 text-xs bg-white text-black hover:bg-white/90 flex items-center transition-colors"
+                >
+                  Get Started
+                </Link>
+              </>
+            )}
+          </div>
+        </div>
       </div>
-    </header>
+    </nav>
   );
 }
 
