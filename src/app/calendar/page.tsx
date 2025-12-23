@@ -197,7 +197,7 @@ export default function CalendarPage() {
                     <div
                       key={day}
                       className={cn(
-                        "h-20 p-1 rounded border border-border/50 bg-card/50 overflow-hidden",
+                        "h-20 p-1 rounded border border-border bg-card/50 overflow-hidden",
                         isToday && "ring-2 ring-primary"
                       )}
                     >

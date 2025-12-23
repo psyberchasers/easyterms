@@ -190,7 +190,7 @@ function ComparisonBar({ comparison }: { comparison: DealComparison }) {
         </div>
       </div>
       
-      <p className="text-sm text-muted-foreground mt-3 border-t border-border/50 pt-3">
+      <p className="text-sm text-muted-foreground mt-3 border-t border-border pt-3">
         {comparison.insight}
       </p>
     </div>
@@ -300,7 +300,7 @@ export function BenchmarkReportComponent({ report }: BenchmarkReportProps) {
               {report.negotiationPoints.map((point, i) => (
                 <div 
                   key={i}
-                  className="flex items-start gap-3 p-3 rounded-lg bg-card/50 border border-border/50"
+                  className="flex items-start gap-3 p-3 rounded-lg bg-card/50 border border-border"
                 >
                   <ArrowRight className="w-4 h-4 text-amber-400 mt-0.5 flex-shrink-0" />
                   <p className="text-sm text-foreground">{point}</p>
@@ -312,7 +312,7 @@ export function BenchmarkReportComponent({ report }: BenchmarkReportProps) {
       )}
 
       {/* Data Source Footer */}
-      <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground pt-4 border-t border-border/30">
+      <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground pt-4 border-t border-border">
         <Users className="w-3 h-3" />
         <span>
           Based on {report.sampleSize.toLocaleString()} anonymized contracts • 

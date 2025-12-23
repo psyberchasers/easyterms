@@ -19,7 +19,6 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
-  Scale,
   FileText,
   Star,
   StarOff,
@@ -28,13 +27,16 @@ import {
   Eye,
   Search,
   AlertTriangle,
-  FolderOpen,
   RefreshCw,
   Plus,
   Calendar,
+  History,
 } from "lucide-react";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { RepeatOffIcon, FolderBlockIcon, AiSheetsIcon } from "@hugeicons-pro/core-solid-rounded";
 import { cn } from "@/lib/utils";
 import { MusicLoader } from "@/components/MusicLoader";
+import { DeleteConfirmModal } from "@/components/DeleteConfirmModal";
 
 export default function DashboardPage() {
   const { user, profile, loading: authLoading, signOut } = useAuth();
@@ -44,6 +46,11 @@ export default function DashboardPage() {
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [filter, setFilter] = useState<"all" | "starred" | "high-risk">("all");
+  const [versionCounts, setVersionCounts] = useState<Record<string, number>>({});
+  const [deleteModal, setDeleteModal] = useState<{ open: boolean; contract: Contract | null }>({
+    open: false,
+    contract: null,
+  });
   const router = useRouter();
   const supabase = createClient();
 
@@ -71,6 +78,23 @@ export default function DashboardPage() {
         setError(fetchError.message);
       } else {
         setContracts(data as Contract[] || []);
+
+        // Fetch version counts for all contracts
+        if (data && data.length > 0) {
+          const contractIds = data.map((c: Contract) => c.id);
+          const { data: versions } = await supabase
+            .from("contract_versions")
+            .select("contract_id")
+            .in("contract_id", contractIds);
+
+          if (versions) {
+            const counts: Record<string, number> = {};
+            versions.forEach((v: { contract_id: string }) => {
+              counts[v.contract_id] = (counts[v.contract_id] || 0) + 1;
+            });
+            setVersionCounts(counts);
+          }
+        }
       }
     } catch (err) {
       console.error("Error:", err);
@@ -105,11 +129,20 @@ export default function DashboardPage() {
     );
   };
 
-  const deleteContract = async (contractId: string) => {
-    if (!confirm("Are you sure you want to delete this contract?")) return;
+  const openDeleteModal = (contract: Contract) => {
+    setDeleteModal({ open: true, contract });
+  };
 
-    await supabase.from("contracts").delete().eq("id", contractId);
-    setContracts((prev) => prev.filter((c) => c.id !== contractId));
+  const handleDeleteConfirm = async () => {
+    if (!deleteModal.contract) return;
+
+    await supabase.from("contracts").delete().eq("id", deleteModal.contract.id);
+    setContracts((prev) => prev.filter((c) => c.id !== deleteModal.contract?.id));
+    setVersionCounts((prev) => {
+      const newCounts = { ...prev };
+      delete newCounts[deleteModal.contract!.id];
+      return newCounts;
+    });
   };
 
   const filteredContracts = contracts.filter((contract) => {
@@ -190,7 +223,7 @@ export default function DashboardPage() {
           <div className="flex items-center gap-2">
             <Link href="/compare">
               <Button variant="outline" size="sm" className="rounded-none">
-                <Scale className="w-4 h-4 mr-2" />
+                <HugeiconsIcon icon={RepeatOffIcon} size={16} className="mr-2" />
                 Compare
               </Button>
             </Link>
@@ -277,8 +310,8 @@ export default function DashboardPage() {
           {/* Quick Actions - inline */}
           <div className="flex items-center gap-2">
             <Link href="/analyze">
-              <Button variant="outline" size="sm" className="h-7 text-xs border-[#262626] bg-transparent hover:bg-[#1a1a1a] rounded-none">
-                <Plus className="w-3 h-3 mr-1" />
+              <Button variant="outline" size="sm" className="h-7 text-xs border-border bg-transparent hover:bg-[#1a1a1a] rounded-none">
+                <HugeiconsIcon icon={AiSheetsIcon} size={12} className="mr-1" />
                 New
               </Button>
             </Link>
@@ -334,109 +367,191 @@ export default function DashboardPage() {
 
         {/* Contracts List */}
         {filteredContracts.length === 0 ? (
-          <Card className="border-dashed">
-            <CardContent className="py-12 text-center">
-              <FolderOpen className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
-              <h3 className="text-lg font-semibold mb-2">
+          <div className="border-2 border-dashed border-border bg-[#0a0a0a]">
+            <div className="py-16 text-center">
+              <div className="w-16 h-16 mx-auto border border-border flex items-center justify-center mb-6 bg-[#1a1a1a]">
+                <HugeiconsIcon icon={FolderBlockIcon} className="w-8 h-8 text-[#525252]" />
+              </div>
+              <h3 className="text-lg font-medium text-white mb-2">
                 {contracts.length === 0 ? "No contracts yet" : "No matching contracts"}
               </h3>
-              <p className="text-muted-foreground mb-4">
+              <p className="text-[#525252] mb-6">
                 {contracts.length === 0
                   ? "Upload your first contract to get started"
                   : "Try adjusting your search or filters"}
               </p>
               {contracts.length === 0 && (
                 <Link href="/analyze">
-                  <Button className="rounded-none">
-                    <Plus className="w-4 h-4 mr-2" />
-                    Analyze Contract
+                  <Button className="rounded-none bg-primary text-black hover:bg-primary/90">
+                    <HugeiconsIcon icon={AiSheetsIcon} size={16} className="mr-2" />
+                    New Analysis
                   </Button>
                 </Link>
               )}
-            </CardContent>
-          </Card>
-        ) : (
-          <div className="border border-border overflow-hidden">
-            {/* Table Header */}
-            <div className="grid grid-cols-[1fr_180px_100px_100px_80px] gap-2 px-4 py-2 bg-muted/50 text-xs font-medium text-muted-foreground border-b border-border">
-              <div>Contract</div>
-              <div>Type</div>
-              <div>Risk</div>
-              <div>Date</div>
-              <div className="text-right">Actions</div>
             </div>
-            {/* Table Rows */}
-            {filteredContracts.map((contract) => (
-              <div
-                key={contract.id}
-                className="grid grid-cols-[1fr_180px_100px_100px_80px] gap-2 px-4 py-2.5 items-center border-b border-border/50 last:border-0 hover:bg-muted/30 transition-colors"
-              >
-                <div className="flex items-center gap-2 min-w-0">
-                  <FileText className="w-4 h-4 text-muted-foreground shrink-0" />
-                  <span className="font-medium truncate text-sm">{contract.title}</span>
-                  {contract.is_starred && (
-                    <Star className="w-3 h-3 text-amber-500 fill-amber-500 shrink-0" />
-                  )}
-                </div>
-                <div>
-                  <span className="text-xs text-muted-foreground truncate block">
-                    {contract.contract_type || "—"}
-                  </span>
-                </div>
-                <div>{getRiskBadge(contract.overall_risk)}</div>
-                <div className="text-xs text-muted-foreground">
-                  {new Date(contract.created_at).toLocaleDateString()}
-                </div>
-                <div className="flex items-center justify-end gap-1">
-                  <Link href={`/contract/${contract.id}`}>
-                    <Button variant="ghost" size="icon" className="h-7 w-7">
-                      <Eye className="w-3.5 h-3.5" />
-                    </Button>
-                  </Link>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon" className="h-7 w-7">
-                        <MoreVertical className="w-3.5 h-3.5" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem
-                        onClick={() => toggleStar(contract.id, contract.is_starred)}
-                      >
-                        {contract.is_starred ? (
-                          <>
-                            <StarOff className="w-4 h-4 mr-2" />
-                            Unstar
-                          </>
-                        ) : (
-                          <>
-                            <Star className="w-4 h-4 mr-2" />
-                            Star
-                          </>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {filteredContracts.map((contract) => {
+              const statusColor = contract.status === "active"
+                ? "text-green-400"
+                : contract.status === "negotiating"
+                  ? "text-amber-400"
+                  : "text-[#525252]";
+              const statusLabel = contract.status === "active"
+                ? "Active"
+                : contract.status === "negotiating"
+                  ? "Negotiating"
+                  : "Draft";
+
+              return (
+                <Link
+                  href={`/contract/${contract.id}`}
+                  key={contract.id}
+                  className="block border border-border hover:border-[#404040] bg-[#0a0a0a] hover:bg-[#111] transition-all"
+                >
+                  <div className="p-4 flex items-start gap-4">
+                    {/* Left: Icon with status indicator */}
+                    <div className="relative shrink-0">
+                      <div className="w-10 h-10 border border-border flex items-center justify-center bg-[#1a1a1a]">
+                        <FileText className="w-5 h-5 text-[#525252]" />
+                      </div>
+                      <div className={cn(
+                        "absolute -bottom-1 -right-1 w-4 h-4 rounded-full flex items-center justify-center",
+                        contract.overall_risk === "high" ? "bg-red-500/20" :
+                        contract.overall_risk === "medium" ? "bg-amber-500/20" :
+                        "bg-green-500/20"
+                      )}>
+                        <div className={cn(
+                          "w-2 h-2 rounded-full",
+                          contract.overall_risk === "high" ? "bg-red-400" :
+                          contract.overall_risk === "medium" ? "bg-amber-400" :
+                          "bg-green-400"
+                        )} />
+                      </div>
+                    </div>
+
+                    {/* Main content */}
+                    <div className="flex-1 min-w-0">
+                      {/* Title row */}
+                      <div className="flex items-center gap-2 mb-1">
+                        <h3 className="font-medium text-white truncate">{contract.title}</h3>
+                        {versionCounts[contract.id] > 0 && (
+                          <span className="flex items-center gap-1 text-[10px] text-[#878787] px-1.5 py-0.5 border border-border bg-[#1a1a1a]">
+                            <History className="w-2.5 h-2.5" />
+                            v{versionCounts[contract.id] + 1}
+                          </span>
                         )}
-                      </DropdownMenuItem>
-                      <DropdownMenuItem asChild>
-                        <Link href={`/compare?contracts=${contract.id}`}>
-                          <Scale className="w-4 h-4 mr-2" />
-                          Compare
-                        </Link>
-                      </DropdownMenuItem>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem
-                        onClick={() => deleteContract(contract.id)}
-                        className="text-red-400"
-                      >
-                        <Trash2 className="w-4 h-4 mr-2" />
-                        Delete
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </div>
-              </div>
-            ))}
+                        {contract.is_starred && (
+                          <Star className="w-3.5 h-3.5 text-amber-500 fill-amber-500 shrink-0" />
+                        )}
+                      </div>
+
+                      {/* Description */}
+                      <p className="text-sm text-[#878787] line-clamp-1 mb-3">
+                        {(contract.analysis as { summary?: string })?.summary || "Contract uploaded for analysis"}
+                      </p>
+
+                      {/* Tags row */}
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs px-2 py-0.5 border border-border text-[#878787]">
+                          {new Date(contract.created_at).getFullYear()}
+                        </span>
+                        {contract.contract_type && (
+                          <span className="text-xs px-2 py-0.5 border border-border text-[#878787]">
+                            {contract.contract_type}
+                          </span>
+                        )}
+                        {contract.overall_risk && (
+                          <span className={cn(
+                            "text-xs px-2 py-0.5 border",
+                            contract.overall_risk === "high"
+                              ? "border-red-500/30 text-red-400 bg-red-500/10"
+                              : contract.overall_risk === "medium"
+                                ? "border-amber-500/30 text-amber-400 bg-amber-500/10"
+                                : "border-green-500/30 text-green-400 bg-green-500/10"
+                          )}>
+                            {contract.overall_risk === "high" ? "High Risk" : contract.overall_risk === "medium" ? "Medium Risk" : "Low Risk"}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Right section: Status & Actions */}
+                    <div className="flex items-center gap-4 shrink-0">
+                      {/* Status badge */}
+                      <div className={cn("flex items-center gap-1.5 text-sm", statusColor)}>
+                        <div className={cn(
+                          "w-2 h-2 rounded-full",
+                          contract.status === "active" ? "bg-green-400" :
+                          contract.status === "negotiating" ? "bg-amber-400" :
+                          "bg-[#525252]"
+                        )} />
+                        {statusLabel}
+                      </div>
+
+                      {/* Actions */}
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild onClick={(e) => e.preventDefault()}>
+                          <Button variant="ghost" size="icon" className="h-8 w-8 rounded-none">
+                            <MoreVertical className="w-4 h-4 text-[#525252]" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="rounded-none">
+                          <DropdownMenuItem
+                            onClick={(e) => {
+                              e.preventDefault();
+                              toggleStar(contract.id, contract.is_starred);
+                            }}
+                          >
+                            {contract.is_starred ? (
+                              <>
+                                <StarOff className="w-4 h-4 mr-2" />
+                                Unstar
+                              </>
+                            ) : (
+                              <>
+                                <Star className="w-4 h-4 mr-2" />
+                                Star
+                              </>
+                            )}
+                          </DropdownMenuItem>
+                          <DropdownMenuItem asChild>
+                            <Link href={`/compare?contracts=${contract.id}`} onClick={(e) => e.stopPropagation()}>
+                              <HugeiconsIcon icon={RepeatOffIcon} size={16} className="mr-2" />
+                              Compare
+                            </Link>
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem
+                            onClick={(e) => {
+                              e.preventDefault();
+                              openDeleteModal(contract);
+                            }}
+                            className="text-red-400"
+                          >
+                            <Trash2 className="w-4 h-4 mr-2" />
+                            Delete
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
+                  </div>
+                </Link>
+              );
+            })}
           </div>
         )}
       </main>
+
+      {/* Delete Confirmation Modal */}
+      <DeleteConfirmModal
+        open={deleteModal.open}
+        onOpenChange={(open) => setDeleteModal({ open, contract: open ? deleteModal.contract : null })}
+        onConfirm={handleDeleteConfirm}
+        title={deleteModal.contract?.title || ""}
+        versionCount={deleteModal.contract ? versionCounts[deleteModal.contract.id] || 0 : 0}
+      />
     </div>
   );
 }

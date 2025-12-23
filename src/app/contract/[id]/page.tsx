@@ -45,7 +45,6 @@ import {
   ArrowUpRight,
   ArrowDownRight,
   X,
-  Shield,
   Eye,
   Download,
   TrendingUp,
@@ -55,9 +54,13 @@ import {
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
   HelpSquareIcon,
+  Alert02Icon,
 } from "@hugeicons-pro/core-duotone-rounded";
+import { Calendar03Icon, Invoice03Icon, Delete03Icon } from "@hugeicons-pro/core-solid-rounded";
 import { FinancialCalculator } from "@/components/FinancialCalculator";
 import { MusicLoader } from "@/components/MusicLoader";
+import { DeleteConfirmModal } from "@/components/DeleteConfirmModal";
+import { NotificationModal } from "@/components/NotificationModal";
 
 interface ContractVersion {
   id: string;
@@ -123,8 +126,17 @@ export default function ContractDetailPage() {
 
   // Expandable items
   const [expandedAdvice, setExpandedAdvice] = useState<number | null>(null);
-  const [expandedConcern, setExpandedConcern] = useState<number | null>(null);
   const [expandedTerm, setExpandedTerm] = useState<number | null>(null);
+
+  // Delete modal
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [showVersionDeleteModal, setShowVersionDeleteModal] = useState(false);
+  const [versionToDelete, setVersionToDelete] = useState<ContractVersion | null>(null);
+  const [notification, setNotification] = useState<{ open: boolean; title: string; message: string }>({
+    open: false,
+    title: "",
+    message: "",
+  });
 
   const contractId = params.id as string;
 
@@ -257,16 +269,70 @@ export default function ContractDetailPage() {
       });
 
       const data = await response.json();
-      if (response.ok) {
-        fetchVersions();
+      if (response.ok && data.version) {
+        // Refresh versions list
+        await fetchVersions();
+        // Auto-select the new version
+        handleVersionSelect(data.version.id);
+      } else if (data.isDuplicate) {
+        setNotification({
+          open: true,
+          title: "Duplicate Document",
+          message: data.error || "This document is identical to an existing version.",
+        });
       } else {
-        alert(data.error || "Failed to upload version");
+        setNotification({
+          open: true,
+          title: "Upload Failed",
+          message: data.error || "Failed to upload version",
+        });
       }
     } catch (err) {
       console.error("Error uploading version:", err);
       alert("Failed to upload version");
     } finally {
       setUploadingVersion(false);
+    }
+  };
+
+  const handleVersionDeleteClick = (version: ContractVersion) => {
+    setVersionToDelete(version);
+    setShowVersionDeleteModal(true);
+  };
+
+  const deleteVersion = async () => {
+    if (!versionToDelete) return;
+
+    // Close modal and clear state first
+    const versionIdToDelete = versionToDelete.id;
+    const wasSelected = selectedVersionId === versionIdToDelete;
+
+    setShowVersionDeleteModal(false);
+    setVersionToDelete(null);
+
+    try {
+      const response = await fetch(`/api/contracts/${contractId}/versions?versionId=${versionIdToDelete}`, {
+        method: "DELETE",
+      });
+
+      if (response.ok) {
+        // If we deleted the currently selected version, go back to original
+        if (wasSelected) {
+          handleVersionSelect(null);
+        }
+        // Update versions state directly by filtering out the deleted version
+        setVersions(prev => prev.filter(v => v.id !== versionIdToDelete));
+      } else {
+        const data = await response.json();
+        alert(data.error || "Failed to delete version");
+        // Refresh to restore state if delete failed
+        await fetchVersions();
+      }
+    } catch (err) {
+      console.error("Error deleting version:", err);
+      alert("Failed to delete version");
+      // Refresh to restore state if delete failed
+      await fetchVersions();
     }
   };
 
@@ -320,9 +386,8 @@ export default function ContractDetailPage() {
     setContract((prev) => prev ? { ...prev, is_starred: !prev.is_starred } : null);
   };
 
-  const deleteContract = async () => {
-    if (!contract || !confirm("Are you sure you want to delete this contract?")) return;
-
+  const handleDeleteConfirm = async () => {
+    if (!contract) return;
     await supabase.from("contracts").delete().eq("id", contract.id);
     router.push("/dashboard");
   };
@@ -397,75 +462,89 @@ export default function ContractDetailPage() {
       case "low":
         return "text-green-400 border-green-400/30";
       default:
-        return "text-[#878787] border-[#262626]";
+        return "text-[#878787] border-border";
     }
   };
 
-  // Get contextual "What to Look For" based on term type
+  // Get contextual questions based on term type
   const getTermChecklist = (title: string): string[] => {
     const titleLower = title.toLowerCase();
-    
-    if (titleLower.includes("royalt")) {
+
+    if (titleLower.includes("royalt") || titleLower.includes("share") || titleLower.includes("percent")) {
       return [
-        "Verify the exact percentage and what it applies to (gross vs net)",
-        "Check if there are different rates for different income sources",
-        "Look for any deductions taken before your royalty is calculated"
+        "Is this percentage calculated on gross or net revenue?",
+        "What deductions are taken before my share is calculated?",
+        "Are there different rates for streaming vs physical vs sync?"
       ];
     }
-    if (titleLower.includes("term") || titleLower.includes("duration") || titleLower.includes("period")) {
+    if (titleLower.includes("term") || titleLower.includes("duration") || titleLower.includes("period") || titleLower.includes("year")) {
       return [
-        "Confirm the exact start and end dates of the agreement",
-        "Check for automatic renewal or extension clauses",
-        "Look for early termination rights and any associated penalties"
+        "When exactly does this agreement start and end?",
+        "Does this automatically renew? How do I opt out?",
+        "Can I terminate early and what are the penalties?"
       ];
     }
-    if (titleLower.includes("rights") || titleLower.includes("ownership") || titleLower.includes("copyright")) {
+    if (titleLower.includes("rights") || titleLower.includes("ownership") || titleLower.includes("copyright") || titleLower.includes("publish")) {
       return [
-        "Clarify exactly which rights you are granting (exclusive vs non-exclusive)",
-        "Check if rights revert to you after the term ends",
-        "Verify territorial limitations on rights granted"
+        "Am I granting exclusive or non-exclusive rights?",
+        "Do my rights revert back to me when the term ends?",
+        "What territories/regions does this cover?"
       ];
     }
-    if (titleLower.includes("advance") || titleLower.includes("payment") || titleLower.includes("fee")) {
+    if (titleLower.includes("advance") || titleLower.includes("payment") || titleLower.includes("fee") || titleLower.includes("recoup")) {
       return [
-        "Confirm the payment schedule and any conditions for payment",
-        "Check if the advance is recoupable and from what income sources",
-        "Look for audit rights to verify payment accuracy"
+        "When exactly will I receive this payment?",
+        "Is this recoupable? From which income sources?",
+        "What happens to unrecouped balances at term end?"
       ];
     }
     if (titleLower.includes("audit")) {
       return [
-        "Verify how often you can request an audit",
-        "Check who bears the cost of the audit",
-        "Look for time limits on when you can dispute discrepancies"
+        "How often can I audit their books?",
+        "Who pays for the audit if errors are found?",
+        "What's the time limit for disputing discrepancies?"
       ];
     }
-    if (titleLower.includes("terminat") || titleLower.includes("cancel")) {
+    if (titleLower.includes("terminat") || titleLower.includes("cancel") || titleLower.includes("post-term")) {
       return [
-        "Understand what triggers termination rights for each party",
-        "Check the notice period required for termination",
-        "Verify what happens to your rights and payments upon termination"
+        "What triggers my right to terminate?",
+        "How much notice do I need to give?",
+        "What happens to my work after termination?"
       ];
     }
     if (titleLower.includes("exclusiv")) {
       return [
-        "Understand exactly what activities are restricted during exclusivity",
-        "Check the geographic scope of the exclusivity",
-        "Look for any carve-outs or exceptions to the exclusivity"
+        "What exactly am I restricted from doing?",
+        "Does this apply worldwide or specific territories?",
+        "Are there any exceptions or carve-outs?"
       ];
     }
     if (titleLower.includes("renewal") || titleLower.includes("option")) {
       return [
-        "Check if renewal is automatic or requires mutual agreement",
-        "Verify the terms (royalty rates, advances) for renewal periods",
-        "Look for how to opt out of automatic renewals"
+        "Is renewal automatic or do both parties need to agree?",
+        "Do the terms change upon renewal?",
+        "How do I prevent automatic renewal if I want out?"
       ];
     }
-    // Default checklist
+    if (titleLower.includes("financ") || titleLower.includes("money") || titleLower.includes("income")) {
+      return [
+        "How and when will I receive statements?",
+        "What's the accounting period for payments?",
+        "Can I audit if I suspect discrepancies?"
+      ];
+    }
+    if (titleLower.includes("perform")) {
+      return [
+        "What performance obligations do I have?",
+        "What happens if I can't meet these obligations?",
+        "Are there minimum delivery requirements?"
+      ];
+    }
+    // Default questions
     return [
-      "Compare this term against industry standards for similar agreements",
-      "Check how this term interacts with other clauses in the contract",
-      "Consider if this term could limit your future opportunities"
+      "How does this compare to industry standard terms?",
+      "Could this clause limit my future opportunities?",
+      "What's the worst case scenario with this term?"
     ];
   };
 
@@ -532,7 +611,7 @@ export default function ContractDetailPage() {
         </div>
         <h1 className="text-lg font-medium text-white">{error || "Contract not found"}</h1>
         <Link href="/dashboard">
-          <button className="h-8 px-4 text-sm text-[#878787] hover:text-white border border-[#262626] hover:border-[#404040] flex items-center gap-2 transition-colors">
+          <button className="h-8 px-4 text-sm text-[#878787] hover:text-white border border-border hover:border-[#404040] flex items-center gap-2 transition-colors">
             <ArrowLeft className="w-3.5 h-3.5" />
             Back to Dashboard
           </button>
@@ -546,7 +625,7 @@ export default function ContractDetailPage() {
     selectedVersion.analysis.keyTerms.length > 0;
 
   return (
-    <div className="flex flex-col h-screen bg-black overflow-hidden pt-[57px]">
+    <div className="flex flex-col h-[calc(100vh-56px)] bg-black overflow-hidden pt-[57px]">
       <Navbar showBorder />
 
       {/* Main Content Area */}
@@ -555,13 +634,13 @@ export default function ContractDetailPage() {
         <div 
           className={cn(
             "h-full flex flex-col bg-black transition-all duration-300 ease-in-out overflow-hidden",
-            showDocument ? "w-1/2 max-w-2xl border-r border-[#262626]" : "w-0"
+            showDocument ? "w-1/2 max-w-2xl border-r border-border" : "w-0"
           )}
         >
           {showDocument && (
             <>
               {/* Panel Header */}
-              <div className="shrink-0 h-12 px-4 border-b border-[#262626] bg-black flex items-center justify-between">
+              <div className="shrink-0 h-12 px-4 border-b border-border bg-black flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <FileText className="w-4 h-4 text-[#878787]" />
                   <div className="flex items-center gap-2">
@@ -573,12 +652,12 @@ export default function ContractDetailPage() {
                         value={selectedVersionId || "original"}
                         onValueChange={(val) => handleVersionSelect(val === "original" ? null : val)}
                       >
-                        <SelectTrigger className="h-6 min-w-[70px] gap-1 border-[#262626] bg-transparent text-xs text-[#878787] hover:text-white">
+                        <SelectTrigger className="h-6 min-w-[70px] gap-1 border-border bg-transparent text-xs text-[#878787] hover:text-white focus:ring-0 focus:ring-offset-0 focus-visible:border-border">
                           <SelectValue>
                             v{currentVersionNumber} of {totalVersions}
                           </SelectValue>
                         </SelectTrigger>
-                        <SelectContent className="bg-[#0a0a0a] border-[#262626]">
+                        <SelectContent className="bg-[#0a0a0a] border-border" position="popper" side="bottom" align="start">
                           <SelectItem value="original" className="text-xs">
                             <div className="flex items-center gap-2">
                               <span>v1 (Original)</span>
@@ -598,7 +677,7 @@ export default function ContractDetailPage() {
                                   <span className={cn(
                                     "text-[10px] px-1 border",
                                     v.analysis.overallRiskAssessment === "low" ? "text-green-400 border-green-400/30" :
-                                    v.analysis.overallRiskAssessment === "medium" ? "text-yellow-400 border-yellow-400/30" :
+                                    v.analysis.overallRiskAssessment === "medium" ? "text-amber-400 border-amber-400/30" :
                                     "text-red-400 border-red-400/30"
                                   )}>
                                     {v.analysis.overallRiskAssessment}
@@ -616,7 +695,7 @@ export default function ContractDetailPage() {
                     )}
                   </div>
                   {highlightedText && (
-                    <span className="text-xs text-[#525252] px-2 py-0.5 border border-[#262626]">Highlighting</span>
+                    <span className="text-xs text-[#525252] px-2 py-0.5 border border-border">Highlighting</span>
                   )}
                 </div>
                 <div className="flex items-center gap-2">
@@ -638,18 +717,18 @@ export default function ContractDetailPage() {
               </div>
               {/* Version Info Banner */}
               {selectedVersion && (
-                <div className="shrink-0 px-4 py-3 bg-[#0a0a0a] border-b border-[#262626]">
+                <div className="shrink-0 px-4 py-3 bg-[#0a0a0a] border-b border-border">
                   <div className="flex items-start gap-3">
-                    <div className="w-5 h-5 border border-[#262626] flex items-center justify-center shrink-0 mt-0.5">
+                    <div className="w-5 h-5 border border-border flex items-center justify-center shrink-0 mt-0.5">
                       <History className="w-3 h-3 text-[#878787]" />
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-xs text-white mb-1">Version {selectedVersion.version_number + 1} Changes</p>
                       <p className="text-[10px] text-[#878787] mb-2">{selectedVersion.changes_summary}</p>
                       {selectedVersion.analysis?.improvements && selectedVersion.analysis.improvements.length > 0 && (
-                        <div className="mb-2">
-                          <p className="text-[10px] text-green-400 mb-1">✓ Improvements</p>
-                          <ul className="text-[10px] text-[#525252] space-y-0.5 ml-3">
+                        <div className="mb-3">
+                          <p className="text-xs text-green-400 mb-1.5">✓ Improvements</p>
+                          <ul className="text-xs text-[#a3a3a3] space-y-1 ml-3">
                             {selectedVersion.analysis.improvements.slice(0, 3).map((imp, i) => (
                               <li key={i}>• {imp}</li>
                             ))}
@@ -658,8 +737,8 @@ export default function ContractDetailPage() {
                       )}
                       {selectedVersion.analysis?.regressions && selectedVersion.analysis.regressions.length > 0 && (
                         <div>
-                          <p className="text-[10px] text-red-400 mb-1">⚠ Regressions</p>
-                          <ul className="text-[10px] text-[#525252] space-y-0.5 ml-3">
+                          <p className="text-xs text-red-400 mb-1.5">⚠ Regressions</p>
+                          <ul className="text-xs text-[#a3a3a3] space-y-1 ml-3">
                             {selectedVersion.analysis.regressions.slice(0, 3).map((reg, i) => (
                               <li key={i}>• {reg}</li>
                             ))}
@@ -718,7 +797,7 @@ export default function ContractDetailPage() {
             )}>
               {/* Breadcrumbs */}
               <div className="flex items-center gap-2 mb-6">
-                <Link href="/dashboard" className="flex items-center justify-center w-7 h-7 border border-[#262626] hover:border-[#404040] transition-colors">
+                <Link href="/dashboard" className="flex items-center justify-center w-7 h-7 border border-border hover:border-[#404040] transition-colors">
                   <ArrowLeft className="w-3.5 h-3.5 text-[#878787]" />
                 </Link>
                 <nav className="flex items-center gap-2 text-sm">
@@ -747,7 +826,7 @@ export default function ContractDetailPage() {
                       analysis.overallRiskAssessment === "low" ? "border-green-500/30 text-green-400" :
                       analysis.overallRiskAssessment === "medium" ? "border-yellow-500/30 text-yellow-400" :
                       analysis.overallRiskAssessment === "high" ? "border-red-500/30 text-red-400" :
-                      "border-[#262626] text-[#525252]"
+                      "border-border text-[#525252]"
                     )}>
                       {analysis.overallRiskAssessment === "low" ? "Low Risk" : 
                        analysis.overallRiskAssessment === "medium" ? "Medium Risk" :
@@ -775,7 +854,7 @@ export default function ContractDetailPage() {
                 <div className="flex items-center gap-2">
                   <button
                     onClick={() => setShowDocument(!showDocument)}
-                    className="h-7 px-2.5 text-xs text-[#878787] hover:text-white border border-[#262626] hover:border-[#404040] flex items-center gap-1.5 transition-colors"
+                    className="h-7 px-2.5 text-xs text-[#878787] hover:text-white border border-border hover:border-[#404040] flex items-center gap-1.5 transition-colors"
                   >
                     <FileText className="w-3 h-3" />
                     {showDocument ? "Hide" : "Show"} PDF
@@ -783,7 +862,7 @@ export default function ContractDetailPage() {
                   <button
                     onClick={handleDownloadReport}
                     disabled={downloading}
-                    className="h-7 px-2.5 text-xs text-[#878787] hover:text-white border border-[#262626] hover:border-[#404040] flex items-center gap-1.5 transition-colors disabled:opacity-50"
+                    className="h-7 px-2.5 text-xs text-[#878787] hover:text-white border border-border hover:border-[#404040] flex items-center gap-1.5 transition-colors disabled:opacity-50"
                   >
                     {downloading ? (
                       <Loader2 className="w-3 h-3 animate-spin" />
@@ -807,7 +886,7 @@ export default function ContractDetailPage() {
                   <button
                     onClick={() => versionInputRef.current?.click()}
                     disabled={uploadingVersion}
-                    className="h-7 w-7 flex items-center justify-center border border-[#262626] hover:border-[#404040] transition-colors disabled:opacity-50"
+                    className="h-7 w-7 flex items-center justify-center border border-border hover:border-[#404040] transition-colors disabled:opacity-50"
                   >
                     {uploadingVersion ? (
                       <Loader2 className="w-3 h-3 text-[#525252] animate-spin" />
@@ -818,7 +897,7 @@ export default function ContractDetailPage() {
 
                   <button 
                     onClick={toggleStar}
-                    className="h-7 w-7 flex items-center justify-center border border-[#262626] hover:border-[#404040] transition-colors"
+                    className="h-7 w-7 flex items-center justify-center border border-border hover:border-[#404040] transition-colors"
                   >
                     {contract.is_starred ? (
                       <Star className="w-3 h-3 text-yellow-400 fill-yellow-400" />
@@ -826,9 +905,9 @@ export default function ContractDetailPage() {
                       <StarOff className="w-3 h-3 text-[#878787]" />
                     )}
                   </button>
-                  <button 
-                    onClick={deleteContract}
-                    className="h-7 w-7 flex items-center justify-center border border-[#262626] hover:border-red-400/30 transition-colors"
+                  <button
+                    onClick={() => setShowDeleteModal(true)}
+                    className="h-7 w-7 flex items-center justify-center border border-border hover:border-red-400/30 transition-colors"
                   >
                     <Trash2 className="w-3 h-3 text-[#878787] hover:text-red-400" />
                   </button>
@@ -837,12 +916,11 @@ export default function ContractDetailPage() {
 
               {/* Tabbed Content - Midday style */}
               <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-                <div className="flex gap-6 border-b border-[#262626]">
+                <div className="flex gap-6 border-b border-border">
                   {[
                     { id: "overview", label: "Overview" },
                     { id: "terms", label: "Key Terms" },
                     { id: "financial", label: "Finances" },
-                    { id: "concerns", label: "Concerns" },
                     { id: "advice", label: "Advice" },
                     { id: "versions", label: "Versions" },
                     { id: "dates", label: "Dates" },
@@ -886,7 +964,7 @@ export default function ContractDetailPage() {
                 {/* Overview Tab - Midday style */}
                 <TabsContent value="overview" className="space-y-6">
                   {/* Summary */}
-                  <div className="border border-[#262626] p-4">
+                  <div className="border border-border p-4">
                     <div className="flex items-center gap-2 mb-3">
                       <span className="text-[10px] text-[#525252] uppercase tracking-wider">Summary</span>
                       <div className="h-px flex-1 bg-[#262626]" />
@@ -894,7 +972,7 @@ export default function ContractDetailPage() {
                     <p className="text-sm text-white leading-relaxed">{analysis.summary}</p>
                     
                     {/* Quick Stats Row */}
-                    <div className="flex flex-wrap items-center gap-4 mt-4 pt-4 border-t border-[#262626]">
+                    <div className="flex flex-wrap items-center gap-4 mt-4 pt-4 border-t border-border">
                       {analysis.parties?.artist && (
                         <div className="text-xs text-[#525252]">
                           <span className="text-[#878787]">{analysis.parties.artist}</span>
@@ -922,7 +1000,7 @@ export default function ContractDetailPage() {
                       </div>
                       <div className="grid grid-cols-3 gap-3">
                         {analysis.financialTerms.royaltyRate && (
-                          <div className="border border-[#262626] p-3">
+                          <div className="border border-border p-3">
                             <div className="flex items-center gap-2 mb-1">
                               <TrendingUp className="w-3 h-3 text-[#525252]" />
                               <span className="text-[10px] text-white">Royalty</span>
@@ -932,9 +1010,9 @@ export default function ContractDetailPage() {
                           </div>
                         )}
                         {analysis.termLength && (
-                          <div className="border border-[#262626] p-3">
+                          <div className="border border-border p-3">
                             <div className="flex items-center gap-2 mb-1">
-                              <Calendar className="w-3 h-3 text-[#525252]" />
+                              <HugeiconsIcon icon={Calendar03Icon} size={12} className="text-[#525252]" />
                               <span className="text-[10px] text-white">Term</span>
                             </div>
                             <p className="text-[10px] text-[#525252] mb-3">Contract duration</p>
@@ -942,7 +1020,7 @@ export default function ContractDetailPage() {
                           </div>
                         )}
                         {analysis.financialTerms.advanceAmount && (
-                          <div className="border border-[#262626] p-3">
+                          <div className="border border-border p-3">
                             <div className="flex items-center gap-2 mb-1">
                               <DollarSign className="w-3 h-3 text-[#525252]" />
                               <span className="text-[10px] text-white">Advance</span>
@@ -952,9 +1030,9 @@ export default function ContractDetailPage() {
                           </div>
                         )}
                         {analysis.financialTerms.paymentSchedule && (
-                          <div className="border border-[#262626] p-3">
+                          <div className="border border-border p-3">
                             <div className="flex items-center gap-2 mb-1">
-                              <Clock className="w-3 h-3 text-[#525252]" />
+                              <HugeiconsIcon icon={Invoice03Icon} size={12} className="text-[#525252]" />
                               <span className="text-[10px] text-white">Payment</span>
                             </div>
                             <p className="text-[10px] text-[#525252] mb-3">Payment schedule</p>
@@ -968,7 +1046,7 @@ export default function ContractDetailPage() {
                   {/* Quick Concerns Preview */}
                   {analysis.potentialConcerns && analysis.potentialConcerns.length > 0 && (
                     <div className="grid md:grid-cols-2 gap-2">
-                      <div className="border border-[#262626] p-3">
+                      <div className="border border-border p-3">
                         <div className="flex items-center gap-2 mb-2">
                           <AlertTriangle className="w-3 h-3 text-red-400" />
                           <span className="text-xs text-red-400">{analysis.potentialConcerns.length} Concerns Found</span>
@@ -976,7 +1054,7 @@ export default function ContractDetailPage() {
                         <p className="text-xs text-[#a3a3a3]">{analysis.potentialConcerns[0]}</p>
                       </div>
                       {analysis.missingClauses && analysis.missingClauses.length > 0 && (
-                        <div className="border border-[#262626] p-3">
+                        <div className="border border-border p-3">
                           <div className="flex items-center gap-2 mb-2">
                             <HugeiconsIcon icon={HelpSquareIcon} size={12} className="text-yellow-400" />
                             <span className="text-xs text-yellow-400">{analysis.missingClauses.length} Missing Protections</span>
@@ -989,12 +1067,30 @@ export default function ContractDetailPage() {
                 </TabsContent>
 
                 {/* Key Terms Tab - Expandable Cards */}
-                <TabsContent value="terms" className="space-y-2">
+                <TabsContent value="terms" className="space-y-4">
+                  {/* Concerns Section */}
+                  {analysis.potentialConcerns && analysis.potentialConcerns.length > 0 && (
+                    <div className="border border-red-500/30 bg-red-500/5 p-4">
+                      <div className="flex items-center gap-2 mb-3">
+                        <HugeiconsIcon icon={Alert02Icon} size={14} className="text-red-400" />
+                        <span className="text-xs font-medium text-red-400 leading-none">{analysis.potentialConcerns.length} Concerns to Address</span>
+                      </div>
+                      <ul className="space-y-2">
+                        {analysis.potentialConcerns.map((concern, i) => (
+                          <li key={i} className="flex items-center gap-2 text-xs text-[#e5e5e5]">
+                            <span className="w-1 h-1 rounded-full bg-red-400/60 shrink-0" />
+                            <span className="leading-tight">{concern}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
                   {(!analysis.keyTerms || analysis.keyTerms.length === 0) && (
-                    <div className="border border-[#262626] p-8 text-center">
+                    <div className="border border-border p-8 text-center">
                       <FileText className="w-6 h-6 text-[#525252] mx-auto mb-2" />
                       <p className="text-xs text-[#878787]">
-                        {selectedVersion && !versionHasFullAnalysis 
+                        {selectedVersion && !versionHasFullAnalysis
                           ? "Full key terms analysis not available for this version"
                           : "No key terms extracted"}
                       </p>
@@ -1006,7 +1102,7 @@ export default function ContractDetailPage() {
                       <div 
                         key={i}
                         className={cn(
-                          "border border-[#262626] transition-all",
+                          "border border-border transition-all",
                           isExpanded && "bg-[#0a0a0a] border-[#404040]"
                         )}
                       >
@@ -1021,7 +1117,7 @@ export default function ContractDetailPage() {
                                 {term.riskLevel}
                               </span>
                             </div>
-                            <p className="text-xs text-[#878787] line-clamp-1">{term.content}</p>
+                            <p className="text-xs text-[#e5e5e5] line-clamp-1">{term.content}</p>
                           </div>
                           <div className={cn(
                             "text-[#525252] transition-transform shrink-0",
@@ -1038,20 +1134,20 @@ export default function ContractDetailPage() {
                           transition={{ duration: 0.2, ease: "easeOut" }}
                           className="overflow-hidden"
                         >
-                          <div className="border-t border-[#262626]">
+                          <div className="border-t border-border">
                             <div className="p-3 space-y-4">
                               {/* Full Term Value */}
                               <div>
                                 <p className="text-[10px] text-[#525252] uppercase tracking-wider mb-1">What This Says</p>
-                                <p className="text-xs text-[#a3a3a3]">{term.content}</p>
+                                <p className="text-xs text-white">{term.content}</p>
                               </div>
-                              
+
                               {/* Plain English Explanation */}
                               <div>
                                 <p className="text-[10px] text-[#525252] uppercase tracking-wider mb-1">In Plain English</p>
-                                <p className="text-xs text-[#878787]">{term.explanation}</p>
+                                <p className="text-xs text-white">{term.explanation}</p>
                               </div>
-                              
+
                               {/* Risk Assessment */}
                               <div>
                                 <p className="text-[10px] text-[#525252] uppercase tracking-wider mb-1">Risk Assessment</p>
@@ -1059,22 +1155,22 @@ export default function ContractDetailPage() {
                                   <span className={cn("text-[10px] px-1.5 py-0.5 border capitalize shrink-0", getRiskColor(term.riskLevel))}>
                                     {term.riskLevel}
                                   </span>
-                                  <p className="text-xs text-[#878787]">
+                                  <p className="text-xs text-white">
                                     {term.riskLevel === "high" && "This term significantly favors the other party and could limit your rights or earnings."}
                                     {term.riskLevel === "medium" && "This term has some elements that could be improved but is within industry norms."}
                                     {term.riskLevel === "low" && "This term is favorable or standard for agreements of this type."}
                                   </p>
                                 </div>
                               </div>
-                              
-                              {/* What to Look For */}
+
+                              {/* Questions to Ask */}
                               <div>
-                                <p className="text-[10px] text-[#525252] uppercase tracking-wider mb-1">What to Look For</p>
-                                <ul className="text-xs text-[#878787] space-y-1">
+                                <p className="text-[10px] text-[#525252] uppercase tracking-wider mb-1">Questions to Ask Your Lawyer</p>
+                                <ul className="text-xs text-[#e5e5e5] space-y-2">
                                   {(term.actionItems || getTermChecklist(term.title)).map((item, idx) => (
-                                    <li key={idx} className="flex items-start gap-2">
-                                      <span className="text-[#525252] mt-1">•</span>
-                                      <span>{item}</span>
+                                    <li key={idx} className="flex items-center gap-2">
+                                      <HugeiconsIcon icon={HelpSquareIcon} size={12} className="text-primary shrink-0" />
+                                      <span className="leading-none">{item}</span>
                                     </li>
                                   ))}
                                 </ul>
@@ -1111,91 +1207,10 @@ export default function ContractDetailPage() {
                   />
                 </TabsContent>
 
-                {/* Concerns Tab - Midday style */}
-                <TabsContent value="concerns" className="space-y-2">
-                  {(!analysis.potentialConcerns || analysis.potentialConcerns.length === 0) && (
-                    <div className="border border-[#262626] p-8 text-center">
-                      <AlertTriangle className="w-6 h-6 text-[#525252] mx-auto mb-2" />
-                      <p className="text-xs text-[#878787]">
-                        {selectedVersion && !versionHasFullAnalysis 
-                          ? "Full concern analysis not available for this version"
-                          : "No concerns identified"}
-                      </p>
-                    </div>
-                  )}
-                  {analysis.potentialConcerns?.map((concern, i) => {
-                    const snippet = analysis.concernSnippets?.[i];
-                    const isExpanded = expandedConcern === i;
-                    return (
-                      <div 
-                        key={i}
-                        className={cn(
-                          "border border-[#262626] transition-all",
-                          isExpanded && "bg-[#0a0a0a] border-[#404040]"
-                        )}
-                      >
-                        <button
-                          onClick={() => setExpandedConcern(isExpanded ? null : i)}
-                          className="w-full p-3 flex items-start gap-3 text-left hover:bg-[#1a1a1a] transition-colors"
-                        >
-                          <div className="w-5 h-5 border border-[#262626] flex items-center justify-center shrink-0">
-                            <span className="text-[10px] text-[#878787]">{i + 1}</span>
-                          </div>
-                          <div className="flex-1">
-                            <p className="text-xs text-[#a3a3a3]">{concern}</p>
-                          </div>
-                          <div className={cn(
-                            "text-[#525252] transition-transform",
-                            isExpanded && "rotate-180"
-                          )}>
-                            <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                              <path d="M2.5 4.5L6 8L9.5 4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                            </svg>
-                          </div>
-                        </button>
-                        <motion.div
-                          initial={false}
-                          animate={{ height: isExpanded ? "auto" : 0, opacity: isExpanded ? 1 : 0 }}
-                          transition={{ duration: 0.2, ease: "easeOut" }}
-                          className="overflow-hidden"
-                        >
-                          <div className="border-t border-[#262626]">
-                            <div className="p-3 space-y-3">
-                              <div>
-                                <p className="text-[10px] text-[#525252] uppercase tracking-wider mb-1">Why This Matters</p>
-                                <p className="text-xs text-[#878787]">
-                                  This clause could limit your flexibility or create obligations that may not be in your best interest. Consider negotiating for more favorable terms or adding protective language.
-                                </p>
-                              </div>
-                              <div>
-                                <p className="text-[10px] text-[#525252] uppercase tracking-wider mb-1">Suggested Action</p>
-                                <p className="text-xs text-[#878787]">
-                                  Review this section carefully with legal counsel before signing. Ask for clarification on any ambiguous terms.
-                                </p>
-                              </div>
-                              {snippet && (
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleClauseClick(snippet);
-                                  }}
-                                  className="text-[10px] text-[#525252] hover:text-white flex items-center gap-1 transition-colors"
-                                >
-                                  <Eye className="w-2.5 h-2.5" /> View in contract
-                                </button>
-                              )}
-                            </div>
-                          </div>
-                        </motion.div>
-                      </div>
-                    );
-                  })}
-                </TabsContent>
-
                 {/* Advice Tab - Midday style */}
                 <TabsContent value="advice" className="space-y-2">
                   {(!analysis.recommendations || analysis.recommendations.length === 0) && (
-                    <div className="border border-[#262626] p-8 text-center">
+                    <div className="border border-border p-8 text-center">
                       <CheckCircle2 className="w-6 h-6 text-[#525252] mx-auto mb-2" />
                       <p className="text-xs text-[#878787]">
                         {selectedVersion && !versionHasFullAnalysis 
@@ -1220,7 +1235,7 @@ export default function ContractDetailPage() {
                       <div 
                         key={i} 
                         className={cn(
-                          "border border-[#262626] transition-all",
+                          "border border-border transition-all",
                           isExpanded && "bg-[#0a0a0a] border-[#404040]"
                         )}
                       >
@@ -1252,7 +1267,7 @@ export default function ContractDetailPage() {
                           transition={{ duration: 0.2, ease: "easeOut" }}
                           className="overflow-hidden"
                         >
-                          <div className="border-t border-[#262626]">
+                          <div className="border-t border-border">
                             <div className="p-3 space-y-3">
                               <div>
                                 <p className="text-[10px] text-[#525252] uppercase tracking-wider mb-1">Rationale</p>
@@ -1284,7 +1299,7 @@ export default function ContractDetailPage() {
                     <button
                       onClick={() => versionInputRef.current?.click()}
                       disabled={uploadingVersion}
-                      className="h-7 px-2.5 text-xs text-[#878787] hover:text-white border border-[#262626] hover:border-[#404040] flex items-center gap-1.5 transition-colors disabled:opacity-50"
+                      className="h-7 px-2.5 text-xs text-[#878787] hover:text-white border border-border hover:border-[#404040] flex items-center gap-1.5 transition-colors disabled:opacity-50"
                     >
                       {uploadingVersion ? (
                         <Loader2 className="w-3 h-3 animate-spin" />
@@ -1300,7 +1315,7 @@ export default function ContractDetailPage() {
                       <Loader2 className="w-4 h-4 animate-spin text-[#525252]" />
                     </div>
                   ) : versions.length === 0 ? (
-                    <div className="text-center py-10 border border-[#262626]">
+                    <div className="text-center py-10 border border-border">
                       <History className="w-6 h-6 mx-auto text-[#525252] mb-2" />
                       <p className="text-xs text-[#878787] mb-1">No version history yet</p>
                       <p className="text-[10px] text-[#525252]">Upload a new version to start tracking changes</p>
@@ -1315,42 +1330,63 @@ export default function ContractDetailPage() {
                           {/* Timeline dot */}
                           <div className={cn(
                             "absolute left-1.5 w-4 h-4 flex items-center justify-center",
-                            i === 0 ? "bg-white text-black" : "bg-[#1a1a1a] border border-[#262626] text-[#878787]"
+                            i === 0 ? "bg-white text-black" : "bg-[#1a1a1a] border border-border text-[#878787]"
                           )}>
-                            <span className="text-[8px] font-bold">{version.version_number}</span>
+                            <span className="text-[8px] font-bold">{version.version_number + 1}</span>
                           </div>
-                          
+
                           <div className={cn(
-                            "border border-[#262626] p-3",
+                            "border border-border p-3",
                             i === 0 && "border-[#404040]"
                           )}>
                             <div className="flex items-center justify-between mb-2">
-                              <span className="text-[10px] text-[#878787] px-1.5 py-0.5 border border-[#262626]">
-                                Version {version.version_number}
-                              </span>
-                              <span className="text-[10px] text-[#525252]">
-                                {new Date(version.created_at).toLocaleDateString()}
-                              </span>
+                              <div className="flex items-center gap-2">
+                                <span className="text-[10px] text-[#878787] px-1.5 py-0.5 border border-border">
+                                  Version {version.version_number + 1}
+                                </span>
+                                {selectedVersionId === version.id && (
+                                  <span className="text-[10px] text-primary px-1.5 py-0.5 border border-primary/30">
+                                    Viewing
+                                  </span>
+                                )}
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <span className="text-[10px] text-[#525252]">
+                                  {new Date(version.created_at).toLocaleDateString()}
+                                </span>
+                                <button
+                                  onClick={() => handleVersionSelect(version.id)}
+                                  className="text-[10px] text-[#878787] hover:text-white transition-colors"
+                                >
+                                  {selectedVersionId === version.id ? "Selected" : "View"}
+                                </button>
+                                <button
+                                  onClick={() => handleVersionDeleteClick(version)}
+                                  className="text-[#525252] hover:text-red-400 transition-colors"
+                                >
+                                  <HugeiconsIcon icon={Delete03Icon} size={14} />
+                                </button>
+                              </div>
                             </div>
-                            
+
                             <p className="text-xs text-[#a3a3a3] mb-2">{version.changes_summary}</p>
                             
                             {version.analysis?.improvements && version.analysis.improvements.length > 0 && (
-                              <div className="space-y-1 mb-2">
+                              <div className="space-y-1.5 mb-2">
                                 {version.analysis.improvements.slice(0, 2).map((imp, j) => (
-                                  <div key={j} className="flex items-center gap-1.5 text-[10px] text-green-400">
-                                    <ArrowUpRight className="w-2.5 h-2.5" />
+                                  <div key={j} className="flex items-start gap-2 text-xs text-green-400">
+                                    <ArrowUpRight className="w-3 h-3 shrink-0 mt-0.5" />
                                     <span>{imp}</span>
                                   </div>
                                 ))}
                               </div>
                             )}
-                            
+
                             {version.analysis?.regressions && version.analysis.regressions.length > 0 && (
-                              <div className="space-y-1">
+                              <div className="space-y-1.5">
                                 {version.analysis.regressions.slice(0, 2).map((reg, j) => (
-                                  <div key={j} className="flex items-center gap-1.5 text-[10px] text-red-400">
-                                    <ArrowDownRight className="w-2.5 h-2.5" />
+                                  <div key={j} className="flex items-start gap-2 text-xs text-red-400">
+                                    <ArrowDownRight className="w-3 h-3 shrink-0 mt-0.5" />
                                     <span>{reg}</span>
                                   </div>
                                 ))}
@@ -1369,12 +1405,12 @@ export default function ContractDetailPage() {
                     <h4 className="text-xs font-medium text-white">Key Dates & Deadlines</h4>
                     <Dialog open={showAddDate} onOpenChange={setShowAddDate}>
                       <DialogTrigger asChild>
-                        <button className="h-7 px-2.5 text-xs text-[#878787] hover:text-white border border-[#262626] hover:border-[#404040] flex items-center gap-1.5 transition-colors">
+                        <button className="h-7 px-2.5 text-xs text-[#878787] hover:text-white border border-border hover:border-[#404040] flex items-center gap-1.5 transition-colors">
                           <Plus className="w-3 h-3" />
                           Add Date
                         </button>
                       </DialogTrigger>
-                      <DialogContent className="bg-[#0a0a0a] border-[#262626]">
+                      <DialogContent className="bg-[#0a0a0a] border-border">
                         <DialogHeader>
                           <DialogTitle className="text-white text-sm">Add Key Date</DialogTitle>
                           <DialogDescription className="text-[#878787] text-xs">
@@ -1388,10 +1424,10 @@ export default function ContractDetailPage() {
                               value={newDate.date_type}
                               onValueChange={(v) => setNewDate({ ...newDate, date_type: v })}
                             >
-                              <SelectTrigger className="bg-transparent border-[#262626] text-white text-xs h-8">
+                              <SelectTrigger className="bg-transparent border-border text-white text-xs h-8">
                                 <SelectValue placeholder="Select type" />
                               </SelectTrigger>
-                              <SelectContent className="bg-[#0a0a0a] border-[#262626]">
+                              <SelectContent className="bg-[#0a0a0a] border-border">
                                 <SelectItem value="option_period">Option Period</SelectItem>
                                 <SelectItem value="termination_window">Termination Window</SelectItem>
                                 <SelectItem value="renewal">Renewal Date</SelectItem>
@@ -1406,7 +1442,7 @@ export default function ContractDetailPage() {
                               type="date"
                               value={newDate.date}
                               onChange={(e) => setNewDate({ ...newDate, date: e.target.value })}
-                              className="bg-transparent border-[#262626] text-white text-xs h-8"
+                              className="bg-transparent border-border text-white text-xs h-8"
                             />
                           </div>
                           <div className="space-y-1.5">
@@ -1415,7 +1451,7 @@ export default function ContractDetailPage() {
                               placeholder="e.g., Album option deadline"
                               value={newDate.description}
                               onChange={(e) => setNewDate({ ...newDate, description: e.target.value })}
-                              className="bg-transparent border-[#262626] text-white placeholder:text-[#525252] text-xs h-8"
+                              className="bg-transparent border-border text-white placeholder:text-[#525252] text-xs h-8"
                             />
                           </div>
                         </div>
@@ -1434,7 +1470,7 @@ export default function ContractDetailPage() {
                       <Loader2 className="w-4 h-4 animate-spin text-[#525252]" />
                     </div>
                   ) : dates.length === 0 ? (
-                    <div className="text-center py-10 border border-[#262626]">
+                    <div className="text-center py-10 border border-border">
                       <Calendar className="w-6 h-6 mx-auto text-[#525252] mb-2" />
                       <p className="text-xs text-[#878787] mb-1">No key dates tracked</p>
                       <p className="text-[10px] text-[#525252]">Add important deadlines to get reminders</p>
@@ -1460,7 +1496,7 @@ export default function ContractDetailPage() {
                           <div
                             key={date.id}
                             className={cn(
-                              "p-2.5 border border-[#262626] flex items-center gap-2.5",
+                              "p-2.5 border border-border flex items-center gap-2.5",
                               isPast && "border-red-400/30",
                               isUrgent && !isPast && "border-yellow-400/30"
                             )}
@@ -1505,7 +1541,7 @@ export default function ContractDetailPage() {
           ) : (
             <div className="flex items-center justify-center h-full">
               <div className="text-center py-20">
-                <div className="w-10 h-10 border border-[#262626] flex items-center justify-center mx-auto mb-3">
+                <div className="w-10 h-10 border border-border flex items-center justify-center mx-auto mb-3">
                   <AlertTriangle className="w-4 h-4 text-[#525252]" />
                 </div>
                 <h2 className="text-sm font-medium text-white mb-1">No Analysis Available</h2>
@@ -1516,16 +1552,32 @@ export default function ContractDetailPage() {
         </div>
       </div>
 
-      {/* Sticky Action Footer - Midday style */}
-      <div className="fixed bottom-0 left-0 right-0 border-t border-[#262626] bg-black p-3 z-30">
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="flex items-center gap-2 text-[10px] text-[#525252]">
-            <Shield className="w-3 h-3" />
-            <span>AI analysis · Always consult a lawyer</span>
-          </div>
-        </div>
-      </div>
+      {/* Delete Confirmation Modal */}
+      <DeleteConfirmModal
+        open={showDeleteModal}
+        onOpenChange={setShowDeleteModal}
+        onConfirm={handleDeleteConfirm}
+        title={contract?.title || ""}
+        versionCount={versions.length}
+      />
 
+      {/* Version Delete Confirmation Modal */}
+      <DeleteConfirmModal
+        open={showVersionDeleteModal}
+        onOpenChange={setShowVersionDeleteModal}
+        onConfirm={deleteVersion}
+        title={`Version ${(versionToDelete?.version_number || 0) + 1}`}
+        dialogTitle="Delete Version"
+        description={<>Are you sure you want to delete <span className="text-white">Version {(versionToDelete?.version_number || 0) + 1}</span>?</>}
+      />
+
+      {/* Notification Modal */}
+      <NotificationModal
+        open={notification.open}
+        onOpenChange={(open) => setNotification(prev => ({ ...prev, open }))}
+        title={notification.title}
+        message={notification.message}
+      />
     </div>
   );
 }

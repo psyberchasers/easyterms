@@ -133,7 +133,7 @@ export function PDFViewer({ fileUrl, highlightText, className }: PDFViewerProps)
   return (
     <div ref={containerRef} className={cn("flex flex-col h-full", className)}>
       {/* Controls */}
-      <div className="shrink-0 flex items-center justify-between px-4 py-2 bg-muted/50 border-b border-border/50">
+      <div className="shrink-0 flex items-center justify-between px-4 py-2 bg-muted/50 border-b border-border">
         <div className="flex items-center gap-2">
           <Button variant="ghost" size="icon" onClick={goToPrevPage} disabled={pageNumber <= 1}>
             <ChevronLeft className="w-4 h-4" />

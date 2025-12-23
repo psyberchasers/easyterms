@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
@@ -8,7 +8,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Loader2, Mail, Lock, User, AlertCircle, CheckCircle2, FileText, Shield, Zap } from "lucide-react";
+import { Loader2, AlertCircle, CheckCircle2 } from "lucide-react";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { Mail01Icon, LockPasswordIcon, UserAdd01Icon, UserIcon } from "@hugeicons-pro/core-solid-rounded";
+import { motion, AnimatePresence } from "framer-motion";
+
+const rotatingWords = ["contracts", "royalties", "publishing deals", "sync licenses", "agreements"];
 
 export default function SignupPage() {
   const [email, setEmail] = useState("");
@@ -17,7 +22,16 @@ export default function SignupPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
+  const [wordIndex, setWordIndex] = useState(0);
   const router = useRouter();
+
+  // Rotating text effect
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setWordIndex((prev) => (prev + 1) % rotatingWords.length);
+    }, 2000);
+    return () => clearInterval(interval);
+  }, []);
 
   const supabase = createClient();
 
@@ -63,22 +77,22 @@ export default function SignupPage() {
 
   if (success) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-black px-4">
-        <div className="w-full max-w-md border border-[#262626] p-8">
+      <div className="h-screen flex items-center justify-center bg-black px-4 overflow-hidden">
+        <div className="w-full max-w-md border border-border p-8">
           <div className="text-center">
             <div className="mx-auto w-12 h-12 border border-green-400/30 flex items-center justify-center mb-4">
               <CheckCircle2 className="w-6 h-6 text-green-400" />
             </div>
-            <h2 className="text-xl font-semibold text-white mb-2">Check your email</h2>
-            <p className="text-[#878787] mb-4">
+            <h2 className="text-xl font-medium text-white mb-2">Check your email</h2>
+            <p className="text-[#525252] mb-4 text-sm">
               We&apos;ve sent a confirmation link to <strong className="text-white">{email}</strong>
             </p>
-            <p className="text-sm text-[#525252]">
+            <p className="text-xs text-[#404040]">
               Click the link in the email to activate your account.
             </p>
-            <Button 
-              variant="outline" 
-              className="mt-6 border-[#262626] bg-black text-white hover:bg-[#1a1a1a] hover:text-white" 
+            <Button
+              variant="outline"
+              className="mt-6 border-border bg-black text-white hover:bg-[#1a1a1a] hover:text-white rounded-none"
               onClick={() => router.push("/login")}
             >
               Back to login
@@ -90,64 +104,51 @@ export default function SignupPage() {
   }
 
   return (
-    <div className="min-h-screen flex bg-black">
+    <div className="h-screen flex bg-black overflow-hidden">
       {/* Left Panel - Branding */}
-      <div className="hidden lg:flex lg:w-1/2 flex-col justify-between p-12 border-r border-[#262626]">
+      <div className="hidden lg:flex lg:w-1/2 flex-col justify-between p-12 border-r border-border">
         <div>
           <Link href="/" className="flex items-center gap-2">
-            <span className="font-semibold text-xl text-white">EasyTerms</span>
+            <img src="/logo.png" alt="EasyTerms" className="h-6" />
           </Link>
         </div>
-        
-        <div className="space-y-8">
-          <div>
-            <h1 className="text-4xl font-bold text-white mb-4">
-              Understand your contracts.
-            </h1>
-            <p className="text-[#878787] text-lg">
-              AI-powered analysis that breaks down complex legal terms into plain language.
-            </p>
-          </div>
-          
-          <div className="space-y-4">
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 border border-[#262626] flex items-center justify-center">
-                <FileText className="w-4 h-4 text-white" />
-              </div>
-              <span className="text-[#878787]">Upload any contract format</span>
-            </div>
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 border border-[#262626] flex items-center justify-center">
-                <Zap className="w-4 h-4 text-white" />
-              </div>
-              <span className="text-[#878787]">Instant AI analysis</span>
-            </div>
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 border border-[#262626] flex items-center justify-center">
-                <Shield className="w-4 h-4 text-white" />
-              </div>
-              <span className="text-[#878787]">Secure and private</span>
-            </div>
-          </div>
+
+        <div className="flex-1 flex items-center">
+          <h1 className="text-5xl font-medium text-white leading-tight">
+            Understand your{" "}
+            <span className="relative inline-block min-w-[280px]">
+              <AnimatePresence mode="wait">
+                <motion.span
+                  key={wordIndex}
+                  initial={{ y: 40, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  exit={{ y: -40, opacity: 0 }}
+                  transition={{ duration: 0.4, ease: [0.4, 0, 0.2, 1] }}
+                  className="text-primary inline-block"
+                >
+                  {rotatingWords[wordIndex]}
+                </motion.span>
+              </AnimatePresence>
+            </span>
+            <br />
+            in plain English.
+          </h1>
         </div>
-        
-        <p className="text-[#525252] text-sm">
-          © 2025 EasyTerms. All rights reserved.
-        </p>
+
       </div>
 
       {/* Right Panel - Signup Form */}
-      <div className="w-full lg:w-1/2 flex items-center justify-center p-8">
-        <div className="w-full max-w-md">
+      <div className="w-full lg:w-1/2 flex flex-col items-center justify-center p-8">
+        <div className="w-full max-w-sm">
           {/* Mobile Logo */}
-          <div className="lg:hidden flex items-center justify-center gap-2 mb-8">
-            <span className="text-2xl font-bold text-white">EasyTerms</span>
+          <div className="lg:hidden flex items-center justify-center mb-8">
+            <img src="/logo.png" alt="EasyTerms" className="h-6" />
           </div>
 
-          <div className="space-y-6">
+          <div className="space-y-5">
             <div>
-              <h2 className="text-2xl font-bold text-white">Create an account</h2>
-              <p className="text-[#878787] mt-1">Start analyzing your music contracts</p>
+              <h2 className="text-2xl font-medium text-white">Create an account</h2>
+              <p className="text-[#525252] mt-1 text-sm">Start analyzing your music contracts</p>
             </div>
 
             {error && (
@@ -159,58 +160,58 @@ export default function SignupPage() {
 
             <form onSubmit={handleSignup} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="name" className="text-white">Full Name</Label>
+                <Label htmlFor="name" className="text-white text-sm">Full Name</Label>
                 <div className="relative">
-                  <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#878787]" />
+                  <HugeiconsIcon icon={UserIcon} className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#525252]" />
                   <Input
                     id="name"
                     type="text"
                     placeholder="Your name"
                     value={fullName}
                     onChange={(e) => setFullName(e.target.value)}
-                    className="pl-10 bg-black border-[#262626] text-white placeholder:text-[#525252] focus:border-[#404040] focus:ring-0"
+                    className="pl-10 bg-black border-border text-white placeholder:text-[#404040] focus:border-[#404040] focus:ring-0 h-10"
                     required
                   />
                 </div>
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="email" className="text-white">Email</Label>
+                <Label htmlFor="email" className="text-white text-sm">Email</Label>
                 <div className="relative">
-                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#878787]" />
+                  <HugeiconsIcon icon={Mail01Icon} className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#525252]" />
                   <Input
                     id="email"
                     type="email"
                     placeholder="you@example.com"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="pl-10 bg-black border-[#262626] text-white placeholder:text-[#525252] focus:border-[#404040] focus:ring-0"
+                    className="pl-10 bg-black border-border text-white placeholder:text-[#404040] focus:border-[#404040] focus:ring-0 h-10"
                     required
                   />
                 </div>
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="password" className="text-white">Password</Label>
+                <Label htmlFor="password" className="text-white text-sm">Password</Label>
                 <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#878787]" />
+                  <HugeiconsIcon icon={LockPasswordIcon} className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#525252]" />
                   <Input
                     id="password"
                     type="password"
                     placeholder="••••••••"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="pl-10 bg-black border-[#262626] text-white placeholder:text-[#525252] focus:border-[#404040] focus:ring-0"
+                    className="pl-10 bg-black border-border text-white placeholder:text-[#404040] focus:border-[#404040] focus:ring-0 h-10"
                     minLength={6}
                     required
                   />
                 </div>
-                <p className="text-xs text-[#525252]">Minimum 6 characters</p>
+                <p className="text-xs text-[#404040]">Minimum 6 characters</p>
               </div>
 
-              <Button 
-                type="submit" 
-                className="w-full bg-white text-black hover:bg-white/90 h-10" 
+              <Button
+                type="submit"
+                className="w-full bg-primary text-black hover:bg-primary/90 h-10 rounded-none"
                 disabled={loading}
               >
                 {loading ? (
@@ -219,23 +220,26 @@ export default function SignupPage() {
                     Creating account...
                   </>
                 ) : (
-                  "Create account"
+                  <>
+                    <HugeiconsIcon icon={UserAdd01Icon} className="w-4 h-4 mr-2" />
+                    Create account
+                  </>
                 )}
               </Button>
             </form>
 
             <div className="relative">
               <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-[#262626]" />
+                <div className="w-full border-t border-border" />
               </div>
               <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-black px-2 text-[#525252]">Or continue with</span>
+                <span className="bg-black px-2 text-[#404040]">Or continue with</span>
               </div>
             </div>
 
             <Button
               variant="outline"
-              className="w-full border-[#262626] bg-black text-white hover:bg-[#1a1a1a] hover:text-white h-10"
+              className="w-full border-border bg-black text-white hover:bg-[#1a1a1a] hover:text-white h-10 rounded-none"
               onClick={handleGoogleSignup}
               disabled={loading}
             >
@@ -260,7 +264,7 @@ export default function SignupPage() {
               Continue with Google
             </Button>
 
-            <p className="text-center text-sm text-[#878787]">
+            <p className="text-center text-sm text-[#525252]">
               Already have an account?{" "}
               <Link href="/login" className="text-white hover:underline">
                 Sign in
@@ -268,11 +272,11 @@ export default function SignupPage() {
             </p>
           </div>
 
-          <p className="text-center text-xs text-[#525252] mt-8">
+          <p className="text-center text-xs text-[#404040] mt-6">
             By signing up, you agree to our{" "}
-            <Link href="/terms" className="hover:text-[#878787]">Terms of Service</Link>
+            <Link href="/terms" className="text-[#525252] hover:text-[#878787] transition-colors">Terms of Service</Link>
             {" "}and{" "}
-            <Link href="/privacy" className="hover:text-[#878787]">Privacy Policy</Link>
+            <Link href="/privacy" className="text-[#525252] hover:text-[#878787] transition-colors">Privacy Policy</Link>
           </p>
         </div>
       </div>

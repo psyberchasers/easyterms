@@ -261,12 +261,12 @@ export function PDFViewerWithSearch({
   return (
     <div className={cn("flex flex-col h-full bg-muted/20", className)}>
       {/* Controls - Always visible with skeletons while loading */}
-      <div className="flex items-center justify-between px-4 py-2 bg-black border-b border-[#262626] shrink-0 gap-2 flex-wrap">
+      <div className="flex items-center justify-between px-4 py-2 bg-black border-b border-border shrink-0 gap-2 flex-wrap">
         <div className="flex items-center gap-2">
           <Button 
             variant="outline" 
             size="icon" 
-            className="h-8 w-8 border-[#262626] bg-black hover:bg-[#1a1a1a]" 
+            className="h-8 w-8 border-border bg-black hover:bg-[#1a1a1a]" 
             onClick={() => setScale(s => Math.max(0.5, s - 0.1))}
             disabled={loading}
           >
@@ -280,7 +280,7 @@ export function PDFViewerWithSearch({
           <Button 
             variant="outline" 
             size="icon" 
-            className="h-8 w-8 border-[#262626] bg-black hover:bg-[#1a1a1a]" 
+            className="h-8 w-8 border-border bg-black hover:bg-[#1a1a1a]" 
             onClick={() => setScale(s => Math.min(2, s + 0.1))}
             disabled={loading}
           >
@@ -292,7 +292,7 @@ export function PDFViewerWithSearch({
           <Button 
             variant="outline" 
             size="icon" 
-            className="h-8 w-8 border-[#262626] bg-black hover:bg-[#1a1a1a]" 
+            className="h-8 w-8 border-border bg-black hover:bg-[#1a1a1a]" 
             onClick={() => setCurrentPage(p => Math.max(1, p - 1))} 
             disabled={loading || currentPage <= 1}
           >
@@ -306,7 +306,7 @@ export function PDFViewerWithSearch({
           <Button 
             variant="outline" 
             size="icon" 
-            className="h-8 w-8 border-[#262626] bg-black hover:bg-[#1a1a1a]" 
+            className="h-8 w-8 border-border bg-black hover:bg-[#1a1a1a]" 
             onClick={() => setCurrentPage(p => Math.min(numPages, p + 1))} 
             disabled={loading || currentPage >= numPages}
           >
@@ -414,7 +414,7 @@ export function PDFViewerWithSearch({
                 <Button 
                   variant="outline" 
                   size="sm" 
-                  className="mt-4 border-[#262626]"
+                  className="mt-4 border-border"
                   onClick={() => setPageError(false)}
                 >
                   Retry

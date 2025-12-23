@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { createClient } from "@/lib/supabase/client";
 import {
@@ -21,10 +22,6 @@ import {
   CommandShortcut,
 } from "@/components/ui/command";
 import {
-  LogOut,
-  Settings,
-  GitCompare,
-  Sparkles,
   FileText,
   Calendar,
   CreditCard,
@@ -38,6 +35,10 @@ import {
   AiSheetsIcon,
   Login01Icon,
   AiUserIcon,
+  RepeatOffIcon,
+  Logout01Icon,
+  Settings02Icon,
+  SparklesIcon,
 } from "@hugeicons-pro/core-solid-rounded";
 
 interface NavbarProps {
@@ -96,7 +97,7 @@ export function Navbar({ showNewAnalysis = true, showBorder = false }: NavbarPro
 
   return (
     <>
-      <header className={`fixed top-0 left-0 right-0 z-50 bg-black ${showBorder ? 'border-b border-[#262626]' : ''}`}>
+      <header className={`fixed top-0 left-0 right-0 z-50 bg-black ${showBorder ? 'border-b border-border' : ''}`}>
         <div className="max-w-full mx-auto px-4 h-14 grid grid-cols-3 items-center">
           {/* Left - Logo */}
           <Link href="/" className="flex items-center gap-2">
@@ -104,13 +105,15 @@ export function Navbar({ showNewAnalysis = true, showBorder = false }: NavbarPro
           </Link>
 
           {/* Center - Command Menu Trigger */}
-          <div className="flex justify-center">
+          <div className="flex justify-center items-center">
             <button
               onClick={() => setCommandOpen(true)}
-              className="hidden sm:flex items-center gap-2 h-8 px-3 text-sm text-primary hover:text-primary/80 border border-primary/30 hover:border-primary/50 bg-primary/5 transition-colors min-w-[200px]"
+              className="group hidden sm:flex items-center justify-center gap-3 h-10 px-4 text-base text-[#878787] hover:text-white bg-transparent transition-colors min-w-[240px] relative"
             >
-              <HugeiconsIcon icon={AiSearch02Icon} size={16} />
-              <span className="flex-1 text-left">Search</span>
+              <HugeiconsIcon icon={AiSearch02Icon} size={18} className="text-[#525252] group-hover:text-primary transition-colors" />
+              <span>Search</span>
+              {/* Underline that expands from middle */}
+              <span className="absolute bottom-0 left-1/2 h-0.5 w-0 bg-primary -translate-x-1/2 transition-all duration-300 ease-out group-hover:w-full" />
             </button>
           </div>
 
@@ -138,11 +141,11 @@ export function Navbar({ showNewAnalysis = true, showBorder = false }: NavbarPro
               </Link>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <button className="w-8 h-8 border border-[#262626] flex items-center justify-center hover:border-[#404040] transition-colors">
+                  <button className="w-8 h-8 border border-border flex items-center justify-center hover:border-[#404040] transition-colors">
                     <HugeiconsIcon icon={UserFullViewIcon} size={16} className="text-[#878787]" />
                   </button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56 bg-[#0a0a0a] border-[#262626] rounded-none">
+                <DropdownMenuContent align="end" className="w-56 bg-[#0a0a0a] border-border rounded-none">
                   <div className="px-3 py-2">
                     <p className="text-sm font-medium text-white">{profile?.full_name || "User"}</p>
                     <p className="text-xs text-[#525252]">{user.email}</p>
@@ -155,22 +158,22 @@ export function Navbar({ showNewAnalysis = true, showBorder = false }: NavbarPro
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild className="text-[#878787] hover:text-white focus:text-white focus:bg-[#1a1a1a]">
                     <Link href="/compare">
-                      <GitCompare className="w-4 h-4 mr-2" />
+                      <HugeiconsIcon icon={RepeatOffIcon} size={16} className="mr-2" />
                       Compare
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild className="text-[#878787] hover:text-white focus:text-white focus:bg-[#1a1a1a]">
                     <Link href="/pricing">
-                      <Sparkles className="w-4 h-4 mr-2" />
+                      <HugeiconsIcon icon={SparklesIcon} size={16} className="mr-2" />
                       Upgrade
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem className="text-[#878787] hover:text-white focus:text-white focus:bg-[#1a1a1a]">
-                    <Settings className="w-4 h-4 mr-2" />
+                    <HugeiconsIcon icon={Settings02Icon} size={16} className="mr-2" />
                     Settings
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={signOut} className="text-red-400 focus:text-red-400 focus:bg-[#1a1a1a]">
-                    <LogOut className="w-4 h-4 mr-2" />
+                    <HugeiconsIcon icon={Logout01Icon} size={16} className="mr-2" />
                     Sign out
                   </DropdownMenuItem>
                 </DropdownMenuContent>
@@ -201,96 +204,118 @@ export function Navbar({ showNewAnalysis = true, showBorder = false }: NavbarPro
       {/* Command Menu Dialog */}
       <CommandDialog open={commandOpen} onOpenChange={(open) => { setCommandOpen(open); if (!open) setCommandTab("commands"); }} showCloseButton={false}>
         {/* Tabs */}
-        <div className="flex border-b border-primary/20">
+        <div className="relative flex bg-black">
           <button
             onClick={() => setCommandTab("commands")}
-            className={`flex-1 px-4 py-2 text-sm font-medium transition-colors ${
+            className={`relative flex-1 px-4 py-2.5 text-sm font-medium transition-colors ${
               commandTab === "commands"
-                ? "text-primary border-b-2 border-primary"
-                : "text-primary/50 hover:text-primary/70"
+                ? "text-primary"
+                : "text-[#525252] hover:text-[#878787]"
             }`}
           >
             Commands
+            {commandTab === "commands" && (
+              <motion.div
+                layoutId="command-tab-underline"
+                className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary"
+                transition={{ type: "spring", stiffness: 500, damping: 30 }}
+              />
+            )}
           </button>
           <button
             onClick={() => setCommandTab("contracts")}
-            className={`flex-1 px-4 py-2 text-sm font-medium transition-colors ${
+            className={`relative flex-1 px-4 py-2.5 text-sm font-medium transition-colors ${
               commandTab === "contracts"
-                ? "text-primary border-b-2 border-primary"
-                : "text-primary/50 hover:text-primary/70"
+                ? "text-primary"
+                : "text-[#525252] hover:text-[#878787]"
             }`}
           >
             Contracts
+            {commandTab === "contracts" && (
+              <motion.div
+                layoutId="command-tab-underline"
+                className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary"
+                transition={{ type: "spring", stiffness: 500, damping: 30 }}
+              />
+            )}
           </button>
         </div>
-        <CommandInput placeholder={commandTab === "commands" ? "Search commands..." : "Search contracts..."} />
+        <CommandInput placeholder={commandTab === "commands" ? "Search commands..." : "Search contracts..."} showShortcut={false} />
         <CommandList>
-          <CommandEmpty>No results found.</CommandEmpty>
-          {commandTab === "contracts" ? (
-            <CommandGroup heading="Recent Contracts">
-              {contracts.length > 0 ? (
-                contracts.map((contract) => (
-                  <CommandItem
-                    key={contract.id}
-                    onSelect={() => runCommand(() => router.push(`/contract/${contract.id}`))}
-                  >
-                    <FileText className="mr-2 h-4 w-4" />
-                    <span className="flex-1 truncate">{contract.title}</span>
-                    {contract.overall_risk && (
-                      <span className={`text-[10px] px-1.5 py-0.5 ${
-                        contract.overall_risk === 'high' ? 'text-red-400 bg-red-400/10' :
-                        contract.overall_risk === 'medium' ? 'text-primary bg-primary/10' :
-                        'text-green-400 bg-green-400/10'
-                      }`}>
-                        {contract.overall_risk}
-                      </span>
-                    )}
-                  </CommandItem>
-                ))
+          <CommandEmpty>No results found</CommandEmpty>
+          <motion.div
+              key={commandTab}
+              initial={false}
+              animate={{ height: "auto" }}
+              transition={{ duration: 0.35, ease: "easeInOut" }}
+              style={{ overflow: "hidden" }}
+            >
+              {commandTab === "contracts" ? (
+                <CommandGroup heading="Recent Contracts">
+                  {contracts.length > 0 ? (
+                    contracts.map((contract) => (
+                      <CommandItem
+                        key={contract.id}
+                        onSelect={() => runCommand(() => router.push(`/contract/${contract.id}`))}
+                      >
+                        <FileText className="mr-2 h-4 w-4" />
+                        <span className="flex-1 truncate">{contract.title}</span>
+                        {contract.overall_risk && (
+                          <span className={`text-[10px] px-1.5 py-0.5 ${
+                            contract.overall_risk === 'high' ? 'text-red-400 bg-red-400/10' :
+                            contract.overall_risk === 'medium' ? 'text-amber-400 bg-amber-400/10' :
+                            'text-green-400 bg-green-400/10'
+                          }`}>
+                            {contract.overall_risk}
+                          </span>
+                        )}
+                      </CommandItem>
+                    ))
+                  ) : (
+                    <div className="py-6 text-center text-sm text-[#525252]">No contracts yet</div>
+                  )}
+                </CommandGroup>
               ) : (
-                <div className="py-6 text-center text-sm text-primary/50">No contracts yet</div>
+                <>
+                  <CommandGroup heading="Navigation">
+                    <CommandItem onSelect={() => runCommand(() => router.push("/"))}>
+                      <Home className="mr-2 h-4 w-4" />
+                      Home
+                    </CommandItem>
+                    <CommandItem onSelect={() => runCommand(() => router.push("/dashboard"))}>
+                      <HugeiconsIcon icon={DashboardSquare01Icon} size={16} className="mr-2" />
+                      Dashboard
+                      <CommandShortcut>⌘D</CommandShortcut>
+                    </CommandItem>
+                    <CommandItem onSelect={() => runCommand(() => router.push("/analyze"))}>
+                      <HugeiconsIcon icon={AiSheetsIcon} size={16} className="mr-2" />
+                      New Analysis
+                      <CommandShortcut>⌘N</CommandShortcut>
+                    </CommandItem>
+                    <CommandItem onSelect={() => runCommand(() => router.push("/compare"))}>
+                      <HugeiconsIcon icon={RepeatOffIcon} size={16} className="mr-2" />
+                      Compare Contracts
+                    </CommandItem>
+                    <CommandItem onSelect={() => runCommand(() => router.push("/calendar"))}>
+                      <Calendar className="mr-2 h-4 w-4" />
+                      Calendar
+                    </CommandItem>
+                  </CommandGroup>
+                  <CommandGroup heading="Actions">
+                    <CommandItem onSelect={() => runCommand(() => router.push("/pricing"))}>
+                      <HugeiconsIcon icon={SparklesIcon} size={16} className="mr-2" />
+                      Pricing & Upgrade
+                    </CommandItem>
+                    {user && (
+                      <CommandItem onSelect={() => runCommand(() => signOut())}>
+                        <HugeiconsIcon icon={Logout01Icon} size={16} className="mr-2" />
+                        Sign Out
+                      </CommandItem>
+                    )}
+                  </CommandGroup>
+                </>
               )}
-            </CommandGroup>
-          ) : (
-            <>
-              <CommandGroup heading="Navigation">
-                <CommandItem onSelect={() => runCommand(() => router.push("/"))}>
-                  <Home className="mr-2 h-4 w-4" />
-                  Home
-                </CommandItem>
-                <CommandItem onSelect={() => runCommand(() => router.push("/dashboard"))}>
-                  <HugeiconsIcon icon={DashboardSquare01Icon} size={16} className="mr-2" />
-                  Dashboard
-                  <CommandShortcut>⌘D</CommandShortcut>
-                </CommandItem>
-                <CommandItem onSelect={() => runCommand(() => router.push("/analyze"))}>
-                  <HugeiconsIcon icon={AiSheetsIcon} size={16} className="mr-2" />
-                  New Analysis
-                  <CommandShortcut>⌘N</CommandShortcut>
-                </CommandItem>
-                <CommandItem onSelect={() => runCommand(() => router.push("/compare"))}>
-                  <GitCompare className="mr-2 h-4 w-4" />
-                  Compare Contracts
-                </CommandItem>
-                <CommandItem onSelect={() => runCommand(() => router.push("/calendar"))}>
-                  <Calendar className="mr-2 h-4 w-4" />
-                  Calendar
-                </CommandItem>
-              </CommandGroup>
-              <CommandGroup heading="Actions">
-                <CommandItem onSelect={() => runCommand(() => router.push("/pricing"))}>
-                  <CreditCard className="mr-2 h-4 w-4" />
-                  Pricing & Upgrade
-                </CommandItem>
-                {user && (
-                  <CommandItem onSelect={() => runCommand(() => signOut())}>
-                    <LogOut className="mr-2 h-4 w-4" />
-                    Sign Out
-                  </CommandItem>
-                )}
-              </CommandGroup>
-            </>
-          )}
+            </motion.div>
         </CommandList>
       </CommandDialog>
     </>

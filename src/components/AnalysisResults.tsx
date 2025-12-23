@@ -90,7 +90,7 @@ function RiskIndicator({ level }: { level: string }) {
 
 function KeyTermCard({ term }: { term: ContractClause }) {
   return (
-    <Card className="card-hover border-border/50 bg-card/50 backdrop-blur">
+    <Card className="card-hover border-border bg-card/50 backdrop-blur">
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between gap-4">
           <CardTitle className="text-base font-semibold">{term.title}</CardTitle>
@@ -164,7 +164,7 @@ export function AnalysisResults({ analysis, isDemo }: AnalysisResultsProps) {
         </div>
 
         {/* Parties */}
-        <Card className="bg-card/50 border-border/50">
+        <Card className="bg-card/50 border-border">
           <CardContent className="pt-6">
             <div className="flex items-center gap-2 mb-4">
               <Users className="w-5 h-5 text-primary" />
@@ -259,7 +259,7 @@ export function AnalysisResults({ analysis, isDemo }: AnalysisResultsProps) {
         </TabsContent>
 
         <TabsContent value="financial" className="mt-6">
-          <Card className="border-border/50 bg-card/50">
+          <Card className="border-border bg-card/50">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <DollarSign className="w-5 h-5 text-primary" />
@@ -307,7 +307,7 @@ export function AnalysisResults({ analysis, isDemo }: AnalysisResultsProps) {
         </TabsContent>
 
         <TabsContent value="rights" className="mt-6">
-          <Card className="border-border/50 bg-card/50">
+          <Card className="border-border bg-card/50">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Shield className="w-5 h-5 text-primary" />
@@ -355,7 +355,7 @@ export function AnalysisResults({ analysis, isDemo }: AnalysisResultsProps) {
         </TabsContent>
 
         <TabsContent value="obligations" className="mt-6">
-          <Card className="border-border/50 bg-card/50">
+          <Card className="border-border bg-card/50">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Target className="w-5 h-5 text-primary" />
@@ -491,7 +491,7 @@ export function AnalysisResults({ analysis, isDemo }: AnalysisResultsProps) {
       </div>
 
       {/* Analysis Confidence */}
-      <Card className="border-border/50 bg-card/30">
+      <Card className="border-border bg-card/30">
         <CardContent className="pt-6">
           <div className="flex items-center justify-between mb-3">
             <span className="text-sm font-medium">Analysis Confidence</span>

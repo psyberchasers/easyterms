@@ -289,7 +289,7 @@ export default function TermsPage() {
         
         {/* Billing Section */}
         <div className="px-4 lg:px-12 pb-12">
-          <div className="border-t border-border/30 pt-12">
+          <div className="border-t border-border pt-12">
             <h2 className="mb-8" style={{ fontWeight: 500, color: 'rgb(250, 250, 250)', fontSize: '24px', lineHeight: '32px' }}>
               Billing & Refund Policy
             </h2>

@@ -241,7 +241,7 @@ export default function ComparePage() {
       <Navbar />
 
       {/* Sub Header */}
-      <div className="border-b border-border/50 bg-card/50 mt-[57px]">
+      <div className="border-b border-border bg-card/50 mt-[57px]">
         <div className="container mx-auto px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <Scale className="w-5 h-5 text-primary" />

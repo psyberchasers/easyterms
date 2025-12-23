@@ -59,7 +59,7 @@ const LegalPageLayout = ({
         {title}
       </h1>
       <div className="relative mb-[50vh] flex gap-12 py-[40px] md:py-[80px]">
-        <ul className="border-border/30 sticky top-24 hidden h-fit w-full max-w-[280px] space-y-4 border-l md:block">
+        <ul className="border-border sticky top-24 hidden h-fit w-full max-w-[280px] space-y-4 border-l md:block">
           {terms.map((term, index) => (
             <li className="relative cursor-pointer pl-3" key={term.id}>
               <a href={`#${term.id}`}>

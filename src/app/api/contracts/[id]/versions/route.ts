@@ -112,6 +112,53 @@ export async function POST(
       extractedText = new TextDecoder().decode(fileBuffer);
     }
 
+    // Normalize text for comparison - aggressive normalization to catch duplicates
+    const normalizeForComparison = (text: string) =>
+      text
+        .toLowerCase()
+        .replace(/[\r\n\t\f\v]+/g, ' ')  // Replace all newlines/tabs with space
+        .replace(/\s+/g, ' ')             // Collapse multiple spaces
+        .replace(/[^\w\s]/g, '')          // Remove punctuation
+        .replace(/\s+/g, '')              // Remove all spaces for final comparison
+        .trim();
+
+    const normalizedNewText = normalizeForComparison(extractedText);
+    const normalizedOriginalText = normalizeForComparison(contract.extracted_text || '');
+
+    // Check if identical to original
+    if (normalizedNewText === normalizedOriginalText) {
+      // Clean up the uploaded file since we're not using it
+      await supabase.storage.from("contracts").remove([fileName]);
+      return NextResponse.json({
+        error: "This document is identical to the original contract (Version 1). No changes detected.",
+        isDuplicate: true
+      }, { status: 400 });
+    }
+
+    // Check if identical to any existing version
+    const { data: existingVersions } = await supabase
+      .from("contract_versions")
+      .select("extracted_text, version_number, created_at")
+      .eq("contract_id", contractId)
+      .order("created_at", { ascending: true });
+
+    if (existingVersions) {
+      for (let i = 0; i < existingVersions.length; i++) {
+        const version = existingVersions[i];
+        const normalizedVersionText = normalizeForComparison(version.extracted_text || '');
+        if (normalizedNewText === normalizedVersionText) {
+          // Clean up the uploaded file since we're not using it
+          await supabase.storage.from("contracts").remove([fileName]);
+          // Use display version number (1-indexed position in list + 1 for "Version 2", "Version 3", etc.)
+          const displayVersionNumber = i + 2; // +2 because original is "Version 1" and versions start at index 0
+          return NextResponse.json({
+            error: `This document is identical to Version ${displayVersionNumber}. No changes detected.`,
+            isDuplicate: true
+          }, { status: 400 });
+        }
+      }
+    }
+
     const previousAnalysis = contract.analysis;
     const industry = (contract.industry as IndustryType) || "music";
 
@@ -219,7 +266,7 @@ Return JSON with:
         .eq("id", contractId);
     }
 
-    return NextResponse.json({ 
+    return NextResponse.json({
       version,
       message: `Version ${newVersionNumber} uploaded successfully`
     });
@@ -233,7 +280,65 @@ Return JSON with:
   }
 }
 
+// DELETE - Delete a specific version
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const { id: contractId } = await params;
+  const supabase = await createClient();
 
+  const { searchParams } = new URL(request.url);
+  const versionId = searchParams.get("versionId");
 
+  if (!versionId) {
+    return NextResponse.json({ error: "Version ID required" }, { status: 400 });
+  }
 
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  // Verify user owns this contract
+  const { data: contract } = await supabase
+    .from("contracts")
+    .select("id, user_id")
+    .eq("id", contractId)
+    .single();
+
+  if (!contract || contract.user_id !== user.id) {
+    return NextResponse.json({ error: "Contract not found" }, { status: 404 });
+  }
+
+  // Get the version to delete (to get the file path)
+  const { data: version } = await supabase
+    .from("contract_versions")
+    .select("*")
+    .eq("id", versionId)
+    .eq("contract_id", contractId)
+    .single();
+
+  if (!version) {
+    return NextResponse.json({ error: "Version not found" }, { status: 404 });
+  }
+
+  // Delete the file from storage
+  if (version.file_url) {
+    await supabase.storage.from("contracts").remove([version.file_url]);
+  }
+
+  // Delete the version record
+  const { error } = await supabase
+    .from("contract_versions")
+    .delete()
+    .eq("id", versionId)
+    .eq("contract_id", contractId);
+
+  if (error) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+
+  return NextResponse.json({ success: true, message: "Version deleted" });
+}
 

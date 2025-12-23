@@ -216,7 +216,7 @@ export default function AnalyzeDemoPage() {
       <Navbar showNewAnalysis={false} />
 
       {/* Sub Header - Demo Controls */}
-      <div className="mt-[57px] border-b border-border/50 bg-card/50">
+      <div className="mt-[57px] border-b border-border bg-card/50">
         <div className="px-4 py-3 flex items-center justify-between">
           <Badge variant="outline" className="text-amber-400 border-amber-400/50">
             🧪 Demo Mode
@@ -280,7 +280,7 @@ export default function AnalyzeDemoPage() {
             showDocument ? "max-w-3xl" : "max-w-6xl"
           )}>
         {/* Health Header */}
-        <div className="p-4 rounded-2xl bg-gradient-to-r from-card via-card to-transparent border border-border/50 mb-6">
+        <div className="p-4 rounded-2xl bg-gradient-to-r from-card via-card to-transparent border border-border mb-6">
           <div className="flex items-center gap-4">
             <div>
               <div className="flex items-center gap-3 mb-0.5">
@@ -337,7 +337,7 @@ export default function AnalyzeDemoPage() {
           {/* Overview Tab */}
           <TabsContent value="overview" className="space-y-6">
             {/* Summary Card */}
-            <div className="relative overflow-hidden rounded-xl border border-border/50 bg-gradient-to-br from-card via-card to-primary/5">
+            <div className="relative overflow-hidden rounded-xl border border-border bg-gradient-to-br from-card via-card to-primary/5">
               <div className="absolute top-0 right-0 w-32 h-32 bg-primary/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
               <div className="relative p-5">
                 <div className="flex items-start gap-4">
@@ -352,7 +352,7 @@ export default function AnalyzeDemoPage() {
                     <p className="text-sm text-foreground/90 leading-relaxed">{analysis.summary}</p>
                     
                     {/* Quick Stats Row */}
-                    <div className="flex flex-wrap items-center gap-3 mt-4 pt-4 border-t border-border/30">
+                    <div className="flex flex-wrap items-center gap-3 mt-4 pt-4 border-t border-border">
                       {analysis.parties?.artist && (
                         <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
                           <div className="w-1.5 h-1.5 rounded-full bg-blue-400" />
@@ -435,7 +435,7 @@ export default function AnalyzeDemoPage() {
           {/* Key Terms Tab */}
           <TabsContent value="terms">
             <TooltipProvider>
-              <div className="rounded-xl border border-border/50 overflow-hidden">
+              <div className="rounded-xl border border-border overflow-hidden">
                 <table className="w-full">
                   <thead>
                     <tr className="bg-muted/30 text-xs text-muted-foreground">
@@ -451,7 +451,7 @@ export default function AnalyzeDemoPage() {
                         key={i}
                         onClick={() => handleClauseClick(term.originalText)}
                         className={cn(
-                          "border-t border-border/30 cursor-pointer transition-all hover:bg-muted/20",
+                          "border-t border-border cursor-pointer transition-all hover:bg-muted/20",
                           term.riskLevel === "high" && "bg-red-500/5 hover:bg-red-500/10",
                           highlightedClause === term.originalText && "ring-2 ring-primary bg-primary/5"
                         )}
@@ -583,7 +583,7 @@ export default function AnalyzeDemoPage() {
       </div>
 
       {/* Sticky Action Footer */}
-      <div className="fixed bottom-0 left-0 right-0 border-t border-border/50 bg-background/95 backdrop-blur p-4 z-30">
+      <div className="fixed bottom-0 left-0 right-0 border-t border-border bg-background/95 backdrop-blur p-4 z-30">
         <div className="max-w-6xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <Shield className="w-4 h-4" />
@@ -614,7 +614,7 @@ export default function AnalyzeDemoPage() {
       {showCounterOfferModal && (
         <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
           <Card className="max-w-2xl w-full max-h-[80vh] overflow-auto">
-            <CardHeader className="border-b border-border/50">
+            <CardHeader className="border-b border-border">
               <div className="flex items-center justify-between">
                 <CardTitle>Draft Counter-Offer Email</CardTitle>
                 <Button variant="ghost" size="sm" onClick={() => setShowCounterOfferModal(false)}>
@@ -658,7 +658,7 @@ export default function AnalyzeDemoPage() {
       {showELI5Modal && (
         <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
           <Card className="max-w-2xl w-full max-h-[80vh] overflow-auto">
-            <CardHeader className="border-b border-border/50">
+            <CardHeader className="border-b border-border">
               <div className="flex items-center justify-between">
                 <CardTitle className="flex items-center gap-2">
                   <HelpCircle className="w-5 h-5" />

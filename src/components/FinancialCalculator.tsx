@@ -108,7 +108,7 @@ export function FinancialCalculator({ contractData }: FinancialCalculatorProps) 
   return (
     <div className="space-y-4">
       <Tabs value={financeTab} onValueChange={setFinanceTab} className="w-full">
-        <div className="flex gap-4 border-b border-[#262626]">
+        <div className="flex gap-4 border-b border-border">
           {[
             { id: "recoup", label: "Recoupment" },
             { id: "streaming", label: "Streaming" },
@@ -145,7 +145,7 @@ export function FinancialCalculator({ contractData }: FinancialCalculatorProps) 
                   type="number"
                   value={royaltyRateStr}
                   onChange={(e) => setRoyaltyRateStr(e.target.value)}
-                  className="pr-6 bg-black border-[#262626] text-white h-8 text-xs"
+                  className="pr-6 bg-black border-border text-white h-8 text-xs"
                   min={0}
                   max={100}
                 />
@@ -158,17 +158,17 @@ export function FinancialCalculator({ contractData }: FinancialCalculatorProps) 
                 type="number"
                 value={monthlyStreamsStr}
                 onChange={(e) => setMonthlyStreamsStr(e.target.value)}
-                className="bg-black border-[#262626] text-white h-8 text-xs"
+                className="bg-black border-border text-white h-8 text-xs"
                 min={0}
               />
             </div>
             <div className="space-y-1">
               <Label className="text-[10px] text-[#525252]">Platform</Label>
               <Select value={selectedPlatform} onValueChange={(v) => setSelectedPlatform(v as keyof typeof PLATFORM_RATES)}>
-                <SelectTrigger className="bg-black border-[#262626] text-white h-8 text-xs">
+                <SelectTrigger className="bg-black border-border text-white h-8 text-xs">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent className="bg-black border-[#262626] text-white">
+                <SelectContent className="bg-black border-border text-white">
                   <SelectItem value="spotify">Spotify</SelectItem>
                   <SelectItem value="appleMusic">Apple Music</SelectItem>
                   <SelectItem value="amazonMusic">Amazon</SelectItem>
@@ -203,14 +203,14 @@ export function FinancialCalculator({ contractData }: FinancialCalculatorProps) 
           </div>
           
           {/* Secondary Stats */}
-          <div className="grid grid-cols-2 gap-2 pb-4 border-b border-[#262626]">
-            <div className="border border-[#262626] p-3">
+          <div className="grid grid-cols-2 gap-2 pb-4 border-b border-border">
+            <div className="border border-border p-3">
               <p className="text-[10px] text-[#525252] mb-0.5">Yearly</p>
               <p className="text-lg font-light text-white">
                 $<NumberFlow value={calculations.artistYearly} format={{ minimumFractionDigits: 0, maximumFractionDigits: 0 }} />
               </p>
             </div>
-            <div className="border border-[#262626] p-3 bg-[#0a0a0a]">
+            <div className="border border-border p-3 bg-[#0a0a0a]">
               <p className="text-[10px] text-[#525252] mb-0.5">Label Gets</p>
               <p className="text-lg font-light text-[#525252]">
                 $<NumberFlow value={calculations.labelMonthly} format={{ minimumFractionDigits: 0, maximumFractionDigits: 0 }} />
@@ -219,7 +219,7 @@ export function FinancialCalculator({ contractData }: FinancialCalculatorProps) 
           </div>
 
           {/* Platform Comparison */}
-          <div className="border border-[#262626] p-3">
+          <div className="border border-border p-3">
             <div className="flex items-center gap-2 mb-3">
               <span className="text-[10px] text-[#525252] uppercase tracking-wider">Platform Comparison</span>
               <div className="h-px flex-1 bg-[#262626]" />
@@ -258,7 +258,7 @@ export function FinancialCalculator({ contractData }: FinancialCalculatorProps) 
                   type="number"
                   value={advanceAmountStr}
                   onChange={(e) => setAdvanceAmountStr(e.target.value)}
-                  className="pl-5 bg-black border-[#262626] text-white h-8 text-xs"
+                  className="pl-5 bg-black border-border text-white h-8 text-xs"
                   min={0}
                   placeholder="0"
                 />
@@ -271,7 +271,7 @@ export function FinancialCalculator({ contractData }: FinancialCalculatorProps) 
                   type="number"
                   value={royaltyRateStr}
                   onChange={(e) => setRoyaltyRateStr(e.target.value)}
-                  className="pr-6 bg-black border-[#262626] text-white h-8 text-xs"
+                  className="pr-6 bg-black border-border text-white h-8 text-xs"
                   min={0}
                   max={100}
                 />
@@ -315,7 +315,7 @@ export function FinancialCalculator({ contractData }: FinancialCalculatorProps) 
               </div>
 
               {/* Monthly Progress */}
-              <div className="border border-[#262626] p-3">
+              <div className="border border-border p-3">
                 <div className="flex items-center gap-2 mb-1">
                   <TrendingUp className="w-3 h-3 text-[#525252]" />
                   <span className="text-[10px] text-[#525252]">Monthly Progress</span>
@@ -327,7 +327,7 @@ export function FinancialCalculator({ contractData }: FinancialCalculatorProps) 
               </div>
 
               {/* Progress Bar */}
-              <div className="border border-[#262626] p-3">
+              <div className="border border-border p-3">
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-[10px] text-[#878787]">Recoupment Progress</span>
                   <span className="text-[10px] text-[#525252]">{formatCurrency(calculations.artistYearly)} / {formatCurrency(advanceAmount)} /yr</span>
@@ -345,7 +345,7 @@ export function FinancialCalculator({ contractData }: FinancialCalculatorProps) 
               </div>
             </>
           ) : (
-            <div className="border border-[#262626] flex flex-col items-center justify-center py-10">
+            <div className="border border-border flex flex-col items-center justify-center py-10">
               <Calculator className="w-6 h-6 text-[#525252] mb-2" />
               <p className="text-xs text-[#878787]">Enter an advance to see recoupment analysis</p>
             </div>
@@ -354,7 +354,7 @@ export function FinancialCalculator({ contractData }: FinancialCalculatorProps) 
 
         {/* Sync Licensing */}
         <TabsContent value="sync" className="space-y-4 pt-4">
-          <div className="flex items-start gap-2 p-3 border border-[#262626] bg-[#0a0a0a]">
+          <div className="flex items-start gap-2 p-3 border border-border bg-[#0a0a0a]">
             <Info className="w-3.5 h-3.5 text-[#878787] mt-0.5 shrink-0" />
             <p className="text-[10px] text-[#878787]">
               Sync licensing fees vary widely based on usage, media type, and your negotiating power.
@@ -373,7 +373,7 @@ export function FinancialCalculator({ contractData }: FinancialCalculatorProps) 
               };
               
               return (
-                <div key={type} className="border border-[#262626] p-3">
+                <div key={type} className="border border-border p-3">
                   <div className="flex items-center gap-1.5 mb-2">
                     <span className="text-[#525252]">{typeIcons[type]}</span>
                     <span className="text-[10px] text-white capitalize">{type.replace(/([A-Z])/g, " $1").trim()}</span>
@@ -387,7 +387,7 @@ export function FinancialCalculator({ contractData }: FinancialCalculatorProps) 
                       <span className="text-[#525252]">Average</span>
                       <span className="text-white">{formatCurrency(rates.avg)}</span>
                     </div>
-                    <div className="flex justify-between pt-1.5 mt-1.5 border-t border-[#262626]">
+                    <div className="flex justify-between pt-1.5 mt-1.5 border-t border-border">
                       <span className="text-[#525252]">Your Cut</span>
                       <span className="text-white font-medium">{formatCurrency(rates.avg * artistCut)}</span>
                     </div>
@@ -397,7 +397,7 @@ export function FinancialCalculator({ contractData }: FinancialCalculatorProps) 
             })}
           </div>
 
-          <div className="flex items-start gap-2 p-3 border border-[#262626]">
+          <div className="flex items-start gap-2 p-3 border border-border">
             <TrendingUp className="w-3 h-3 text-[#525252] mt-0.5 shrink-0" />
             <p className="text-[10px] text-[#878787]">
               If your contract doesn&apos;t specify sync splits, your royalty rate ({royaltyRate}%) applies. Consider negotiating 50/50.

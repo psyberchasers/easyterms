@@ -122,7 +122,7 @@ export default function Home() {
                 "relative border-2 border-dashed rounded-2xl p-8 text-center transition-all cursor-pointer group",
                 isDragging 
                   ? "border-primary bg-primary/10 scale-[1.02]" 
-                  : "border-border/50 hover:border-primary/50 hover:bg-primary/5"
+                  : "border-border hover:border-primary/50 hover:bg-primary/5"
               )}
             >
               <input
@@ -299,7 +299,7 @@ export default function Home() {
             ].map((feature, i) => (
               <div 
                 key={i}
-                className={`group relative p-8 rounded-3xl bg-gradient-to-br from-card/80 to-card/40 border border-border/50 ${feature.borderHover} transition-all duration-300 hover:-translate-y-1`}
+                className={`group relative p-8 rounded-3xl bg-gradient-to-br from-card/80 to-card/40 border border-border ${feature.borderHover} transition-all duration-300 hover:-translate-y-1`}
               >
                 {/* Subtle gradient glow on hover */}
                 <div className={`absolute inset-0 rounded-3xl bg-gradient-to-br ${feature.gradient} opacity-0 group-hover:opacity-100 transition-opacity duration-300 blur-xl -z-10`} />
@@ -327,7 +327,7 @@ export default function Home() {
       </section>
 
       {/* How It Works Section */}
-      <section className="py-20 px-4 border-t border-border/30 bg-muted/30">
+      <section className="py-20 px-4 border-t border-border bg-muted/30">
         <div className="max-w-5xl mx-auto">
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
@@ -375,33 +375,6 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="py-8 px-4 border-t border-border/30">
-        <div className="max-w-6xl mx-auto">
-          <div className="grid grid-cols-3 items-center gap-4">
-            {/* Left - Logo */}
-            <div className="flex items-center">
-              <img src="/logo.png" alt="EasyTerms" className="h-5" />
-            </div>
-
-            {/* Center - Disclaimer */}
-            <p className="text-xs text-muted-foreground text-center">
-              AI-powered analysis is not a substitute for professional legal advice.
-              Always consult with a qualified attorney for your situation.
-            </p>
-
-            {/* Right - Legal Links */}
-            <div className="flex items-center justify-end gap-4">
-              <Link href="/privacy" className="text-xs text-muted-foreground hover:text-foreground transition-colors">
-                Privacy Policy
-              </Link>
-              <Link href="/terms" className="text-xs text-muted-foreground hover:text-foreground transition-colors">
-                Terms of Service
-              </Link>
-            </div>
-          </div>
-        </div>
-      </footer>
       </main>
   );
 }

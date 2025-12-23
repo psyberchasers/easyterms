@@ -57,6 +57,7 @@ import {
   DollarCircleIcon,
   Idea01Icon,
 } from "@hugeicons-pro/core-duotone-rounded";
+import { Calendar03Icon, Invoice03Icon } from "@hugeicons-pro/core-solid-rounded";
 import Lottie from "lottie-react";
 import loadMusicAnimation from "@/../public/loadmusic.json";
 import Link from "next/link";
@@ -503,7 +504,7 @@ export default function AnalyzePage() {
               onDragOver={handleDragOver}
               onDrop={handleDrop}
               onClick={() => fileInputRef.current?.click()}
-              className="border-2 border-dashed border-border/50 hover:border-primary/50 hover:bg-primary/5 rounded-2xl p-10 text-center transition-all cursor-pointer group"
+              className="border-2 border-dashed border-border hover:border-primary/50 hover:bg-primary/5 rounded-2xl p-10 text-center transition-all cursor-pointer group"
             >
               <input
                 ref={fileInputRef}
@@ -565,9 +566,23 @@ export default function AnalyzePage() {
 
           {/* Progress Bar */}
           <div className="space-y-3">
-            <div className="h-1 bg-[#262626] overflow-hidden">
-              <div
-                className="h-full bg-primary transition-all duration-500 ease-out"
+            <div className="h-1 bg-[#262626] overflow-hidden relative">
+              <motion.div
+                className="h-full bg-primary"
+                initial={{ width: 0 }}
+                animate={{ width: `${((currentStep + 1) / steps.length) * 100}%` }}
+                transition={{ duration: 0.8, ease: "easeOut" }}
+              />
+              {/* Animated shimmer effect */}
+              <motion.div
+                className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent"
+                initial={{ x: "-100%" }}
+                animate={{ x: "200%" }}
+                transition={{
+                  repeat: Infinity,
+                  duration: 1.5,
+                  ease: "linear",
+                }}
                 style={{ width: `${((currentStep + 1) / steps.length) * 100}%` }}
               />
             </div>
@@ -582,7 +597,7 @@ export default function AnalyzePage() {
                       ? "bg-primary text-primary-foreground"
                       : i === currentStep
                         ? "border border-primary text-primary"
-                        : "border border-[#262626] text-[#525252]"
+                        : "border border-border text-[#525252]"
                   )}>
                     {i < currentStep ? (
                       <CheckCircle2 className="w-3 h-3" />
@@ -602,8 +617,8 @@ export default function AnalyzePage() {
           </div>
 
           {/* File Card */}
-          <div className="border border-[#262626] p-4 flex items-center gap-4">
-            <div className="w-12 h-12 border border-[#262626] flex items-center justify-center shrink-0">
+          <div className="border border-border p-4 flex items-center gap-4">
+            <div className="w-12 h-12 border border-border flex items-center justify-center shrink-0">
               <FileText className="w-5 h-5 text-primary" />
             </div>
             <div className="flex-1 min-w-0">
@@ -635,7 +650,7 @@ export default function AnalyzePage() {
   if (status === "error") {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center">
-        <div className="text-center space-y-4 max-w-md p-6 border border-[#262626] rounded-lg">
+        <div className="text-center space-y-4 max-w-md p-6 border border-border rounded-lg">
           <div className="w-12 h-12 rounded-lg border border-red-400/30 flex items-center justify-center mx-auto">
             <AlertTriangle className="w-5 h-5 text-red-400" />
           </div>
@@ -664,7 +679,6 @@ export default function AnalyzePage() {
     { id: "overview", label: "Overview" },
     { id: "terms", label: "Key Terms" },
     { id: "financial", label: "Finances" },
-    { id: "concerns", label: "Concerns" },
     { id: "advice", label: "Advice" },
     ...(savedContractId ? [
       { id: "versions", label: "Versions" },
@@ -682,18 +696,18 @@ export default function AnalyzePage() {
         <div
           className={cn(
             "h-full flex flex-col bg-black transition-all duration-300 ease-in-out overflow-hidden",
-            showDocument ? "w-1/2 max-w-2xl border-r border-[#262626]" : "w-0"
+            showDocument ? "w-1/2 max-w-2xl border-r border-border" : "w-0"
           )}
         >
           {showDocument && (
             <>
               {/* Panel Header */}
-              <div className="shrink-0 h-12 px-4 border-b border-[#262626] bg-black flex items-center justify-between">
+              <div className="shrink-0 h-12 px-4 border-b border-border bg-black flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <FileText className="w-4 h-4 text-[#878787]" />
                   <span className="text-sm text-white">{fileName}</span>
                   {highlightedClause && (
-                    <span className="text-xs text-[#525252] px-2 py-0.5 border border-[#262626]">Highlighting</span>
+                    <span className="text-xs text-[#525252] px-2 py-0.5 border border-border">Highlighting</span>
                   )}
                 </div>
                 <div className="flex items-center gap-2">
@@ -733,7 +747,7 @@ export default function AnalyzePage() {
           )}>
             {/* Breadcrumbs */}
             <div className="flex items-center gap-2 mb-6">
-              <Link href={savedContractId ? "/dashboard" : "/"} className="flex items-center justify-center w-7 h-7 border border-[#262626] hover:border-[#404040] transition-colors">
+              <Link href={savedContractId ? "/dashboard" : "/"} className="flex items-center justify-center w-7 h-7 border border-border hover:border-[#404040] transition-colors">
                 <ArrowLeft className="w-3.5 h-3.5 text-[#878787]" />
               </Link>
               <nav className="flex items-center gap-2 text-sm">
@@ -757,7 +771,7 @@ export default function AnalyzePage() {
                     analysis.overallRiskAssessment === "low" ? "border-green-500/30 text-green-400" :
                     analysis.overallRiskAssessment === "medium" ? "border-yellow-500/30 text-yellow-400" :
                     analysis.overallRiskAssessment === "high" ? "border-red-500/30 text-red-400" :
-                    "border-[#262626] text-[#525252]"
+                    "border-border text-[#525252]"
                   )}>
                     {analysis.overallRiskAssessment === "low" ? "Low Risk" :
                      analysis.overallRiskAssessment === "medium" ? "Medium Risk" :
@@ -775,7 +789,7 @@ export default function AnalyzePage() {
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => setShowDocument(!showDocument)}
-                  className="h-7 px-2.5 text-xs text-[#878787] hover:text-white border border-[#262626] hover:border-[#404040] flex items-center gap-1.5 transition-colors"
+                  className="h-7 px-2.5 text-xs text-[#878787] hover:text-white border border-border hover:border-[#404040] flex items-center gap-1.5 transition-colors"
                 >
                   <FileText className="w-3 h-3" />
                   {showDocument ? "Hide" : "Show"} PDF
@@ -783,7 +797,7 @@ export default function AnalyzePage() {
                 <button
                   onClick={handleDownloadReport}
                   disabled={downloading}
-                  className="h-7 px-2.5 text-xs text-[#878787] hover:text-white border border-[#262626] hover:border-[#404040] flex items-center gap-1.5 transition-colors disabled:opacity-50"
+                  className="h-7 px-2.5 text-xs text-[#878787] hover:text-white border border-border hover:border-[#404040] flex items-center gap-1.5 transition-colors disabled:opacity-50"
                 >
                   {downloading ? (
                     <Loader2 className="w-3 h-3 animate-spin" />
@@ -809,7 +823,7 @@ export default function AnalyzePage() {
                     <button
                       onClick={() => versionInputRef.current?.click()}
                       disabled={uploadingVersion}
-                      className="h-7 w-7 flex items-center justify-center border border-[#262626] hover:border-[#404040] transition-colors disabled:opacity-50"
+                      className="h-7 w-7 flex items-center justify-center border border-border hover:border-[#404040] transition-colors disabled:opacity-50"
                     >
                       {uploadingVersion ? (
                         <Loader2 className="w-3 h-3 text-[#525252] animate-spin" />
@@ -822,11 +836,11 @@ export default function AnalyzePage() {
 
                 {/* Save indicator */}
                 {saving ? (
-                  <div className="h-7 w-7 flex items-center justify-center border border-[#262626]">
+                  <div className="h-7 w-7 flex items-center justify-center border border-border">
                     <Loader2 className="w-3 h-3 text-[#525252] animate-spin" />
                   </div>
                 ) : savedContractId ? (
-                  <div className="h-7 w-7 flex items-center justify-center border border-[#262626]">
+                  <div className="h-7 w-7 flex items-center justify-center border border-border">
                     <CheckCircle2 className="w-3 h-3 text-green-400" />
                   </div>
                 ) : null}
@@ -835,7 +849,7 @@ export default function AnalyzePage() {
 
             {/* Tabbed Content with animated underlines */}
             <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-              <div className="flex gap-6 border-b border-[#262626]">
+              <div className="flex gap-6 border-b border-border">
                 {tabs.map((tab) => (
                   <button
                     key={tab.id}
@@ -860,15 +874,15 @@ export default function AnalyzePage() {
               {/* Overview Tab */}
               <TabsContent value="overview" className="space-y-6">
                 {/* Summary */}
-                <div className="border border-[#262626] p-4">
+                <div className="border border-border p-4">
                   <div className="flex items-center gap-2 mb-3">
                     <span className="text-[10px] text-[#525252] uppercase tracking-wider">Summary</span>
                     <div className="h-px flex-1 bg-[#262626]" />
                   </div>
-                  <p className="text-sm text-[#a3a3a3] leading-relaxed">{analysis.summary}</p>
+                  <p className="text-sm text-white leading-relaxed">{analysis.summary}</p>
 
                   {/* Quick Stats Row */}
-                  <div className="flex flex-wrap items-center gap-4 mt-4 pt-4 border-t border-[#262626]">
+                  <div className="flex flex-wrap items-center gap-4 mt-4 pt-4 border-t border-border">
                     {analysis.parties?.artist && (
                       <div className="text-xs text-[#525252]">
                         <span className="text-[#878787]">{analysis.parties.artist}</span>
@@ -896,7 +910,7 @@ export default function AnalyzePage() {
                     </div>
                     <div className="grid grid-cols-3 gap-3">
                       {analysis.financialTerms.royaltyRate && (
-                        <div className="border border-[#262626] p-3">
+                        <div className="border border-border p-3">
                           <div className="flex items-center gap-2 mb-1">
                             <TrendingUp className="w-3 h-3 text-[#525252]" />
                             <span className="text-[10px] text-white">Royalty</span>
@@ -906,9 +920,9 @@ export default function AnalyzePage() {
                         </div>
                       )}
                       {analysis.termLength && (
-                        <div className="border border-[#262626] p-3">
+                        <div className="border border-border p-3">
                           <div className="flex items-center gap-2 mb-1">
-                            <Calendar className="w-3 h-3 text-[#525252]" />
+                            <HugeiconsIcon icon={Calendar03Icon} size={12} className="text-[#525252]" />
                             <span className="text-[10px] text-white">Term</span>
                           </div>
                           <p className="text-[10px] text-[#525252] mb-3">Contract duration</p>
@@ -916,7 +930,7 @@ export default function AnalyzePage() {
                         </div>
                       )}
                       {analysis.financialTerms.advanceAmount && (
-                        <div className="border border-[#262626] p-3">
+                        <div className="border border-border p-3">
                           <div className="flex items-center gap-2 mb-1">
                             <DollarSign className="w-3 h-3 text-[#525252]" />
                             <span className="text-[10px] text-white">Advance</span>
@@ -926,9 +940,9 @@ export default function AnalyzePage() {
                         </div>
                       )}
                       {analysis.financialTerms.paymentSchedule && (
-                        <div className="border border-[#262626] p-3">
+                        <div className="border border-border p-3">
                           <div className="flex items-center gap-2 mb-1">
-                            <Clock className="w-3 h-3 text-[#525252]" />
+                            <HugeiconsIcon icon={Invoice03Icon} size={12} className="text-[#525252]" />
                             <span className="text-[10px] text-white">Payment</span>
                           </div>
                           <p className="text-[10px] text-[#525252] mb-3">Payment schedule</p>
@@ -942,7 +956,7 @@ export default function AnalyzePage() {
                 {/* Quick Concerns Preview */}
                 {analysis.potentialConcerns && analysis.potentialConcerns.length > 0 && (
                   <div className="grid md:grid-cols-2 gap-2">
-                    <div className="border border-[#262626] p-3">
+                    <div className="border border-border p-3">
                       <div className="flex items-center gap-2 mb-2">
                         <AlertTriangle className="w-3 h-3 text-red-400" />
                         <span className="text-xs text-red-400">{analysis.potentialConcerns.length} Concerns Found</span>
@@ -950,7 +964,7 @@ export default function AnalyzePage() {
                       <p className="text-xs text-[#a3a3a3]">{analysis.potentialConcerns[0]}</p>
                     </div>
                     {analysis.missingClauses && analysis.missingClauses.length > 0 && (
-                      <div className="border border-[#262626] p-3">
+                      <div className="border border-border p-3">
                         <div className="flex items-center gap-2 mb-2">
                           <HugeiconsIcon icon={HelpSquareIcon} size={12} className="text-yellow-400" />
                           <span className="text-xs text-yellow-400">{analysis.missingClauses.length} Missing Protections</span>
@@ -963,9 +977,27 @@ export default function AnalyzePage() {
               </TabsContent>
 
               {/* Key Terms Tab - Expandable Cards */}
-              <TabsContent value="terms" className="space-y-2">
+              <TabsContent value="terms" className="space-y-4">
+                {/* Concerns Section */}
+                {analysis.potentialConcerns && analysis.potentialConcerns.length > 0 && (
+                  <div className="border border-red-500/30 bg-red-500/5 p-4">
+                    <div className="flex items-center gap-2 mb-3">
+                      <HugeiconsIcon icon={Alert02Icon} size={14} className="text-red-400" />
+                      <span className="text-xs font-medium text-red-400 leading-none">{analysis.potentialConcerns.length} Concerns to Address</span>
+                    </div>
+                    <ul className="space-y-2">
+                      {analysis.potentialConcerns.map((concern, i) => (
+                        <li key={i} className="flex items-center gap-2 text-xs text-[#e5e5e5]">
+                          <span className="w-1 h-1 rounded-full bg-red-400/60 shrink-0" />
+                          <span className="leading-tight">{concern}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
                 {(!analysis.keyTerms || analysis.keyTerms.length === 0) && (
-                  <div className="border border-[#262626] p-8 text-center">
+                  <div className="border border-border p-8 text-center">
                     <FileText className="w-6 h-6 text-[#525252] mx-auto mb-2" />
                     <p className="text-xs text-[#878787]">No key terms extracted</p>
                   </div>
@@ -976,7 +1008,7 @@ export default function AnalyzePage() {
                     <div
                       key={i}
                       className={cn(
-                        "border border-[#262626] transition-all",
+                        "border border-border transition-all",
                         isExpanded && "bg-[#0a0a0a] border-[#404040]"
                       )}
                     >
@@ -991,7 +1023,7 @@ export default function AnalyzePage() {
                               {term.riskLevel}
                             </span>
                           </div>
-                          <p className="text-xs text-[#878787] line-clamp-1">{term.content}</p>
+                          <p className="text-xs text-[#e5e5e5] line-clamp-1">{term.content}</p>
                         </div>
                         <div className={cn(
                           "text-[#525252] transition-transform shrink-0",
@@ -1008,18 +1040,18 @@ export default function AnalyzePage() {
                         transition={{ duration: 0.2, ease: "easeOut" }}
                         className="overflow-hidden"
                       >
-                        <div className="border-t border-[#262626]">
+                        <div className="border-t border-border">
                           <div className="p-3 space-y-4">
                             {/* Full Term Value */}
                             <div>
                               <p className="text-[10px] text-[#525252] uppercase tracking-wider mb-1">What This Says</p>
-                              <p className="text-xs text-[#a3a3a3]">{term.content}</p>
+                              <p className="text-xs text-white">{term.content}</p>
                             </div>
 
                             {/* Plain English Explanation */}
                             <div>
                               <p className="text-[10px] text-[#525252] uppercase tracking-wider mb-1">In Plain English</p>
-                              <p className="text-xs text-[#878787]">{term.explanation}</p>
+                              <p className="text-xs text-white">{term.explanation}</p>
                             </div>
 
                             {/* Risk Assessment */}
@@ -1029,7 +1061,7 @@ export default function AnalyzePage() {
                                 <span className={cn("text-[10px] px-1.5 py-0.5 border capitalize shrink-0", getRiskColor(term.riskLevel))}>
                                   {term.riskLevel}
                                 </span>
-                                <p className="text-xs text-[#878787]">
+                                <p className="text-xs text-white">
                                   {term.riskLevel === "high" && "This term significantly favors the other party and could limit your rights or earnings."}
                                   {term.riskLevel === "medium" && "This term has some elements that could be improved but is within industry norms."}
                                   {term.riskLevel === "low" && "This term is favorable or standard for agreements of this type."}
@@ -1037,14 +1069,14 @@ export default function AnalyzePage() {
                               </div>
                             </div>
 
-                            {/* What to Look For */}
+                            {/* Questions to Ask Your Lawyer */}
                             <div>
-                              <p className="text-[10px] text-[#525252] uppercase tracking-wider mb-1">What to Look For</p>
-                              <ul className="text-xs text-[#878787] space-y-1">
-                                {getTermChecklist(term.title).map((item, idx) => (
-                                  <li key={idx} className="flex items-start gap-2">
-                                    <span className="text-[#525252] mt-1">•</span>
-                                    <span>{item}</span>
+                              <p className="text-[10px] text-[#525252] uppercase tracking-wider mb-1">Questions to Ask Your Lawyer</p>
+                              <ul className="text-xs text-[#e5e5e5] space-y-2">
+                                {(term.actionItems || getTermChecklist(term.title)).map((item, idx) => (
+                                  <li key={idx} className="flex items-center gap-2">
+                                    <HugeiconsIcon icon={HelpSquareIcon} size={12} className="text-primary shrink-0" />
+                                    <span className="leading-none">{item}</span>
                                   </li>
                                 ))}
                               </ul>
@@ -1081,87 +1113,10 @@ export default function AnalyzePage() {
                 />
               </TabsContent>
 
-              {/* Concerns Tab - Expandable Cards */}
-              <TabsContent value="concerns" className="space-y-2">
-                {(!analysis.potentialConcerns || analysis.potentialConcerns.length === 0) && (
-                  <div className="border border-[#262626] p-8 text-center">
-                    <AlertTriangle className="w-6 h-6 text-[#525252] mx-auto mb-2" />
-                    <p className="text-xs text-[#878787]">No concerns identified</p>
-                  </div>
-                )}
-                {analysis.potentialConcerns?.map((concern, i) => {
-                  const snippet = analysis.concernSnippets?.[i];
-                  const isExpanded = expandedConcern === i;
-                  return (
-                    <div
-                      key={i}
-                      className={cn(
-                        "border border-[#262626] transition-all",
-                        isExpanded && "bg-[#0a0a0a] border-[#404040]"
-                      )}
-                    >
-                      <button
-                        onClick={() => setExpandedConcern(isExpanded ? null : i)}
-                        className="w-full p-3 flex items-start gap-3 text-left hover:bg-[#1a1a1a] transition-colors"
-                      >
-                        <div className="w-5 h-5 border border-[#262626] flex items-center justify-center shrink-0">
-                          <span className="text-[10px] text-[#878787]">{i + 1}</span>
-                        </div>
-                        <div className="flex-1">
-                          <p className="text-xs text-[#a3a3a3]">{concern}</p>
-                        </div>
-                        <div className={cn(
-                          "text-[#525252] transition-transform",
-                          isExpanded && "rotate-180"
-                        )}>
-                          <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                            <path d="M2.5 4.5L6 8L9.5 4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                          </svg>
-                        </div>
-                      </button>
-                      <motion.div
-                        initial={false}
-                        animate={{ height: isExpanded ? "auto" : 0, opacity: isExpanded ? 1 : 0 }}
-                        transition={{ duration: 0.2, ease: "easeOut" }}
-                        className="overflow-hidden"
-                      >
-                        <div className="border-t border-[#262626]">
-                          <div className="p-3 space-y-3">
-                            <div>
-                              <p className="text-[10px] text-[#525252] uppercase tracking-wider mb-1">Why This Matters</p>
-                              <p className="text-xs text-[#878787]">
-                                This clause could limit your flexibility or create obligations that may not be in your best interest. Consider negotiating for more favorable terms or adding protective language.
-                              </p>
-                            </div>
-                            <div>
-                              <p className="text-[10px] text-[#525252] uppercase tracking-wider mb-1">Suggested Action</p>
-                              <p className="text-xs text-[#878787]">
-                                Review this section carefully with legal counsel before signing. Ask for clarification on any ambiguous terms.
-                              </p>
-                            </div>
-                            {snippet && (
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleClauseClick(snippet);
-                                }}
-                                className="text-[10px] text-[#525252] hover:text-white flex items-center gap-1 transition-colors"
-                              >
-                                <Eye className="w-2.5 h-2.5" /> View in contract
-                              </button>
-                            )}
-                          </div>
-                        </div>
-                      </motion.div>
-                    </div>
-                  );
-                })}
-              </TabsContent>
-
               {/* Advice Tab - Expandable Cards */}
               <TabsContent value="advice" className="space-y-2">
                 {(!analysis.recommendations || analysis.recommendations.length === 0) && (
-                  <div className="border border-[#262626] p-8 text-center">
+                  <div className="border border-border p-8 text-center">
                     <CheckCircle2 className="w-6 h-6 text-[#525252] mx-auto mb-2" />
                     <p className="text-xs text-[#878787]">No recommendations available</p>
                   </div>
@@ -1182,7 +1137,7 @@ export default function AnalyzePage() {
                     <div
                       key={i}
                       className={cn(
-                        "border border-[#262626] transition-all",
+                        "border border-border transition-all",
                         isExpanded && "bg-[#0a0a0a] border-[#404040]"
                       )}
                     >
@@ -1214,7 +1169,7 @@ export default function AnalyzePage() {
                         transition={{ duration: 0.2, ease: "easeOut" }}
                         className="overflow-hidden"
                       >
-                        <div className="border-t border-[#262626]">
+                        <div className="border-t border-border">
                           <div className="p-3 space-y-3">
                             <div>
                               <p className="text-[10px] text-[#525252] uppercase tracking-wider mb-1">Rationale</p>
@@ -1247,7 +1202,7 @@ export default function AnalyzePage() {
                     <button
                       onClick={() => versionInputRef.current?.click()}
                       disabled={uploadingVersion}
-                      className="h-7 px-2.5 text-xs text-[#878787] hover:text-white border border-[#262626] hover:border-[#404040] flex items-center gap-1.5 transition-colors disabled:opacity-50"
+                      className="h-7 px-2.5 text-xs text-[#878787] hover:text-white border border-border hover:border-[#404040] flex items-center gap-1.5 transition-colors disabled:opacity-50"
                     >
                       {uploadingVersion ? (
                         <Loader2 className="w-3 h-3 animate-spin" />
@@ -1263,7 +1218,7 @@ export default function AnalyzePage() {
                       <Loader2 className="w-4 h-4 animate-spin text-[#525252]" />
                     </div>
                   ) : versions.length === 0 ? (
-                    <div className="text-center py-10 border border-[#262626]">
+                    <div className="text-center py-10 border border-border">
                       <History className="w-6 h-6 mx-auto text-[#525252] mb-2" />
                       <p className="text-xs text-[#878787] mb-1">No version history yet</p>
                       <p className="text-[10px] text-[#525252]">Upload a new version to start tracking changes</p>
@@ -1278,18 +1233,18 @@ export default function AnalyzePage() {
                           {/* Timeline dot */}
                           <div className={cn(
                             "absolute left-1.5 w-4 h-4 flex items-center justify-center",
-                            i === 0 ? "bg-white text-black" : "bg-[#1a1a1a] border border-[#262626] text-[#878787]"
+                            i === 0 ? "bg-white text-black" : "bg-[#1a1a1a] border border-border text-[#878787]"
                           )}>
-                            <span className="text-[8px] font-bold">{version.version_number}</span>
+                            <span className="text-[8px] font-bold">{version.version_number + 1}</span>
                           </div>
 
                           <div className={cn(
-                            "border border-[#262626] p-3",
+                            "border border-border p-3",
                             i === 0 && "border-[#404040]"
                           )}>
                             <div className="flex items-center justify-between mb-2">
-                              <span className="text-[10px] text-[#878787] px-1.5 py-0.5 border border-[#262626]">
-                                Version {version.version_number}
+                              <span className="text-[10px] text-[#878787] px-1.5 py-0.5 border border-border">
+                                Version {version.version_number + 1}
                               </span>
                               <span className="text-[10px] text-[#525252]">
                                 {new Date(version.created_at).toLocaleDateString()}
@@ -1334,12 +1289,12 @@ export default function AnalyzePage() {
                     <h4 className="text-xs font-medium text-white">Key Dates & Deadlines</h4>
                     <Dialog open={showAddDate} onOpenChange={setShowAddDate}>
                       <DialogTrigger asChild>
-                        <button className="h-7 px-2.5 text-xs text-[#878787] hover:text-white border border-[#262626] hover:border-[#404040] flex items-center gap-1.5 transition-colors">
+                        <button className="h-7 px-2.5 text-xs text-[#878787] hover:text-white border border-border hover:border-[#404040] flex items-center gap-1.5 transition-colors">
                           <Plus className="w-3 h-3" />
                           Add Date
                         </button>
                       </DialogTrigger>
-                      <DialogContent className="bg-[#0a0a0a] border-[#262626]">
+                      <DialogContent className="bg-[#0a0a0a] border-border">
                         <DialogHeader>
                           <DialogTitle className="text-white text-sm">Add Key Date</DialogTitle>
                           <DialogDescription className="text-[#878787] text-xs">
@@ -1353,10 +1308,10 @@ export default function AnalyzePage() {
                               value={newDate.date_type}
                               onValueChange={(v) => setNewDate({ ...newDate, date_type: v })}
                             >
-                              <SelectTrigger className="bg-transparent border-[#262626] text-white text-xs h-8">
+                              <SelectTrigger className="bg-transparent border-border text-white text-xs h-8">
                                 <SelectValue placeholder="Select type" />
                               </SelectTrigger>
-                              <SelectContent className="bg-[#0a0a0a] border-[#262626]">
+                              <SelectContent className="bg-[#0a0a0a] border-border">
                                 <SelectItem value="option_period">Option Period</SelectItem>
                                 <SelectItem value="termination_window">Termination Window</SelectItem>
                                 <SelectItem value="renewal">Renewal Date</SelectItem>
@@ -1371,7 +1326,7 @@ export default function AnalyzePage() {
                               type="date"
                               value={newDate.date}
                               onChange={(e) => setNewDate({ ...newDate, date: e.target.value })}
-                              className="bg-transparent border-[#262626] text-white text-xs h-8"
+                              className="bg-transparent border-border text-white text-xs h-8"
                             />
                           </div>
                           <div className="space-y-1.5">
@@ -1380,7 +1335,7 @@ export default function AnalyzePage() {
                               placeholder="e.g., Album option deadline"
                               value={newDate.description}
                               onChange={(e) => setNewDate({ ...newDate, description: e.target.value })}
-                              className="bg-transparent border-[#262626] text-white placeholder:text-[#525252] text-xs h-8"
+                              className="bg-transparent border-border text-white placeholder:text-[#525252] text-xs h-8"
                             />
                           </div>
                         </div>
@@ -1399,7 +1354,7 @@ export default function AnalyzePage() {
                       <Loader2 className="w-4 h-4 animate-spin text-[#525252]" />
                     </div>
                   ) : dates.length === 0 ? (
-                    <div className="text-center py-10 border border-[#262626]">
+                    <div className="text-center py-10 border border-border">
                       <Calendar className="w-6 h-6 mx-auto text-[#525252] mb-2" />
                       <p className="text-xs text-[#878787] mb-1">No key dates tracked</p>
                       <p className="text-[10px] text-[#525252]">Add important deadlines to get reminders</p>
@@ -1425,7 +1380,7 @@ export default function AnalyzePage() {
                           <div
                             key={date.id}
                             className={cn(
-                              "p-2.5 border border-[#262626] flex items-center gap-2.5",
+                              "p-2.5 border border-border flex items-center gap-2.5",
                               isPast && "border-red-400/30",
                               isUrgent && !isPast && "border-yellow-400/30"
                             )}
@@ -1472,7 +1427,7 @@ export default function AnalyzePage() {
       </div>
 
       {/* Sticky Action Footer */}
-      <div className="fixed bottom-0 left-0 right-0 border-t border-[#262626] bg-black p-3 z-30">
+      <div className="fixed bottom-0 left-0 right-0 border-t border-border bg-black p-3 z-30">
         <div className="max-w-7xl mx-auto px-6">
           <div className="flex items-center gap-2 text-[10px] text-[#525252]">
             <Shield className="w-3 h-3" />
