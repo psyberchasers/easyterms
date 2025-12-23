@@ -6,26 +6,24 @@ import { Badge } from "@/components/ui/badge";
 import { Navbar } from "@/components/Navbar";
 import {
   FileText,
-  Shield,
   Zap,
   ChevronDown,
   DollarSign,
   Clock,
   CheckCircle2,
-  ArrowRight,
   Sparkles,
   Lock,
-  TrendingUp,
   FileSearch,
   BookOpen,
   Eye,
   AlertTriangle,
-  Scale,
   Upload,
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { Alert02Icon, DocumentValidationIcon, FallingStarIcon } from "@hugeicons-pro/core-solid-rounded";
 
 export default function Home() {
   const router = useRouter();
@@ -74,35 +72,44 @@ export default function Home() {
 
       {/* Hero Section */}
       <section className="relative min-h-[90vh] flex flex-col items-center justify-center px-4 py-16 pt-28">
-        {/* Background Elements */}
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/5 rounded-full blur-3xl" />
-          <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-primary/5 rounded-full blur-3xl" />
-        </div>
 
         <div className="relative z-10 max-w-4xl mx-auto text-center space-y-8">
-          {/* Logo/Brand */}
-          <div className="flex items-center justify-center gap-3 animate-fade-in-up">
-            <div className="p-3 rounded-2xl bg-primary/10 glow-amber">
-              <Scale className="w-10 h-10 text-primary" />
-            </div>
+          {/* Logo */}
+          <div className="flex items-center justify-center animate-fade-in-up">
+            <img src="/logo.png" alt="EasyTerms" className="h-12" />
           </div>
 
           {/* Headline */}
           <div className="space-y-4 animate-fade-in-up stagger-1">
-            <h1 className="text-5xl md:text-7xl font-bold tracking-tight">
-              <span className="text-gradient">EasyTerms</span>
-          </h1>
+            <h1 className="text-4xl md:text-6xl font-normal tracking-tight text-white">
+              Welcome to <span className="text-gradient">EasyTerms</span>
+            </h1>
             <p className="text-xl md:text-2xl text-muted-foreground font-light">
               AI Contract Analysis for Creators & Talent
             </p>
           </div>
 
           {/* Subheadline */}
-          <p className="text-lg text-foreground/80 max-w-2xl mx-auto leading-relaxed animate-fade-in-up stagger-2">
-            Upload any contract and get an instant breakdown in plain English. 
-            Spot red flags, understand key terms, and negotiate with confidence.
-          </p>
+          <div className="text-lg text-foreground/70 max-w-2xl mx-auto leading-relaxed animate-fade-in-up stagger-2 space-y-3">
+            <p>Upload any contract and get an <span className="text-foreground">instant, easy-to-understand</span> breakdown</p>
+            <p className="flex items-center justify-center gap-1.5 flex-wrap">
+              <span>Spot</span>
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 bg-red-500/10 text-red-400 border border-red-500/30 text-sm font-medium">
+                <HugeiconsIcon icon={Alert02Icon} size={14} />
+                red flags
+              </span>
+              <span>understand</span>
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 bg-primary/10 text-primary border border-primary/30 text-sm font-medium">
+                <HugeiconsIcon icon={DocumentValidationIcon} size={14} />
+                key terms
+              </span>
+              <span>and negotiate with</span>
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 text-sm font-medium">
+                <HugeiconsIcon icon={FallingStarIcon} size={14} />
+                confidence
+              </span>
+            </p>
+          </div>
 
           {/* Upload Widget */}
           <div className="pt-6 animate-fade-in-up stagger-3 w-full max-w-xl mx-auto">
@@ -138,7 +145,7 @@ export default function Home() {
               <p className="text-muted-foreground text-sm mb-4">or click to browse</p>
               <div className="flex justify-center gap-2">
                 {["PDF", "Word", "TXT"].map((format) => (
-                  <Badge key={format} variant="secondary" className="text-xs">{format}</Badge>
+                  <Badge key={format} variant="secondary" className="text-xs bg-primary/10 text-primary border border-primary/30">{format}</Badge>
                 ))}
               </div>
             </div>
@@ -146,7 +153,7 @@ export default function Home() {
 
           {/* Scroll Indicator */}
           <div className="pt-24 pb-8 animate-fade-in-up stagger-5 flex justify-center">
-            <ChevronDown className="w-8 h-8 animate-bounce text-muted-foreground" />
+            <ChevronDown className="w-8 h-8 animate-bounce text-primary" />
           </div>
         </div>
       </section>
@@ -205,27 +212,13 @@ export default function Home() {
                     <Eye className="w-8 h-8 text-primary" />
                   </div>
                   <div>
-                    <h3 className="text-2xl font-bold text-foreground">AI-Powered Deep Analysis</h3>
-                    <p className="text-primary">GPT-4 Intelligence</p>
+                    <h3 className="text-2xl font-bold text-foreground">Advanced AI Analysis</h3>
                   </div>
                 </div>
-                <p className="text-foreground/80 text-lg mb-6 leading-relaxed">
-                  Our AI doesn&apos;t just scan for keywords—it understands context, industry standards, 
-                  and the subtle implications that could cost you thousands.
+                <p className="text-foreground/80 text-lg leading-relaxed">
+                  Our AI doesn&apos;t just scan for keywords. It understands context, industry standards, 
+                  and the subtle implications that could cost you in the long run.
                 </p>
-                <div className="space-y-3">
-                  {[
-                    "Identifies hidden perpetuity clauses",
-                    "Catches cross-collateralization traps",
-                    "Flags unfair 360 deal terms",
-                    "Detects vague royalty language",
-                  ].map((item, i) => (
-                    <div key={i} className="flex items-center gap-3 text-foreground/80">
-                      <CheckCircle2 className="w-5 h-5 text-primary shrink-0" />
-                      <span>{item}</span>
-                    </div>
-                  ))}
-                </div>
               </div>
             </div>
 
@@ -261,7 +254,7 @@ export default function Home() {
                 <div>
                   <h3 className="text-xl font-bold text-foreground mb-2">Financial Clarity</h3>
                   <p className="text-muted-foreground mb-4">
-                    Understand exactly where your money goes. Advances, royalties, recoupment—all 
+                    Understand exactly where your money goes. Advances, royalties, recoupment: all 
                     broken down in plain terms.
                   </p>
                   <div className="flex flex-wrap gap-2">
@@ -277,7 +270,7 @@ export default function Home() {
           </div>
 
           {/* Secondary Features Row - Enhanced */}
-          <div className="grid md:grid-cols-3 gap-8 mt-4">
+          <div className="grid md:grid-cols-2 gap-8 mt-4 max-w-3xl mx-auto">
             {[
               {
                 icon: BookOpen,
@@ -294,26 +287,14 @@ export default function Home() {
               {
                 icon: Lock,
                 title: "Private & Secure",
-                description: "Your contracts are never stored. Analysis happens in real-time.",
-                highlight: "Zero data retention",
+                description: "Your contracts are encrypted and securely stored. De-identified data may help improve our AI, and you control access and deletion.",
+                highlight: "You control your data",
                 gradient: "from-emerald-500/20 to-green-500/20",
                 iconBg: "bg-emerald-500/20",
                 iconColor: "text-emerald-400",
                 borderHover: "hover:border-emerald-500/40",
                 pillBg: "bg-emerald-500/10",
                 pillText: "text-emerald-400",
-              },
-              {
-                icon: TrendingUp,
-                title: "Industry Benchmarks",
-                description: "Know if your deal is fair. Compare your terms against market standards.",
-                highlight: "Data from 1,000+ contracts",
-                gradient: "from-purple-500/20 to-pink-500/20",
-                iconBg: "bg-purple-500/20",
-                iconColor: "text-purple-400",
-                borderHover: "hover:border-purple-500/40",
-                pillBg: "bg-purple-500/10",
-                pillText: "text-purple-400",
               },
             ].map((feature, i) => (
               <div 
@@ -363,7 +344,7 @@ export default function Home() {
               {
                 step: "01",
                 title: "Upload",
-                description: "Drop your contract in any format—PDF, Word, or plain text. We handle the rest.",
+                description: "Drop your contract in any format. PDF, Word, or plain text. We handle the rest.",
                 icon: FileText,
               },
               {
@@ -395,17 +376,29 @@ export default function Home() {
       </section>
 
       {/* Footer */}
-      <footer className="py-12 px-4 border-t border-border/30">
+      <footer className="py-8 px-4 border-t border-border/30">
         <div className="max-w-6xl mx-auto">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-            <div className="flex items-center gap-2">
-              <Scale className="w-5 h-5 text-primary" />
-              <span className="font-semibold text-foreground">EasyTerms</span>
+          <div className="grid grid-cols-3 items-center gap-4">
+            {/* Left - Logo */}
+            <div className="flex items-center">
+              <img src="/logo.png" alt="EasyTerms" className="h-5" />
             </div>
-            <p className="text-sm text-muted-foreground text-center">
-              AI-powered analysis is not a substitute for professional legal advice. 
+
+            {/* Center - Disclaimer */}
+            <p className="text-xs text-muted-foreground text-center">
+              AI-powered analysis is not a substitute for professional legal advice.
               Always consult with a qualified attorney for your situation.
             </p>
+
+            {/* Right - Legal Links */}
+            <div className="flex items-center justify-end gap-4">
+              <Link href="/privacy" className="text-xs text-muted-foreground hover:text-foreground transition-colors">
+                Privacy Policy
+              </Link>
+              <Link href="/terms" className="text-xs text-muted-foreground hover:text-foreground transition-colors">
+                Terms of Service
+              </Link>
+            </div>
           </div>
         </div>
       </footer>

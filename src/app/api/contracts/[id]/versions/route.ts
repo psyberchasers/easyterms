@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { extractTextFromPDF, extractTextFromWord } from "@/lib/extractText";
+import { getAnalysisPrompt, getOutputSchema } from "@/config/analysis-prompts";
+import { IndustryType } from "@/config/industries";
 import OpenAI from "openai";
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
@@ -110,37 +112,82 @@ export async function POST(
       extractedText = new TextDecoder().decode(fileBuffer);
     }
 
-    // Analyze the new version and compare with previous
     const previousAnalysis = contract.analysis;
+    const industry = (contract.industry as IndustryType) || "music";
+
+    // Run FULL analysis on the new version (same as initial upload)
+    const analysisPrompt = getAnalysisPrompt(industry);
+    const outputSchema = getOutputSchema(industry);
     
-    const analysisResponse = await openai.chat.completions.create({
+    const fullAnalysisPrompt = `${analysisPrompt}
+
+Respond ONLY with valid JSON matching this structure:
+${outputSchema}
+
+Important guidelines:
+- If certain information is not present in the contract, use null or omit the field
+- Be conservative with risk assessments - flag anything that could disadvantage the individual
+- The confidenceScore should reflect how complete and clear the contract text was (0-1)
+- Always explain legal jargon in plain English
+- For originalText and concernSnippets, use EXACT quotes from the contract that can be found via text search
+
+CONTRACT TEXT:
+${extractedText.substring(0, 15000)}`;
+
+    const fullAnalysisResponse = await openai.chat.completions.create({
       model: "gpt-4o",
       messages: [
         {
           role: "system",
-          content: `You are a legal contract analyst. Analyze this new version of a contract and compare it to the previous version's analysis. Focus on what changed - better or worse for the artist/creator.
+          content: `You are an expert contract analyst specializing in the ${industry} industry. Always respond with valid JSON only.`,
+        },
+        {
+          role: "user",
+          content: fullAnalysisPrompt,
+        },
+      ],
+      temperature: 0.3,
+      max_tokens: 4000,
+      response_format: { type: "json_object" },
+    });
+
+    const fullAnalysis = JSON.parse(fullAnalysisResponse.choices[0].message.content || "{}");
+
+    // Now compare with previous version to get changes summary
+    const comparisonResponse = await openai.chat.completions.create({
+      model: "gpt-4o",
+      messages: [
+        {
+          role: "system",
+          content: `You are a legal contract analyst. Compare these two contract analyses and identify what changed between versions. Focus on changes that affect the individual/artist - better or worse.
 
 Return JSON with:
 {
-  "summary": "Brief summary of this version",
-  "overallRiskAssessment": "high" | "medium" | "low",
-  "confidenceScore": 0.0-1.0,
-  "changesSummary": "Human-readable summary of key changes from previous version",
-  "improvements": ["List of terms that got better"],
-  "regressions": ["List of terms that got worse"],
+  "changesSummary": "Human-readable 1-2 sentence summary of key changes",
+  "improvements": ["Specific term/clause that got better for the individual"],
+  "regressions": ["Specific term/clause that got worse for the individual"],
   "unchanged": ["Major terms that stayed the same"]
 }`
         },
         {
           role: "user",
-          content: `NEW CONTRACT VERSION:\n${extractedText.substring(0, 15000)}\n\nPREVIOUS VERSION ANALYSIS:\n${JSON.stringify(previousAnalysis, null, 2)}`
+          content: `PREVIOUS VERSION ANALYSIS:\n${JSON.stringify(previousAnalysis, null, 2)}\n\nNEW VERSION ANALYSIS:\n${JSON.stringify(fullAnalysis, null, 2)}`
         }
       ],
       response_format: { type: "json_object" },
       temperature: 0.3,
     });
 
-    const analysis = JSON.parse(analysisResponse.choices[0].message.content || "{}");
+    const comparison = JSON.parse(comparisonResponse.choices[0].message.content || "{}");
+
+    // Merge full analysis with comparison data
+    const analysis = {
+      ...fullAnalysis,
+      changesSummary: comparison.changesSummary,
+      improvements: comparison.improvements,
+      regressions: comparison.regressions,
+      unchanged: comparison.unchanged,
+    };
 
     // Create version record
     const { data: version, error: versionError } = await supabase
@@ -185,5 +232,8 @@ Return JSON with:
     );
   }
 }
+
+
+
 
 

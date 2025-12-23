@@ -1,7 +1,6 @@
 "use client";
 
-import { useState } from "react";
-import Link from "next/link";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { Navbar } from "@/components/Navbar";
@@ -10,73 +9,86 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import {
-  Check,
   Loader2,
-  Sparkles,
   Zap,
-  Users,
-  Scale,
   FileText,
   GitCompare,
   Calculator,
-  MessageSquare,
   Clock,
   Calendar,
   Download,
-  LayoutDashboard,
-  Shield,
-  Headphones,
-  Palette,
+  Lightbulb,
 } from "lucide-react";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { SparklesIcon, DashboardCircleIcon } from "@hugeicons-pro/core-solid-rounded";
 import { cn } from "@/lib/utils";
+
+// Animated number component
+function AnimatedPrice({ value }: { value: number }) {
+  const [displayValue, setDisplayValue] = useState(value);
+  const previousValue = useRef(value);
+
+  useEffect(() => {
+    if (previousValue.current === value) return;
+
+    const startValue = previousValue.current;
+    const endValue = value;
+    const duration = 400;
+    const startTime = performance.now();
+
+    const animate = (currentTime: number) => {
+      const elapsed = currentTime - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+
+      // Easing function for smooth animation
+      const easeOut = 1 - Math.pow(1 - progress, 3);
+      const currentValue = startValue + (endValue - startValue) * easeOut;
+
+      setDisplayValue(currentValue);
+
+      if (progress < 1) {
+        requestAnimationFrame(animate);
+      } else {
+        previousValue.current = value;
+      }
+    };
+
+    requestAnimationFrame(animate);
+  }, [value]);
+
+  return <>{displayValue.toFixed(2)}</>;
+}
 
 const plans = [
   {
     id: "free",
-    name: "Free",
+    name: "Starter",
     description: "Perfect for trying out EasyTerms",
     price: { monthly: 0, annual: 0 },
     features: [
       { text: "3 contracts/month", icon: FileText },
       { text: "Basic AI analysis", icon: Zap },
-      { text: "Risk assessment", icon: Shield },
     ],
     cta: "Get Started",
     popular: false,
   },
   {
     id: "pro",
-    name: "Pro",
+    name: "Advanced",
     description: "For artists & creators serious about their deals",
-    price: { monthly: 19, annual: 15 },
+    price: { monthly: 9.99, annual: 7.99 },
     features: [
       { text: "Unlimited contracts", icon: FileText },
       { text: "Contract comparison", icon: GitCompare },
       { text: "Financial projections", icon: Calculator },
-      { text: "Negotiation suggestions", icon: MessageSquare },
+      { text: "Advice", icon: Lightbulb },
       { text: "Version tracking", icon: Clock },
       { text: "Calendar & alerts", icon: Calendar },
       { text: "PDF export", icon: Download },
-      { text: "Portfolio dashboard", icon: LayoutDashboard },
+      { text: "Portfolio dashboard", icon: DashboardCircleIcon, isHugeIcon: true },
     ],
-    cta: "Start Pro Trial",
+    cta: "Start Advanced Trial",
     popular: true,
-  },
-  {
-    id: "team",
-    name: "Team",
-    description: "For managers & agencies",
-    price: { monthly: 49, annual: 39 },
-    features: [
-      { text: "Everything in Pro", icon: Check },
-      { text: "5 team members", icon: Users },
-      { text: "Shared workspace", icon: LayoutDashboard },
-      { text: "Lawyer collaboration", icon: MessageSquare },
-      { text: "Priority support", icon: Headphones },
-      { text: "Custom branding", icon: Palette },
-    ],
-    cta: "Contact Sales",
-    popular: false,
   },
 ];
 
@@ -94,12 +106,6 @@ export default function PricingPage() {
 
     if (planId === "free") {
       router.push("/dashboard");
-      return;
-    }
-
-    if (planId === "team") {
-      // Open contact form or email
-      window.location.href = "mailto:team@easyterms.io?subject=Team Plan Inquiry";
       return;
     }
 
@@ -136,10 +142,10 @@ export default function PricingPage() {
       <main className="max-w-6xl mx-auto px-4 py-20 pt-28">
         {/* Header */}
         <div className="text-center mb-16">
-          <Badge variant="outline" className="mb-4">
-            <Sparkles className="w-3 h-3 mr-1" />
-            Simple Pricing
-          </Badge>
+          <div className="inline-flex items-center gap-2 px-3 py-1.5 mb-4 border border-primary bg-primary/10">
+            <HugeiconsIcon icon={SparklesIcon} size={14} className="text-primary" />
+            <span className="text-sm font-bold text-primary">Simple Pricing</span>
+          </div>
           <h1 className="text-4xl md:text-5xl font-bold mb-4">
             Protect Your Career
           </h1>
@@ -164,7 +170,7 @@ export default function PricingPage() {
         </div>
 
         {/* Plans Grid */}
-        <div className="grid md:grid-cols-3 gap-6">
+        <div className="grid md:grid-cols-2 gap-6 max-w-3xl mx-auto">
           {plans.map((plan) => {
             const price = isAnnual ? plan.price.annual : plan.price.monthly;
             const isCurrentPlan = currentTier === plan.id;
@@ -174,7 +180,7 @@ export default function PricingPage() {
               <Card
                 key={plan.id}
                 className={cn(
-                  "relative flex flex-col",
+                  "relative flex flex-col rounded-none",
                   plan.popular && "border-primary shadow-lg shadow-primary/10 scale-105"
                 )}
               >
@@ -203,7 +209,7 @@ export default function PricingPage() {
                   <div className="mb-6">
                     <div className="flex items-baseline gap-1">
                       <span className="text-4xl font-bold">
-                        ${price}
+                        ${price === 0 ? "0" : <AnimatedPrice value={price} />}
                       </span>
                       {price > 0 && (
                         <span className="text-muted-foreground">/mo</span>
@@ -211,19 +217,27 @@ export default function PricingPage() {
                     </div>
                     {isAnnual && price > 0 && (
                       <p className="text-sm text-muted-foreground mt-1">
-                        Billed annually (${price * 12}/year)
+                        Billed annually (${(price * 12).toFixed(2)}/year)
                       </p>
                     )}
                   </div>
 
                   {/* Features */}
                   <ul className="space-y-3 mb-8 flex-1">
-                    {plan.features.map((feature, i) => (
-                      <li key={i} className="flex items-center gap-2 text-sm">
-                        <feature.icon className="w-4 h-4 text-primary shrink-0" />
-                        <span>{feature.text}</span>
-                      </li>
-                    ))}
+                    {plan.features.map((feature, i) => {
+                      const feat = feature as { text: string; icon: React.ComponentType<{ className?: string }> | unknown; isHugeIcon?: boolean };
+                      const Icon = feat.icon as React.ComponentType<{ className?: string }>;
+                      return (
+                        <li key={i} className="flex items-center gap-2 text-sm">
+                          {feat.isHugeIcon ? (
+                            <HugeiconsIcon icon={feat.icon as Parameters<typeof HugeiconsIcon>[0]["icon"]} size={16} className="text-primary shrink-0" />
+                          ) : (
+                            <Icon className="w-4 h-4 text-primary shrink-0" />
+                          )}
+                          <span>{feat.text}</span>
+                        </li>
+                      );
+                    })}
                   </ul>
 
                   {/* CTA */}
@@ -231,7 +245,7 @@ export default function PricingPage() {
                     onClick={() => handleSubscribe(plan.id)}
                     disabled={isCurrentPlan || isLoading}
                     variant={plan.popular ? "default" : "outline"}
-                    className="w-full"
+                    className="w-full rounded-none"
                   >
                     {isLoading ? (
                       <Loader2 className="w-4 h-4 animate-spin mr-2" />
@@ -251,7 +265,7 @@ export default function PricingPage() {
         <div className="mt-20">
           <h2 className="text-2xl font-bold text-center mb-8">Frequently Asked Questions</h2>
           <div className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
-            <Card>
+            <Card className="rounded-none">
               <CardContent className="pt-6">
                 <h3 className="font-semibold mb-2">Can I cancel anytime?</h3>
                 <p className="text-sm text-muted-foreground">
@@ -259,7 +273,7 @@ export default function PricingPage() {
                 </p>
               </CardContent>
             </Card>
-            <Card>
+            <Card className="rounded-none">
               <CardContent className="pt-6">
                 <h3 className="font-semibold mb-2">Is my data secure?</h3>
                 <p className="text-sm text-muted-foreground">
@@ -267,7 +281,7 @@ export default function PricingPage() {
                 </p>
               </CardContent>
             </Card>
-            <Card>
+            <Card className="rounded-none">
               <CardContent className="pt-6">
                 <h3 className="font-semibold mb-2">Do you offer refunds?</h3>
                 <p className="text-sm text-muted-foreground">
@@ -275,11 +289,11 @@ export default function PricingPage() {
                 </p>
               </CardContent>
             </Card>
-            <Card>
+            <Card className="rounded-none">
               <CardContent className="pt-6">
-                <h3 className="font-semibold mb-2">Need more than Team?</h3>
+                <h3 className="font-semibold mb-2">Need custom solutions?</h3>
                 <p className="text-sm text-muted-foreground">
-                  Contact us for Enterprise pricing with custom integrations, dedicated support, and volume discounts.
+                  Contact us for custom integrations and dedicated support for your specific needs.
                 </p>
               </CardContent>
             </Card>
@@ -291,7 +305,7 @@ export default function PricingPage() {
           <p className="text-muted-foreground mb-4">
             Questions? We&apos;re here to help.
           </p>
-          <Button variant="outline" asChild>
+          <Button variant="outline" className="rounded-none" asChild>
             <a href="mailto:support@easyterms.io">Contact Support</a>
           </Button>
         </div>

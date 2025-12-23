@@ -7,6 +7,12 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import {
   FileText,
   AlertTriangle,
   CheckCircle2,
@@ -428,50 +434,59 @@ export default function AnalyzeDemoPage() {
 
           {/* Key Terms Tab */}
           <TabsContent value="terms">
-            <div className="rounded-xl border border-border/50 overflow-hidden">
-              <table className="w-full">
-                <thead>
-                  <tr className="bg-muted/30 text-xs text-muted-foreground">
-                    <th className="text-left p-3 font-medium">Term</th>
-                    <th className="text-left p-3 font-medium">Value</th>
-                    <th className="text-left p-3 font-medium">Risk</th>
-                    <th className="text-left p-3 font-medium">Action</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {analysis.keyTerms.map((term, i) => (
-                    <tr 
-                      key={i}
-                      onClick={() => handleClauseClick(term.originalText)}
-                      className={cn(
-                        "border-t border-border/30 cursor-pointer transition-all hover:bg-muted/20",
-                        term.riskLevel === "high" && "bg-red-500/5 hover:bg-red-500/10",
-                        highlightedClause === term.originalText && "ring-2 ring-primary bg-primary/5"
-                      )}
-                    >
-                      <td className="p-3">
-                        <div className="font-medium">{term.title}</div>
-                        <div className="text-xs text-muted-foreground mt-0.5">{term.explanation}</div>
-                      </td>
-                      <td className="p-3">
-                        <span className="text-sm text-foreground/80">{term.content}</span>
-                      </td>
-                      <td className="p-3">
-                        <Badge variant="outline" className={getRiskColor(term.riskLevel)}>
-                          {term.riskLevel}
-                        </Badge>
-                      </td>
-                      <td className="p-3">
-                        <Button variant="ghost" size="sm" className="text-xs">
-                          <Eye className="w-3 h-3 mr-1" />
-                          View
-                        </Button>
-                      </td>
+            <TooltipProvider>
+              <div className="rounded-xl border border-border/50 overflow-hidden">
+                <table className="w-full">
+                  <thead>
+                    <tr className="bg-muted/30 text-xs text-muted-foreground">
+                      <th className="text-left p-3 font-medium">Term</th>
+                      <th className="text-left p-3 font-medium">Value</th>
+                      <th className="text-left p-3 font-medium">Risk</th>
+                      <th className="text-left p-3 font-medium">Action</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody>
+                    {analysis.keyTerms.map((term, i) => (
+                      <tr 
+                        key={i}
+                        onClick={() => handleClauseClick(term.originalText)}
+                        className={cn(
+                          "border-t border-border/30 cursor-pointer transition-all hover:bg-muted/20",
+                          term.riskLevel === "high" && "bg-red-500/5 hover:bg-red-500/10",
+                          highlightedClause === term.originalText && "ring-2 ring-primary bg-primary/5"
+                        )}
+                      >
+                        <td className="p-3">
+                          <div className="font-medium">{term.title}</div>
+                        </td>
+                        <td className="p-3">
+                          <span className="text-sm text-foreground/80">{term.content}</span>
+                        </td>
+                        <td className="p-3">
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Badge variant="outline" className={cn("cursor-help", getRiskColor(term.riskLevel))}>
+                                {term.riskLevel}
+                              </Badge>
+                            </TooltipTrigger>
+                            <TooltipContent side="top" className="max-w-xs p-3">
+                              <p className="text-sm font-medium mb-1">Why {term.riskLevel} risk?</p>
+                              <p className="text-xs text-muted-foreground">{term.explanation}</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </td>
+                        <td className="p-3">
+                          <Button variant="ghost" size="sm" className="text-xs">
+                            <Eye className="w-3 h-3 mr-1" />
+                            View
+                          </Button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </TooltipProvider>
           </TabsContent>
 
           {/* Financial Calculator Tab */}

@@ -7,9 +7,8 @@ import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Scale, Loader2, Mail, Lock, AlertCircle } from "lucide-react";
+import { Loader2, Mail, Lock, AlertCircle, FileText, Shield, Zap } from "lucide-react";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -65,24 +64,68 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background px-4">
-      <div className="w-full max-w-md">
-        {/* Logo */}
-        <div className="flex items-center justify-center gap-2 mb-8">
-          <div className="p-2 rounded-xl bg-primary/10">
-            <Scale className="w-8 h-8 text-primary" />
-          </div>
-          <span className="text-2xl font-bold text-gradient">EasyTerms</span>
+    <div className="min-h-screen flex bg-black">
+      {/* Left Panel - Branding */}
+      <div className="hidden lg:flex lg:w-1/2 flex-col justify-between p-12 border-r border-[#262626]">
+        <div>
+          <Link href="/" className="flex items-center gap-2">
+            <span className="font-semibold text-xl text-white">EasyTerms</span>
+          </Link>
         </div>
+        
+        <div className="space-y-8">
+          <div>
+            <h1 className="text-4xl font-bold text-white mb-4">
+              Understand your contracts.
+            </h1>
+            <p className="text-[#878787] text-lg">
+              AI-powered analysis that breaks down complex legal terms into plain language.
+            </p>
+          </div>
+          
+          <div className="space-y-4">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 border border-[#262626] flex items-center justify-center">
+                <FileText className="w-4 h-4 text-white" />
+              </div>
+              <span className="text-[#878787]">Upload any contract format</span>
+            </div>
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 border border-[#262626] flex items-center justify-center">
+                <Zap className="w-4 h-4 text-white" />
+              </div>
+              <span className="text-[#878787]">Instant AI analysis</span>
+            </div>
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 border border-[#262626] flex items-center justify-center">
+                <Shield className="w-4 h-4 text-white" />
+              </div>
+              <span className="text-[#878787]">Secure and private</span>
+            </div>
+          </div>
+        </div>
+        
+        <p className="text-[#525252] text-sm">
+          © 2025 EasyTerms. All rights reserved.
+        </p>
+      </div>
 
-        <Card className="border-border/50">
-          <CardHeader className="text-center">
-            <CardTitle className="text-2xl">Welcome back</CardTitle>
-            <CardDescription>Sign in to access your contracts</CardDescription>
-          </CardHeader>
-          <CardContent>
+      {/* Right Panel - Login Form */}
+      <div className="w-full lg:w-1/2 flex items-center justify-center p-8">
+        <div className="w-full max-w-md">
+          {/* Mobile Logo */}
+          <div className="lg:hidden flex items-center justify-center gap-2 mb-8">
+            <span className="text-2xl font-bold text-white">EasyTerms</span>
+          </div>
+
+          <div className="space-y-6">
+            <div>
+              <h2 className="text-2xl font-bold text-white">Welcome back</h2>
+              <p className="text-[#878787] mt-1">Sign in to access your contracts</p>
+            </div>
+
             {error && (
-              <Alert variant="destructive" className="mb-4">
+              <Alert variant="destructive" className="border-red-400/30 bg-red-400/5">
                 <AlertCircle className="h-4 w-4" />
                 <AlertDescription>{error}</AlertDescription>
               </Alert>
@@ -90,16 +133,16 @@ export default function LoginPage() {
 
             <form onSubmit={handleLogin} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
+                <Label htmlFor="email" className="text-white">Email</Label>
                 <div className="relative">
-                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#878787]" />
                   <Input
                     id="email"
                     type="email"
                     placeholder="you@example.com"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="pl-10"
+                    className="pl-10 bg-black border-[#262626] text-white placeholder:text-[#525252] focus:border-[#404040] focus:ring-0"
                     required
                   />
                 </div>
@@ -107,26 +150,30 @@ export default function LoginPage() {
 
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <Label htmlFor="password">Password</Label>
-                  <Link href="/forgot-password" className="text-sm text-primary hover:underline">
+                  <Label htmlFor="password" className="text-white">Password</Label>
+                  <Link href="/forgot-password" className="text-sm text-[#878787] hover:text-white transition-colors">
                     Forgot password?
                   </Link>
                 </div>
                 <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#878787]" />
                   <Input
                     id="password"
                     type="password"
                     placeholder="••••••••"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="pl-10"
+                    className="pl-10 bg-black border-[#262626] text-white placeholder:text-[#525252] focus:border-[#404040] focus:ring-0"
                     required
                   />
                 </div>
               </div>
 
-              <Button type="submit" className="w-full" disabled={loading}>
+              <Button 
+                type="submit" 
+                className="w-full bg-white text-black hover:bg-white/90 h-10" 
+                disabled={loading}
+              >
                 {loading ? (
                   <>
                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -138,18 +185,18 @@ export default function LoginPage() {
               </Button>
             </form>
 
-            <div className="relative my-6">
+            <div className="relative">
               <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-border" />
+                <div className="w-full border-t border-[#262626]" />
               </div>
               <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-card px-2 text-muted-foreground">Or continue with</span>
+                <span className="bg-black px-2 text-[#525252]">Or continue with</span>
               </div>
             </div>
 
             <Button
               variant="outline"
-              className="w-full"
+              className="w-full border-[#262626] bg-black text-white hover:bg-[#1a1a1a] hover:text-white h-10"
               onClick={handleGoogleLogin}
               disabled={loading}
             >
@@ -174,23 +221,22 @@ export default function LoginPage() {
               Continue with Google
             </Button>
 
-            <p className="text-center text-sm text-muted-foreground mt-6">
+            <p className="text-center text-sm text-[#878787]">
               Don&apos;t have an account?{" "}
-              <Link href="/signup" className="text-primary hover:underline font-medium">
+              <Link href="/signup" className="text-white hover:underline">
                 Sign up
               </Link>
             </p>
-          </CardContent>
-        </Card>
+          </div>
 
-        <p className="text-center text-xs text-muted-foreground mt-4">
-          By signing in, you agree to our Terms of Service and Privacy Policy
-        </p>
+          <p className="text-center text-xs text-[#525252] mt-8">
+            By signing in, you agree to our{" "}
+            <Link href="/terms" className="hover:text-[#878787]">Terms of Service</Link>
+            {" "}and{" "}
+            <Link href="/privacy" className="hover:text-[#878787]">Privacy Policy</Link>
+          </p>
+        </div>
       </div>
     </div>
   );
 }
-
-
-
-

@@ -66,7 +66,8 @@ Respond ONLY with valid JSON matching this structure:
       "importance": "critical|important|standard",
       "riskLevel": "high|medium|low",
       "explanation": "Plain English explanation of what this means for the artist",
-      "originalText": "EXACT quote from the contract (10-50 words) that this term refers to - must be verbatim from the contract"
+      "originalText": "EXACT quote from the contract (10-50 words) that this term refers to - must be verbatim from the contract",
+      "actionItems": ["Specific action item 1 for this term", "Specific action item 2", "Specific action item 3"]
     }
   ],
   "financialTerms": {
@@ -97,7 +98,12 @@ Respond ONLY with valid JSON matching this structure:
     "EXACT quote from the contract for each concern - must be verbatim text that can be found and highlighted"
   ],
   "recommendations": [
-    "Specific actionable recommendations for negotiation or points to clarify with a lawyer"
+    {
+      "advice": "Specific actionable recommendation",
+      "rationale": "Why this matters for THIS specific contract, citing industry standards where relevant",
+      "priority": "high|medium|low",
+      "howToImplement": "Concrete steps to take or language to propose"
+    }
   ],
   "overallRiskAssessment": "high|medium|low",
   "confidenceScore": 0.85,

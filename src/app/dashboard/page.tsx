@@ -28,17 +28,13 @@ import {
   Eye,
   Search,
   AlertTriangle,
-  CheckCircle2,
-  Clock,
-  Loader2,
   FolderOpen,
   RefreshCw,
   Plus,
   Calendar,
-  TrendingUp,
-  PieChart,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { MusicLoader } from "@/components/MusicLoader";
 
 export default function DashboardPage() {
   const { user, profile, loading: authLoading, signOut } = useAuth();
@@ -161,7 +157,7 @@ export default function DashboardPage() {
   if (authLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        <MusicLoader />
       </div>
     );
   }
@@ -170,10 +166,7 @@ export default function DashboardPage() {
   if (initialLoad && loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="text-center">
-          <Loader2 className="w-8 h-8 animate-spin text-primary mx-auto mb-3" />
-          <p className="text-sm text-muted-foreground">Loading your contracts...</p>
-        </div>
+        <MusicLoader />
       </div>
     );
   }
@@ -187,8 +180,8 @@ export default function DashboardPage() {
         {/* Welcome & Stats */}
         <div className="mb-8 flex items-start justify-between">
           <div>
-            <h1 className="text-3xl font-bold mb-2">
-              Welcome back, {profile?.full_name?.split(" ")[0] || "there"}
+            <h1 className="text-3xl font-normal mb-2">
+              Welcome back, <span className="text-primary">{profile?.full_name?.split(" ")[0] || "there"}</span>
             </h1>
             <p className="text-muted-foreground">
               Manage and analyze your music contracts
@@ -196,12 +189,12 @@ export default function DashboardPage() {
           </div>
           <div className="flex items-center gap-2">
             <Link href="/compare">
-              <Button variant="outline" size="sm">
+              <Button variant="outline" size="sm" className="rounded-none">
                 <Scale className="w-4 h-4 mr-2" />
                 Compare
               </Button>
             </Link>
-            <Button variant="outline" size="sm" onClick={() => fetchContracts(false)} disabled={loading}>
+            <Button variant="outline" size="sm" className="rounded-none" onClick={() => fetchContracts(false)} disabled={loading}>
               <RefreshCw className={cn("w-4 h-4 mr-2", loading && "animate-spin")} />
               Refresh
             </Button>
@@ -218,7 +211,7 @@ export default function DashboardPage() {
                   <p className="font-medium text-red-400">Failed to load contracts</p>
                   <p className="text-sm text-muted-foreground">{error}</p>
                 </div>
-                <Button variant="outline" size="sm" onClick={() => fetchContracts(false)}>
+                <Button variant="outline" size="sm" className="rounded-none" onClick={() => fetchContracts(false)}>
                   Try Again
                 </Button>
               </div>
@@ -226,116 +219,76 @@ export default function DashboardPage() {
           </Card>
         )}
 
-        {/* Enhanced Stats Section */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-          {/* Quick Stats */}
-          <Card className="bg-card/50">
-            <CardContent className="pt-4">
-              <div className="flex items-center gap-2 mb-4">
-                <TrendingUp className="w-4 h-4 text-primary" />
-                <span className="text-sm font-medium">Overview</span>
+        {/* Compact Stats Row */}
+        <div className="flex flex-wrap items-center gap-6 mb-8 py-4">
+          {/* Stats */}
+          <div className="flex items-center gap-1">
+            <span className="text-2xl font-light text-white">{stats.total}</span>
+            <span className="text-xs text-[#525252] ml-1">contracts</span>
+          </div>
+          <div className="w-px h-6 bg-[#262626]" />
+          <div className="flex items-center gap-1">
+            <span className="text-2xl font-light text-green-500">{stats.active}</span>
+            <span className="text-xs text-[#525252] ml-1">active</span>
+          </div>
+          <div className="w-px h-6 bg-[#262626]" />
+          <div className="flex items-center gap-1">
+            <span className="text-2xl font-light text-amber-500">{stats.negotiating}</span>
+            <span className="text-xs text-[#525252] ml-1">negotiating</span>
+          </div>
+          <div className="w-px h-6 bg-[#262626]" />
+          <div className="flex items-center gap-1">
+            <Star className="w-3 h-3 text-[#525252]" />
+            <span className="text-lg font-light text-white">{stats.starred}</span>
+          </div>
+          
+          {/* Risk Bar - inline */}
+          {riskTotal > 0 && (
+            <>
+              <div className="w-px h-6 bg-[#262626]" />
+              <div className="flex items-center gap-3">
+                <span className="text-xs text-[#525252]">Risk</span>
+                <div className="h-1.5 w-32 overflow-hidden flex bg-[#1a1a1a]">
+                  <div className="bg-red-500" style={{ width: `${riskPercentages.high}%` }} />
+                  <div className="bg-amber-500" style={{ width: `${riskPercentages.medium}%` }} />
+                  <div className="bg-green-500" style={{ width: `${riskPercentages.low}%` }} />
+                </div>
+                <div className="flex items-center gap-2 text-[10px]">
+                  <span className="flex items-center gap-1">
+                    <span className="w-1.5 h-1.5 bg-red-500" />
+                    <span className="text-[#525252]">{stats.highRisk}</span>
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <span className="w-1.5 h-1.5 bg-amber-500" />
+                    <span className="text-[#525252]">{stats.mediumRisk}</span>
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <span className="w-1.5 h-1.5 bg-green-500" />
+                    <span className="text-[#525252]">{stats.lowRisk}</span>
+                  </span>
+                </div>
               </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1">
-                  <p className="text-3xl font-bold">{stats.total}</p>
-                  <p className="text-xs text-muted-foreground">Total Contracts</p>
-                </div>
-                <div className="space-y-1">
-                  <p className="text-3xl font-bold text-green-500">{stats.active}</p>
-                  <p className="text-xs text-muted-foreground">Active</p>
-                </div>
-                <div className="space-y-1">
-                  <p className="text-2xl font-bold text-amber-500">{stats.negotiating}</p>
-                  <p className="text-xs text-muted-foreground">Negotiating</p>
-                </div>
-                <div className="space-y-1">
-                  <p className="text-2xl font-bold">{stats.starred}</p>
-                  <p className="text-xs text-muted-foreground">Starred</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Risk Distribution */}
-          <Card className="bg-card/50">
-            <CardContent className="pt-4">
-              <div className="flex items-center gap-2 mb-4">
-                <PieChart className="w-4 h-4 text-primary" />
-                <span className="text-sm font-medium">Risk Distribution</span>
-              </div>
-              {riskTotal > 0 ? (
-                <div className="space-y-3">
-                  {/* Visual Bar */}
-                  <div className="h-3 rounded-full overflow-hidden flex bg-muted">
-                    <div 
-                      className="bg-red-500 transition-all" 
-                      style={{ width: `${riskPercentages.high}%` }} 
-                    />
-                    <div 
-                      className="bg-amber-500 transition-all" 
-                      style={{ width: `${riskPercentages.medium}%` }} 
-                    />
-                    <div 
-                      className="bg-green-500 transition-all" 
-                      style={{ width: `${riskPercentages.low}%` }} 
-                    />
-                  </div>
-                  {/* Legend */}
-                  <div className="grid grid-cols-3 gap-2 text-xs">
-                    <div className="flex items-center gap-1.5">
-                      <div className="w-2 h-2 rounded-full bg-red-500" />
-                      <span className="text-muted-foreground">High</span>
-                      <span className="font-medium">{stats.highRisk}</span>
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                      <div className="w-2 h-2 rounded-full bg-amber-500" />
-                      <span className="text-muted-foreground">Medium</span>
-                      <span className="font-medium">{stats.mediumRisk}</span>
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                      <div className="w-2 h-2 rounded-full bg-green-500" />
-                      <span className="text-muted-foreground">Low</span>
-                      <span className="font-medium">{stats.lowRisk}</span>
-                    </div>
-                  </div>
-                </div>
-              ) : (
-                <div className="text-center py-4 text-sm text-muted-foreground">
-                  No risk data yet
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Quick Actions */}
-          <Card className="bg-card/50">
-            <CardContent className="pt-4">
-              <div className="flex items-center gap-2 mb-4">
-                <Plus className="w-4 h-4 text-primary" />
-                <span className="text-sm font-medium">Quick Actions</span>
-              </div>
-              <div className="space-y-2">
-                <Link href="/analyze" className="block">
-                  <Button variant="outline" className="w-full justify-start" size="sm">
-                    <Plus className="w-4 h-4 mr-2" />
-                    New Analysis
-                  </Button>
-                </Link>
-                <Link href="/compare" className="block">
-                  <Button variant="outline" className="w-full justify-start" size="sm">
-                    <Scale className="w-4 h-4 mr-2" />
-                    Compare Contracts
-                  </Button>
-                </Link>
-                <Link href="/calendar" className="block">
-                  <Button variant="outline" className="w-full justify-start" size="sm">
-                    <Calendar className="w-4 h-4 mr-2" />
-                    View Calendar
-                  </Button>
-                </Link>
-              </div>
-            </CardContent>
-          </Card>
+            </>
+          )}
+          
+          {/* Spacer to push actions right */}
+          <div className="flex-1" />
+          
+          {/* Quick Actions - inline */}
+          <div className="flex items-center gap-2">
+            <Link href="/analyze">
+              <Button variant="outline" size="sm" className="h-7 text-xs border-[#262626] bg-transparent hover:bg-[#1a1a1a] rounded-none">
+                <Plus className="w-3 h-3 mr-1" />
+                New
+              </Button>
+            </Link>
+            <Link href="/calendar">
+              <Button variant="ghost" size="sm" className="h-7 text-xs text-[#525252] hover:text-white rounded-none">
+                <Calendar className="w-3 h-3 mr-1" />
+                Calendar
+              </Button>
+            </Link>
+          </div>
         </div>
 
         {/* Filters & Search */}
@@ -353,6 +306,7 @@ export default function DashboardPage() {
             <Button
               variant={filter === "all" ? "default" : "outline"}
               size="sm"
+              className="rounded-none"
               onClick={() => setFilter("all")}
             >
               All
@@ -360,6 +314,7 @@ export default function DashboardPage() {
             <Button
               variant={filter === "starred" ? "default" : "outline"}
               size="sm"
+              className="rounded-none"
               onClick={() => setFilter("starred")}
             >
               <Star className="w-4 h-4 mr-1" />
@@ -368,6 +323,7 @@ export default function DashboardPage() {
             <Button
               variant={filter === "high-risk" ? "default" : "outline"}
               size="sm"
+              className="rounded-none"
               onClick={() => setFilter("high-risk")}
             >
               <AlertTriangle className="w-4 h-4 mr-1" />
@@ -391,7 +347,7 @@ export default function DashboardPage() {
               </p>
               {contracts.length === 0 && (
                 <Link href="/analyze">
-                  <Button>
+                  <Button className="rounded-none">
                     <Plus className="w-4 h-4 mr-2" />
                     Analyze Contract
                   </Button>
@@ -400,9 +356,9 @@ export default function DashboardPage() {
             </CardContent>
           </Card>
         ) : (
-          <div className="border border-border rounded-lg overflow-hidden">
+          <div className="border border-border overflow-hidden">
             {/* Table Header */}
-            <div className="grid grid-cols-[1fr_140px_100px_100px_80px] gap-2 px-4 py-2 bg-muted/50 text-xs font-medium text-muted-foreground border-b border-border">
+            <div className="grid grid-cols-[1fr_180px_100px_100px_80px] gap-2 px-4 py-2 bg-muted/50 text-xs font-medium text-muted-foreground border-b border-border">
               <div>Contract</div>
               <div>Type</div>
               <div>Risk</div>
@@ -413,7 +369,7 @@ export default function DashboardPage() {
             {filteredContracts.map((contract) => (
               <div
                 key={contract.id}
-                className="grid grid-cols-[1fr_140px_100px_100px_80px] gap-2 px-4 py-2.5 items-center border-b border-border/50 last:border-0 hover:bg-muted/30 transition-colors"
+                className="grid grid-cols-[1fr_180px_100px_100px_80px] gap-2 px-4 py-2.5 items-center border-b border-border/50 last:border-0 hover:bg-muted/30 transition-colors"
               >
                 <div className="flex items-center gap-2 min-w-0">
                   <FileText className="w-4 h-4 text-muted-foreground shrink-0" />

@@ -6,6 +6,8 @@ export interface ContractClause {
   explanation: string;
   /** Text snippet to search for in original document */
   originalText?: string;
+  /** AI-generated action items specific to this term */
+  actionItems?: string[];
 }
 
 export interface ParagraphBreakdown {
@@ -43,6 +45,13 @@ export interface ObligationsAndDeliverables {
   timeline?: string;
 }
 
+export interface Recommendation {
+  advice: string;
+  rationale: string;
+  priority: "high" | "medium" | "low";
+  howToImplement: string;
+}
+
 export interface ContractAnalysis {
   summary: string;
   contractType: string;
@@ -70,7 +79,8 @@ export interface ContractAnalysis {
   potentialConcerns: string[];
   /** Original text snippets for each concern (for highlighting) */
   concernSnippets?: string[];
-  recommendations: string[];
+  /** Recommendations - can be strings (legacy) or structured objects (new) */
+  recommendations: (string | Recommendation)[];
   overallRiskAssessment: "high" | "medium" | "low";
   confidenceScore: number;
   /** Paragraph-by-paragraph breakdown */

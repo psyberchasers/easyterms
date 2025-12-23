@@ -1,13 +1,31 @@
 "use client";
 
-import { useState, useCallback, useRef, useEffect } from "react";
+import { useState, useCallback, useRef, useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsContent } from "@/components/ui/tabs";
+import { Input } from "@/components/ui/input";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { ContractAnalysis } from "@/types/contract";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { Navbar } from "@/components/Navbar";
+import { motion } from "framer-motion";
 import {
   Upload,
   FileText,
@@ -18,12 +36,16 @@ import {
   X,
   Shield,
   Eye,
-  ChevronRight,
-  Save,
-  AlertOctagon,
-  HelpCircle,
   Download,
-  Mail,
+  TrendingUp,
+  DollarSign,
+  Clock,
+  Calendar,
+  History,
+  Plus,
+  Trash2,
+  ArrowUpRight,
+  ArrowDownRight,
 } from "lucide-react";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
@@ -32,26 +54,27 @@ import {
   Alert02Icon,
   HelpSquareIcon,
   AiIdeaIcon,
-  Comment01Icon,
   DollarCircleIcon,
+  Idea01Icon,
 } from "@hugeicons-pro/core-duotone-rounded";
 import Lottie from "lottie-react";
-import searchAnimation from "@/../public/search.json";
+import loadMusicAnimation from "@/../public/loadmusic.json";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import dynamic from "next/dynamic";
 import { FinancialCalculator } from "@/components/FinancialCalculator";
-import { NegotiationAssistant } from "@/components/NegotiationAssistant";
+import { MusicLoader } from "@/components/MusicLoader";
 
-// Dynamically import PDFViewerWithSearch to avoid SSR issues
+// Dynamically import components
 const PDFViewerWithSearch = dynamic(() => import("@/components/PDFViewerWithSearch").then((mod) => mod.PDFViewerWithSearch), {
   ssr: false,
   loading: () => (
     <div className="flex items-center justify-center h-full">
-      <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      <MusicLoader />
     </div>
   ),
 });
+
 
 type AnalysisStatus = "idle" | "uploading" | "analyzing" | "complete" | "error";
 
@@ -78,18 +101,53 @@ export default function AnalyzePage() {
   const [originalFile, setOriginalFile] = useState<File | null>(null);
   
   // UI state
-  const [showDocument, setShowDocument] = useState(false);
+  const [showDocument, setShowDocument] = useState(true);
   const [highlightedClause, setHighlightedClause] = useState<string | null>(null);
-  const [showELI5Modal, setShowELI5Modal] = useState(false);
-  const [showCounterOfferModal, setShowCounterOfferModal] = useState(false);
   
   // Save state
   const [saving, setSaving] = useState(false);
   const [savedContractId, setSavedContractId] = useState<string | null>(null);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [downloading, setDownloading] = useState(false);
-  
+
+  // Tab state
+  const [activeTab, setActiveTab] = useState("overview");
+
+  // Expandable items
+  const [expandedTerm, setExpandedTerm] = useState<number | null>(null);
+  const [expandedConcern, setExpandedConcern] = useState<number | null>(null);
+  const [expandedAdvice, setExpandedAdvice] = useState<number | null>(null);
+
+  // Version tracking (for logged-in users)
+  interface ContractVersion {
+    id: string;
+    version_number: number;
+    file_url: string;
+    changes_summary: string;
+    analysis: ContractAnalysis & {
+      improvements?: string[];
+      regressions?: string[];
+    };
+    created_at: string;
+  }
+  const [versions, setVersions] = useState<ContractVersion[]>([]);
+  const [loadingVersions, setLoadingVersions] = useState(false);
+  const [uploadingVersion, setUploadingVersion] = useState(false);
+
+  // Key dates (for logged-in users)
+  interface ContractDate {
+    id: string;
+    date_type: string;
+    date: string;
+    description: string;
+  }
+  const [dates, setDates] = useState<ContractDate[]>([]);
+  const [loadingDates, setLoadingDates] = useState(false);
+  const [showAddDate, setShowAddDate] = useState(false);
+  const [newDate, setNewDate] = useState({ date_type: "", date: "", description: "" });
+
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const versionInputRef = useRef<HTMLInputElement>(null);
 
   // Check for pending file from homepage upload
   useEffect(() => {
@@ -275,40 +333,177 @@ export default function AnalyzePage() {
     if (file) handleFileSelect(file);
   };
 
-  // Helper functions
+  // Helper functions - Midday style (minimal color)
   const getRiskColor = (risk: string) => {
     switch (risk) {
-      case "high": return "text-red-400 border-red-500/50 bg-red-500/10";
-      case "medium": return "text-amber-400 border-amber-500/50 bg-amber-500/10";
-      case "low": return "text-green-400 border-green-500/50 bg-green-500/10";
-      default: return "text-muted-foreground";
+      case "high": return "text-red-400 border-red-400/30";
+      case "medium": return "text-yellow-400 border-yellow-400/30";
+      case "low": return "text-green-400 border-green-400/30";
+      default: return "text-muted-foreground border-border";
     }
   };
 
+  // Get contextual "What to Look For" based on term type
+  const getTermChecklist = (title: string): string[] => {
+    const titleLower = title.toLowerCase();
+
+    if (titleLower.includes("royalt")) {
+      return [
+        "Verify the exact percentage and what it applies to (gross vs net)",
+        "Check if there are different rates for different income sources",
+        "Look for any deductions taken before your royalty is calculated"
+      ];
+    }
+    if (titleLower.includes("term") || titleLower.includes("duration") || titleLower.includes("period")) {
+      return [
+        "Confirm the exact start and end dates of the agreement",
+        "Check for automatic renewal or extension clauses",
+        "Look for early termination rights and any associated penalties"
+      ];
+    }
+    if (titleLower.includes("rights") || titleLower.includes("ownership") || titleLower.includes("copyright")) {
+      return [
+        "Clarify exactly which rights you are granting (exclusive vs non-exclusive)",
+        "Check if rights revert to you after the term ends",
+        "Verify territorial limitations on rights granted"
+      ];
+    }
+    if (titleLower.includes("advance") || titleLower.includes("payment") || titleLower.includes("fee")) {
+      return [
+        "Confirm the payment schedule and any conditions for payment",
+        "Check if the advance is recoupable and from what income sources",
+        "Look for audit rights to verify payment accuracy"
+      ];
+    }
+    return [
+      "Compare this term against industry standards for similar agreements",
+      "Check how this term interacts with other clauses in the contract",
+      "Consider if this term could limit your future opportunities"
+    ];
+  };
+
+  // Fetch versions for saved contract
+  const fetchVersions = useCallback(async () => {
+    if (!savedContractId) return;
+    setLoadingVersions(true);
+    try {
+      const response = await fetch(`/api/contracts/${savedContractId}/versions`);
+      const data = await response.json();
+      if (response.ok && data.versions) {
+        setVersions(data.versions);
+      }
+    } catch (err) {
+      console.error("Error fetching versions:", err);
+    } finally {
+      setLoadingVersions(false);
+    }
+  }, [savedContractId]);
+
+  // Fetch dates for saved contract
+  const fetchDates = useCallback(async () => {
+    if (!savedContractId) return;
+    setLoadingDates(true);
+    try {
+      const response = await fetch(`/api/contracts/${savedContractId}/dates`);
+      const data = await response.json();
+      if (response.ok && data.dates) {
+        setDates(data.dates);
+      }
+    } catch (err) {
+      console.error("Error fetching dates:", err);
+    } finally {
+      setLoadingDates(false);
+    }
+  }, [savedContractId]);
+
+  // Upload new version
+  const uploadNewVersion = useCallback(async (file: File) => {
+    if (!savedContractId) return;
+    setUploadingVersion(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      const response = await fetch(`/api/contracts/${savedContractId}/versions`, {
+        method: "POST",
+        body: formData,
+      });
+      if (response.ok) {
+        fetchVersions();
+      } else {
+        const data = await response.json();
+        alert(data.error || "Failed to upload version");
+      }
+    } catch (err) {
+      console.error("Error uploading version:", err);
+    } finally {
+      setUploadingVersion(false);
+    }
+  }, [savedContractId, fetchVersions]);
+
+  // Add date
+  const addDate = useCallback(async () => {
+    if (!savedContractId || !newDate.date_type || !newDate.date) return;
+    try {
+      const response = await fetch(`/api/contracts/${savedContractId}/dates`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(newDate),
+      });
+      if (response.ok) {
+        fetchDates();
+        setShowAddDate(false);
+        setNewDate({ date_type: "", date: "", description: "" });
+      }
+    } catch (err) {
+      console.error("Error adding date:", err);
+    }
+  }, [savedContractId, newDate, fetchDates]);
+
+  // Delete date
+  const deleteDate = useCallback(async (dateId: string) => {
+    if (!savedContractId) return;
+    try {
+      await fetch(`/api/contracts/${savedContractId}/dates?dateId=${dateId}`, {
+        method: "DELETE",
+      });
+      setDates(dates.filter((d) => d.id !== dateId));
+    } catch (err) {
+      console.error("Error deleting date:", err);
+    }
+  }, [savedContractId, dates]);
+
+  // Fetch versions and dates when contract is saved
+  useEffect(() => {
+    if (savedContractId) {
+      fetchVersions();
+      fetchDates();
+    }
+  }, [savedContractId, fetchVersions, fetchDates]);
+
   // ============================================
-  // IDLE STATE - Upload Screen
+  // IDLE STATE - Upload Screen (Midday style)
   // ============================================
   if (status === "idle") {
     return (
-      <div className="min-h-screen bg-background flex flex-col">
+      <div className="min-h-screen bg-black flex flex-col">
         <Navbar showNewAnalysis={false} />
 
         {/* Upload Area */}
         <main className="flex-1 flex items-center justify-center p-8 pt-24">
-          <div className="w-full max-w-2xl space-y-8">
+          <div className="w-full max-w-md space-y-6">
             <div className="text-center">
-              <h1 className="text-3xl font-bold mb-2">Analyze Your Contract</h1>
-              <p className="text-muted-foreground">
-                Upload a contract to get instant AI-powered analysis
+              <h1 className="text-2xl font-medium text-white mb-2">Upload Contract</h1>
+              <p className="text-[#878787] text-sm">
+                Drop a file to get instant AI analysis
               </p>
             </div>
 
-            {/* Upload Zone */}
+            {/* Upload Zone - Matching homepage style */}
             <div
               onDragOver={handleDragOver}
               onDrop={handleDrop}
               onClick={() => fileInputRef.current?.click()}
-              className="border-2 border-dashed border-border rounded-2xl p-12 text-center hover:border-primary/50 hover:bg-primary/5 transition-all cursor-pointer group"
+              className="border-2 border-dashed border-border/50 hover:border-primary/50 hover:bg-primary/5 rounded-2xl p-10 text-center transition-all cursor-pointer group"
             >
               <input
                 ref={fileInputRef}
@@ -317,14 +512,14 @@ export default function AnalyzePage() {
                 onChange={handleFileInput}
                 className="hidden"
               />
-              <div className="p-4 rounded-2xl bg-muted/50 w-fit mx-auto mb-4 group-hover:bg-primary/10 transition-colors">
+              <div className="p-4 rounded-2xl w-fit mx-auto mb-4 bg-muted/50 group-hover:bg-primary/10 transition-all">
                 <Upload className="w-8 h-8 text-muted-foreground group-hover:text-primary transition-colors" />
               </div>
-              <p className="text-lg font-medium mb-2">Drop your contract here</p>
-              <p className="text-muted-foreground mb-4">or click to browse</p>
+              <p className="text-lg font-medium text-white mb-2">Drop your contract here</p>
+              <p className="text-muted-foreground text-sm mb-4">or click to browse</p>
               <div className="flex justify-center gap-2">
                 {["PDF", "Word", "TXT"].map((format) => (
-                  <Badge key={format} variant="secondary">{format}</Badge>
+                  <Badge key={format} variant="secondary" className="text-xs bg-primary/10 text-primary border border-primary/30">{format}</Badge>
                 ))}
               </div>
             </div>
@@ -335,581 +530,957 @@ export default function AnalyzePage() {
   }
 
   // ============================================
-  // LOADING STATE
+  // LOADING STATE - Fresh Design
   // ============================================
   if (status === "uploading" || status === "analyzing") {
+    const currentStep = status === "uploading" ? 0 : 1;
     const steps = [
-      { label: "Uploading document", done: status === "analyzing" },
-      { label: "Extracting text", done: status === "analyzing" },
-      { label: "AI analysis in progress", done: false },
-      { label: "Generating insights", done: false },
+      { label: "Uploading", sublabel: "Securing your document" },
+      { label: "Analyzing", sublabel: "AI reading contract terms" },
+      { label: "Generating", sublabel: "Building your insights" },
     ];
-    
+
     return (
-      <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4">
-        {/* Background glow */}
-        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-          <div className="w-96 h-96 bg-gradient-to-r from-primary/20 via-primary/10 to-primary/20 blur-3xl opacity-50 rounded-full" />
-        </div>
-        
-        {/* Lottie Animation - Above card */}
-        <div className="w-40 h-40 mb-6 relative z-10">
-          <Lottie animationData={searchAnimation} loop={true} />
-        </div>
-        
-        {/* Title - Above card */}
-        <div className="text-center mb-6 relative z-10">
-          <h2 className="text-2xl font-bold text-foreground mb-2">
-            {status === "uploading" ? "Uploading Document" : "Analyzing Your Contract"}
-          </h2>
-          <p className="text-muted-foreground text-sm">
-            Our AI is reviewing every clause for risks and opportunities
-          </p>
-        </div>
-          
-        <Card className="relative border-border/50 bg-card/80 backdrop-blur-sm w-full max-w-md z-10">
-          <CardContent className="p-6">
-              
-              {/* File info */}
-              <div className="flex items-center gap-3 p-3 rounded-xl bg-muted/50 border border-border/50 mb-6">
-                <div className="p-2 rounded-lg bg-primary/10">
-                  <FileText className="w-5 h-5 text-primary" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-foreground truncate">{fileName}</p>
-                  <p className="text-xs text-muted-foreground">Processing...</p>
-                </div>
-              </div>
-              
-              {/* Progress Steps */}
-              <div className="space-y-3">
-                {steps.map((step, i) => (
-                  <div key={i} className="flex items-center gap-3">
-                    <div className={cn(
-                      "w-6 h-6 rounded-full flex items-center justify-center text-xs font-medium transition-all",
-                      step.done 
-                        ? "bg-primary text-primary-foreground" 
-                        : i === (status === "uploading" ? 0 : 2)
-                          ? "bg-primary/20 text-primary animate-pulse ring-2 ring-primary/30"
-                          : "bg-muted text-muted-foreground"
-                    )}>
-                      {step.done ? (
-                        <CheckCircle2 className="w-4 h-4" />
-                      ) : (
-                        i + 1
-                      )}
-                    </div>
-                    <span className={cn(
-                      "text-sm transition-colors",
-                      step.done ? "text-foreground" : i === (status === "uploading" ? 0 : 2) ? "text-foreground" : "text-muted-foreground"
-                    )}>
-                      {step.label}
-                    </span>
+      <div className="min-h-screen bg-black flex flex-col items-center justify-center p-4">
+        <div className="w-full max-w-md space-y-8">
+          {/* Music Loader - Prominent */}
+          <div className="flex justify-center">
+            <div className="w-40 h-40">
+              <Lottie animationData={loadMusicAnimation} loop={true} />
+            </div>
+          </div>
+
+          {/* Current Status - Large and Clear */}
+          <div className="text-center space-y-2">
+            <h2 className="text-2xl font-medium text-white">
+              {steps[currentStep].label}
+              <span className="inline-flex ml-1">
+                <span className="animate-pulse">.</span>
+                <span className="animate-pulse" style={{ animationDelay: "0.2s" }}>.</span>
+                <span className="animate-pulse" style={{ animationDelay: "0.4s" }}>.</span>
+              </span>
+            </h2>
+            <p className="text-sm text-[#878787]">{steps[currentStep].sublabel}</p>
+          </div>
+
+          {/* Progress Bar */}
+          <div className="space-y-3">
+            <div className="h-1 bg-[#262626] overflow-hidden">
+              <div
+                className="h-full bg-primary transition-all duration-500 ease-out"
+                style={{ width: `${((currentStep + 1) / steps.length) * 100}%` }}
+              />
+            </div>
+
+            {/* Step Indicators */}
+            <div className="flex justify-between">
+              {steps.map((step, i) => (
+                <div key={i} className="flex items-center gap-2">
+                  <div className={cn(
+                    "w-5 h-5 flex items-center justify-center text-xs font-medium transition-all",
+                    i < currentStep
+                      ? "bg-primary text-primary-foreground"
+                      : i === currentStep
+                        ? "border border-primary text-primary"
+                        : "border border-[#262626] text-[#525252]"
+                  )}>
+                    {i < currentStep ? (
+                      <CheckCircle2 className="w-3 h-3" />
+                    ) : (
+                      i + 1
+                    )}
                   </div>
-                ))}
-              </div>
-              
-              {/* Bottom tip */}
-              <div className="mt-6 pt-4 border-t border-border/50">
-                <p className="text-xs text-muted-foreground text-center">
-                  💡 Tip: The more detailed your contract, the better our analysis
-                </p>
-              </div>
-            </CardContent>
-          </Card>
+                  <span className={cn(
+                    "text-xs hidden sm:inline transition-colors",
+                    i <= currentStep ? "text-[#878787]" : "text-[#525252]"
+                  )}>
+                    {step.label}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* File Card */}
+          <div className="border border-[#262626] p-4 flex items-center gap-4">
+            <div className="w-12 h-12 border border-[#262626] flex items-center justify-center shrink-0">
+              <FileText className="w-5 h-5 text-primary" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium text-white truncate">{fileName}</p>
+              <p className="text-xs text-[#525252] mt-0.5">
+                {status === "uploading" ? "Uploading..." : "Processing with AI..."}
+              </p>
+            </div>
+            <div className="w-8 h-8 flex items-center justify-center">
+              <Loader2 className="w-4 h-4 text-primary animate-spin" />
+            </div>
+          </div>
+
+          {/* Fun Fact / Tip */}
+          <div className="flex justify-center">
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-primary/10 border border-primary/30">
+              <HugeiconsIcon icon={AiIdeaIcon} size={14} className="text-primary" />
+              <span className="text-xs text-primary">Our AI checks for 50+ common contract pitfalls</span>
+            </div>
+          </div>
+        </div>
       </div>
     );
   }
 
   // ============================================
-  // ERROR STATE
+  // ERROR STATE (Midday style)
   // ============================================
   if (status === "error") {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center space-y-4 max-w-md">
-          <AlertTriangle className="w-12 h-12 text-red-500 mx-auto" />
-          <div>
-            <p className="text-lg font-medium">Analysis Failed</p>
-            <p className="text-sm text-muted-foreground">{error}</p>
+      <div className="min-h-screen bg-black flex items-center justify-center">
+        <div className="text-center space-y-4 max-w-md p-6 border border-[#262626] rounded-lg">
+          <div className="w-12 h-12 rounded-lg border border-red-400/30 flex items-center justify-center mx-auto">
+            <AlertTriangle className="w-5 h-5 text-red-400" />
           </div>
-          <Button onClick={handleReset}>Try Again</Button>
+          <div>
+            <p className="text-base font-medium text-white">Analysis Failed</p>
+            <p className="text-sm text-[#878787] mt-1">{error}</p>
+          </div>
+          <Button 
+            onClick={handleReset}
+            className="bg-white text-black hover:bg-white/90 rounded"
+          >
+            Try Again
+          </Button>
         </div>
       </div>
     );
   }
 
   // ============================================
-  // COMPLETE STATE - Side by Side View
+  // COMPLETE STATE - Matching contract/[id] page design
   // ============================================
   if (!analysis) return null;
 
+  // Build tabs array - include Versions/Dates only if logged in and saved
+  const tabs = [
+    { id: "overview", label: "Overview" },
+    { id: "terms", label: "Key Terms" },
+    { id: "financial", label: "Finances" },
+    { id: "concerns", label: "Concerns" },
+    { id: "advice", label: "Advice" },
+    ...(savedContractId ? [
+      { id: "versions", label: "Versions" },
+      { id: "dates", label: "Dates" },
+    ] : []),
+  ];
+
   return (
-    <div className="flex flex-col h-screen bg-background overflow-hidden overflow-x-hidden pt-[57px]">
-      <Navbar />
+    <div className="flex flex-col h-screen bg-black overflow-hidden overflow-x-hidden pt-[57px]">
+      <Navbar showBorder />
 
       {/* Main Content Area */}
       <div className="flex flex-1 overflow-hidden">
         {/* Document Side Panel */}
-      <div 
-        className={cn(
-          "h-full flex flex-col bg-card transition-all duration-300 ease-in-out overflow-hidden",
-          showDocument ? "w-1/2 max-w-2xl border-r border-border" : "w-0"
-        )}
-      >
-        {showDocument && (
-          <>
-            {/* Panel Header */}
-            <div className="shrink-0 p-4 border-b border-border bg-muted/30 flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <FileText className="w-5 h-5 text-primary" />
-                <span className="font-medium">Original Contract</span>
-                {highlightedClause && (
-                  <Badge variant="secondary" className="text-xs">Highlighting</Badge>
+        <div
+          className={cn(
+            "h-full flex flex-col bg-black transition-all duration-300 ease-in-out overflow-hidden",
+            showDocument ? "w-1/2 max-w-2xl border-r border-[#262626]" : "w-0"
+          )}
+        >
+          {showDocument && (
+            <>
+              {/* Panel Header */}
+              <div className="shrink-0 h-12 px-4 border-b border-[#262626] bg-black flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <FileText className="w-4 h-4 text-[#878787]" />
+                  <span className="text-sm text-white">{fileName}</span>
+                  {highlightedClause && (
+                    <span className="text-xs text-[#525252] px-2 py-0.5 border border-[#262626]">Highlighting</span>
+                  )}
+                </div>
+                <div className="flex items-center gap-2">
+                  {highlightedClause && (
+                    <button
+                      onClick={() => setHighlightedClause(null)}
+                      className="text-xs text-[#878787] hover:text-white transition-colors"
+                    >
+                      Clear
+                    </button>
+                  )}
+                  <button
+                    onClick={() => { setShowDocument(false); setHighlightedClause(null); }}
+                    className="w-7 h-7 flex items-center justify-center hover:bg-[#1a1a1a] transition-colors"
+                  >
+                    <X className="w-4 h-4 text-[#878787]" />
+                  </button>
+                </div>
+              </div>
+              {/* PDF Content */}
+              <div className="flex-1 overflow-hidden bg-[#0a0a0a]">
+                <PDFViewerWithSearch
+                  fileUrl={fileUrl}
+                  searchText={highlightedClause || ""}
+                  className="h-full"
+                />
+              </div>
+            </>
+          )}
+        </div>
+
+        {/* Main Content */}
+        <div className="flex-1 overflow-auto">
+          <main className={cn(
+            "px-6 py-6 pb-24 transition-all duration-300",
+            showDocument ? "w-full" : "max-w-4xl mx-auto"
+          )}>
+            {/* Breadcrumbs */}
+            <div className="flex items-center gap-2 mb-6">
+              <Link href={savedContractId ? "/dashboard" : "/"} className="flex items-center justify-center w-7 h-7 border border-[#262626] hover:border-[#404040] transition-colors">
+                <ArrowLeft className="w-3.5 h-3.5 text-[#878787]" />
+              </Link>
+              <nav className="flex items-center gap-2 text-sm">
+                <Link href="/" className="text-[#878787] hover:text-white transition-colors">
+                  Home
+                </Link>
+                <span className="text-[#525252]">/</span>
+                <span className="text-[#878787]">{analysis.contractType || "Contract"}</span>
+                <span className="text-[#525252]">/</span>
+                <span className="text-white font-medium">Analysis</span>
+              </nav>
+            </div>
+
+            {/* Header */}
+            <div className="flex items-center justify-between mb-8">
+              <div>
+                <div className="flex items-center gap-3 mb-1">
+                  <h1 className="text-xl font-medium text-white">{analysis.contractType || fileName}</h1>
+                  <span className={cn(
+                    "text-xs px-2 py-0.5 border uppercase",
+                    analysis.overallRiskAssessment === "low" ? "border-green-500/30 text-green-400" :
+                    analysis.overallRiskAssessment === "medium" ? "border-yellow-500/30 text-yellow-400" :
+                    analysis.overallRiskAssessment === "high" ? "border-red-500/30 text-red-400" :
+                    "border-[#262626] text-[#525252]"
+                  )}>
+                    {analysis.overallRiskAssessment === "low" ? "Low Risk" :
+                     analysis.overallRiskAssessment === "medium" ? "Medium Risk" :
+                     analysis.overallRiskAssessment === "high" ? "High Risk" : "Analyzed"}
+                  </span>
+                </div>
+                {analysis.parties?.label && (
+                  <span className="text-[#525252] text-sm">
+                    {analysis.parties.label}
+                    {analysis.parties?.artist && ` · ${analysis.parties.artist}`}
+                  </span>
                 )}
               </div>
+
               <div className="flex items-center gap-2">
-                {highlightedClause && (
-                  <Button variant="ghost" size="sm" onClick={() => setHighlightedClause(null)}>
-                    Clear
-                  </Button>
+                <button
+                  onClick={() => setShowDocument(!showDocument)}
+                  className="h-7 px-2.5 text-xs text-[#878787] hover:text-white border border-[#262626] hover:border-[#404040] flex items-center gap-1.5 transition-colors"
+                >
+                  <FileText className="w-3 h-3" />
+                  {showDocument ? "Hide" : "Show"} PDF
+                </button>
+                <button
+                  onClick={handleDownloadReport}
+                  disabled={downloading}
+                  className="h-7 px-2.5 text-xs text-[#878787] hover:text-white border border-[#262626] hover:border-[#404040] flex items-center gap-1.5 transition-colors disabled:opacity-50"
+                >
+                  {downloading ? (
+                    <Loader2 className="w-3 h-3 animate-spin" />
+                  ) : (
+                    <Download className="w-3 h-3" />
+                  )}
+                  Download Report
+                </button>
+
+                {/* Upload New Version - only if logged in and saved */}
+                {savedContractId && (
+                  <>
+                    <input
+                      ref={versionInputRef}
+                      type="file"
+                      accept=".pdf,.doc,.docx,.txt"
+                      className="hidden"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) uploadNewVersion(file);
+                      }}
+                    />
+                    <button
+                      onClick={() => versionInputRef.current?.click()}
+                      disabled={uploadingVersion}
+                      className="h-7 w-7 flex items-center justify-center border border-[#262626] hover:border-[#404040] transition-colors disabled:opacity-50"
+                    >
+                      {uploadingVersion ? (
+                        <Loader2 className="w-3 h-3 text-[#525252] animate-spin" />
+                      ) : (
+                        <Upload className="w-3 h-3 text-[#878787]" />
+                      )}
+                    </button>
+                  </>
                 )}
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  onClick={() => { setShowDocument(false); setHighlightedClause(null); }}
-                >
-                  <X className="w-4 h-4" />
-                </Button>
-              </div>
-            </div>
-            {/* PDF Content */}
-            <div className="flex-1 overflow-hidden">
-              <PDFViewerWithSearch 
-                fileUrl={fileUrl} 
-                searchText={highlightedClause || ""}
-                className="h-full"
-              />
-            </div>
-          </>
-        )}
-      </div>
 
-      {/* Main Content */}
-      <div className="flex-1 overflow-auto">
-        <main className={cn(
-          "mx-auto px-4 py-6 pb-24 transition-all duration-300",
-          showDocument ? "max-w-3xl" : "max-w-6xl"
-        )}>
-          {/* Header */}
-          <div className="flex items-center justify-between mb-6">
-            <div>
-              <div className="flex items-center gap-3 mb-0.5">
-                <h1 className="text-lg font-bold">{analysis.contractType || fileName}</h1>
-                <Badge 
-                  variant="outline"
-                  className={cn(
-                    "capitalize text-xs px-2 py-0",
-                    analysis.overallRiskAssessment === "high" && "border-red-500/40 text-red-400",
-                    analysis.overallRiskAssessment === "medium" && "border-amber-500/40 text-amber-400",
-                    analysis.overallRiskAssessment === "low" && "border-green-500/40 text-green-400"
-                  )}
-                >
-                  {analysis.overallRiskAssessment} risk
-                </Badge>
-              </div>
-              {analysis.parties?.label && (
-                <span className="text-muted-foreground text-xs">
-                  {analysis.parties.label}
-                  {analysis.parties?.artist && ` → ${analysis.parties.artist}`}
-                </span>
-              )}
-            </div>
-
-            <div className="flex items-center gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setShowDocument(!showDocument)}
-              >
-                <FileText className="w-4 h-4 mr-2" />
-                {showDocument ? "Hide" : "View"} Original
-              </Button>
-              {saving ? (
-                <Button variant="outline" size="sm" disabled>
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                </Button>
-              ) : savedContractId ? (
-                <Button variant="outline" size="sm" disabled>
-                  <CheckCircle2 className="w-4 h-4 text-green-500" />
-                </Button>
-              ) : user && (
-                <Button variant="outline" size="sm" onClick={() => originalFile && saveContract(analysis, originalFile)}>
-                  <Save className="w-4 h-4" />
-                </Button>
-              )}
-            </div>
-          </div>
-
-          {/* Tabbed Content */}
-          <Tabs defaultValue="overview" className="space-y-6">
-            <TabsList className="bg-muted/50 p-1 flex-wrap h-auto">
-              <TabsTrigger value="overview">Overview</TabsTrigger>
-              <TabsTrigger value="terms" className="flex items-center gap-1.5">
-                <HugeiconsIcon icon={LegalDocument01Icon} size={16} />
-                Key Terms
-              </TabsTrigger>
-              <TabsTrigger value="financial" className="flex items-center gap-1.5">
-                <HugeiconsIcon icon={Coins01Icon} size={16} />
-                Calculator
-              </TabsTrigger>
-              <TabsTrigger value="concerns" className="flex items-center gap-1.5">
-                <HugeiconsIcon icon={Alert02Icon} size={16} />
-                Concerns
-              </TabsTrigger>
-              <TabsTrigger value="missing" className="flex items-center gap-1.5">
-                <HugeiconsIcon icon={HelpSquareIcon} size={16} />
-                Missing
-              </TabsTrigger>
-              <TabsTrigger value="advice" className="flex items-center gap-1.5">
-                <HugeiconsIcon icon={AiIdeaIcon} size={16} />
-                Advice
-              </TabsTrigger>
-              <TabsTrigger value="negotiate" className="flex items-center gap-1.5">
-                <HugeiconsIcon icon={Comment01Icon} size={16} />
-                Negotiate
-              </TabsTrigger>
-            </TabsList>
-
-            {/* Overview Tab */}
-            <TabsContent value="overview" className="space-y-6">
-              {/* Summary Card */}
-              <div className="relative overflow-hidden rounded-xl border border-border/50 bg-gradient-to-br from-card via-card to-primary/5">
-                <div className="absolute top-0 right-0 w-32 h-32 bg-primary/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
-                <div className="relative p-5">
-                  <div className="flex items-start gap-4">
-                    <div className="p-2.5 rounded-xl bg-primary/10 border border-primary/20 shrink-0">
-                      <FileText className="w-5 h-5 text-primary" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-2">
-                        <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Contract Summary</h3>
-                        <div className="h-px flex-1 bg-gradient-to-r from-border/50 to-transparent" />
-                      </div>
-                      <p className="text-sm text-foreground/90 leading-relaxed">{analysis.summary}</p>
-                      
-                      {/* Quick Stats Row */}
-                      <div className="flex flex-wrap items-center gap-3 mt-4 pt-4 border-t border-border/30">
-                        {analysis.parties?.artist && (
-                          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                            <div className="w-1.5 h-1.5 rounded-full bg-blue-400" />
-                            <span className="text-foreground/70">{analysis.parties.artist}</span>
-                          </div>
-                        )}
-                        {analysis.parties?.label && (
-                          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                            <div className="w-1.5 h-1.5 rounded-full bg-purple-400" />
-                            <span className="text-foreground/70">{analysis.parties.label}</span>
-                          </div>
-                        )}
-                        {analysis.contractType && (
-                          <div className="flex items-center gap-1.5 text-xs">
-                            <div className="w-1.5 h-1.5 rounded-full bg-amber-400" />
-                            <span className="text-foreground/70">{analysis.contractType}</span>
-                          </div>
-                        )}
-                      </div>
-                    </div>
+                {/* Save indicator */}
+                {saving ? (
+                  <div className="h-7 w-7 flex items-center justify-center border border-[#262626]">
+                    <Loader2 className="w-3 h-3 text-[#525252] animate-spin" />
                   </div>
-                </div>
-              </div>
-              
-              {/* Financial Terms */}
-              {analysis.financialTerms && (
-                <div>
-                  <h3 className="text-xs font-semibold text-muted-foreground mb-2 flex items-center gap-2">
-                    <HugeiconsIcon icon={DollarCircleIcon} size={16} />
-                    FINANCIAL TERMS
-                  </h3>
-                  <div className="flex flex-wrap gap-2">
-                    {analysis.financialTerms.royaltyRate && (
-                      <div className="px-3 py-2 rounded-lg bg-blue-500/10 border border-blue-500/20 shrink-0">
-                        <p className="text-[10px] text-blue-400/70">Royalty</p>
-                        <p className="text-xs font-semibold text-blue-400 whitespace-nowrap">{analysis.financialTerms.royaltyRate}</p>
-                      </div>
-                    )}
-                    {analysis.termLength && (
-                      <div className="px-3 py-2 rounded-lg bg-amber-500/10 border border-amber-500/20 shrink-0">
-                        <p className="text-[10px] text-amber-400/70">Term</p>
-                        <p className="text-xs font-semibold text-amber-400 whitespace-nowrap">{analysis.termLength}</p>
-                      </div>
-                    )}
-                    {analysis.financialTerms.advanceAmount && (
-                      <div className="px-3 py-2 rounded-lg bg-green-500/10 border border-green-500/20 shrink-0">
-                        <p className="text-[10px] text-green-400/70">Advance</p>
-                        <p className="text-xs font-semibold text-green-400 whitespace-nowrap">{analysis.financialTerms.advanceAmount}</p>
-                      </div>
-                    )}
-                    {analysis.financialTerms.paymentSchedule && (
-                      <div className="px-3 py-2 rounded-lg bg-purple-500/10 border border-purple-500/20 shrink-0">
-                        <p className="text-[10px] text-purple-400/70">Payment</p>
-                        <p className="text-xs font-semibold text-purple-400 whitespace-nowrap">{analysis.financialTerms.paymentSchedule}</p>
-                      </div>
-                    )}
+                ) : savedContractId ? (
+                  <div className="h-7 w-7 flex items-center justify-center border border-[#262626]">
+                    <CheckCircle2 className="w-3 h-3 text-green-400" />
                   </div>
-                </div>
-              )}
-
-              {/* Quick Concerns Preview */}
-              {analysis.potentialConcerns && analysis.potentialConcerns.length > 0 && (
-                <div className="grid md:grid-cols-2 gap-4">
-                  <div className="p-4 rounded-xl bg-red-500/5 border border-red-500/20">
-                    <h4 className="text-xs font-semibold text-red-400 mb-2 flex items-center gap-2">
-                      <AlertTriangle className="w-3.5 h-3.5" />
-                      {analysis.potentialConcerns.length} Concerns Found
-                    </h4>
-                    <p className="text-sm text-foreground">{analysis.potentialConcerns[0]}</p>
-                  </div>
-                  {analysis.missingClauses && analysis.missingClauses.length > 0 && (
-                    <div className="p-4 rounded-xl bg-orange-500/5 border border-orange-500/20">
-                      <h4 className="text-xs font-semibold text-orange-400 mb-2 flex items-center gap-2">
-                        <HugeiconsIcon icon={HelpSquareIcon} size={14} />
-                        {analysis.missingClauses.length} Missing Protections
-                      </h4>
-                      <p className="text-sm text-foreground">{analysis.missingClauses[0].clause}: {analysis.missingClauses[0].description}</p>
-                    </div>
-                  )}
-                </div>
-              )}
-            </TabsContent>
-
-            {/* Key Terms Tab */}
-            <TabsContent value="terms">
-              <div className="rounded-xl border border-border/50 overflow-hidden">
-                <table className="w-full">
-                  <thead>
-                    <tr className="bg-muted/30 text-xs text-muted-foreground">
-                      <th className="text-left p-3 font-medium">Term</th>
-                      <th className="text-left p-3 font-medium">Value</th>
-                      <th className="text-left p-3 font-medium">Risk</th>
-                      <th className="text-left p-3 font-medium">Action</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {analysis.keyTerms?.map((term, i) => (
-                      <tr 
-                        key={i}
-                        onClick={() => handleClauseClick(term.originalText)}
-                        className={cn(
-                          "border-t border-border/30 cursor-pointer transition-all hover:bg-muted/20",
-                          term.riskLevel === "high" && "bg-red-500/5 hover:bg-red-500/10",
-                          highlightedClause === term.originalText && "ring-2 ring-primary bg-primary/5"
-                        )}
-                      >
-                        <td className="p-3">
-                          <div className="font-medium">{term.title}</div>
-                          <div className="text-xs text-muted-foreground mt-0.5">{term.explanation}</div>
-                        </td>
-                        <td className="p-3">
-                          <span className="text-sm text-foreground/80">{term.content}</span>
-                        </td>
-                        <td className="p-3">
-                          <Badge variant="outline" className={getRiskColor(term.riskLevel)}>
-                            {term.riskLevel}
-                          </Badge>
-                        </td>
-                        <td className="p-3">
-                          <Button variant="ghost" size="sm" className="text-xs">
-                            <Eye className="w-3 h-3 mr-1" />
-                            View
-                          </Button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+                ) : null}
               </div>
-            </TabsContent>
+            </div>
 
-            {/* Financial Calculator Tab */}
-            <TabsContent value="financial">
-              <FinancialCalculator 
-                contractData={{
-                  royaltyRate: analysis.financialTerms?.royaltyRate,
-                  advanceAmount: analysis.financialTerms?.advanceAmount,
-                  termLength: analysis.termLength,
-                }}
-              />
-            </TabsContent>
-
-            {/* Concerns Tab */}
-            <TabsContent value="concerns" className="space-y-3">
-              {analysis.potentialConcerns?.map((concern, i) => {
-                const snippet = analysis.concernSnippets?.[i];
-                return (
-                  <div 
-                    key={i}
-                    onClick={() => snippet && handleClauseClick(snippet)}
+            {/* Tabbed Content with animated underlines */}
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+              <div className="flex gap-6 border-b border-[#262626]">
+                {tabs.map((tab) => (
+                  <button
+                    key={tab.id}
+                    onClick={() => setActiveTab(tab.id)}
                     className={cn(
-                      "p-4 rounded-xl bg-red-500/5 border border-red-500/20 cursor-pointer hover:bg-red-500/10 transition-all flex items-start gap-3",
-                      highlightedClause === snippet && "ring-2 ring-primary"
+                      "relative pb-3 text-sm transition-colors",
+                      activeTab === tab.id ? "text-white" : "text-[#525252] hover:text-[#878787]"
                     )}
                   >
-                    <div className="w-6 h-6 rounded-full bg-red-500/20 flex items-center justify-center shrink-0">
-                      <span className="text-xs font-bold text-red-400">{i + 1}</span>
+                    {tab.label}
+                    {activeTab === tab.id && (
+                      <motion.div
+                        layoutId="tab-underline-analyze"
+                        className="absolute bottom-0 left-0 right-0 h-[2px] bg-white"
+                        transition={{ type: "spring", stiffness: 500, damping: 30 }}
+                      />
+                    )}
+                  </button>
+                ))}
+              </div>
+
+              {/* Overview Tab */}
+              <TabsContent value="overview" className="space-y-6">
+                {/* Summary */}
+                <div className="border border-[#262626] p-4">
+                  <div className="flex items-center gap-2 mb-3">
+                    <span className="text-[10px] text-[#525252] uppercase tracking-wider">Summary</span>
+                    <div className="h-px flex-1 bg-[#262626]" />
+                  </div>
+                  <p className="text-sm text-[#a3a3a3] leading-relaxed">{analysis.summary}</p>
+
+                  {/* Quick Stats Row */}
+                  <div className="flex flex-wrap items-center gap-4 mt-4 pt-4 border-t border-[#262626]">
+                    {analysis.parties?.artist && (
+                      <div className="text-xs text-[#525252]">
+                        <span className="text-[#878787]">{analysis.parties.artist}</span>
+                      </div>
+                    )}
+                    {analysis.parties?.label && (
+                      <div className="text-xs text-[#525252]">
+                        <span className="text-[#878787]">{analysis.parties.label}</span>
+                      </div>
+                    )}
+                    {analysis.contractType && (
+                      <div className="text-xs">
+                        <span className="text-[#878787]">{analysis.contractType}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Financial Terms - Card style */}
+                {analysis.financialTerms && (
+                  <div>
+                    <div className="flex items-center gap-2 mb-4">
+                      <span className="text-[10px] text-[#525252] uppercase tracking-wider">Financial Terms</span>
+                      <div className="h-px flex-1 bg-[#262626]" />
                     </div>
-                    <div className="flex-1">
-                      <p className="text-sm">{concern}</p>
-                      {snippet && (
-                        <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
-                          <Eye className="w-3 h-3" /> Click to view in contract
-                        </p>
+                    <div className="grid grid-cols-3 gap-3">
+                      {analysis.financialTerms.royaltyRate && (
+                        <div className="border border-[#262626] p-3">
+                          <div className="flex items-center gap-2 mb-1">
+                            <TrendingUp className="w-3 h-3 text-[#525252]" />
+                            <span className="text-[10px] text-white">Royalty</span>
+                          </div>
+                          <p className="text-[10px] text-[#525252] mb-3">Your share of net sums</p>
+                          <p className="text-sm text-white">{analysis.financialTerms.royaltyRate}</p>
+                        </div>
+                      )}
+                      {analysis.termLength && (
+                        <div className="border border-[#262626] p-3">
+                          <div className="flex items-center gap-2 mb-1">
+                            <Calendar className="w-3 h-3 text-[#525252]" />
+                            <span className="text-[10px] text-white">Term</span>
+                          </div>
+                          <p className="text-[10px] text-[#525252] mb-3">Contract duration</p>
+                          <p className="text-sm text-white">{analysis.termLength}</p>
+                        </div>
+                      )}
+                      {analysis.financialTerms.advanceAmount && (
+                        <div className="border border-[#262626] p-3">
+                          <div className="flex items-center gap-2 mb-1">
+                            <DollarSign className="w-3 h-3 text-[#525252]" />
+                            <span className="text-[10px] text-white">Advance</span>
+                          </div>
+                          <p className="text-[10px] text-[#525252] mb-3">Upfront payment</p>
+                          <p className="text-sm text-white">{analysis.financialTerms.advanceAmount}</p>
+                        </div>
+                      )}
+                      {analysis.financialTerms.paymentSchedule && (
+                        <div className="border border-[#262626] p-3">
+                          <div className="flex items-center gap-2 mb-1">
+                            <Clock className="w-3 h-3 text-[#525252]" />
+                            <span className="text-[10px] text-white">Payment</span>
+                          </div>
+                          <p className="text-[10px] text-[#525252] mb-3">Payment schedule</p>
+                          <p className="text-sm text-white">{analysis.financialTerms.paymentSchedule}</p>
+                        </div>
                       )}
                     </div>
                   </div>
-                );
-              })}
-            </TabsContent>
+                )}
 
-            {/* Missing Clauses Tab */}
-            <TabsContent value="missing" className="space-y-3">
-              {(analysis.missingClauses || DEFAULT_MISSING_CLAUSES).map((missing, i) => (
-                <div 
-                  key={i}
-                  className={cn(
-                    "p-4 rounded-xl border flex items-start gap-3",
-                    missing.severity === "critical" && "bg-red-500/10 border-red-500/30",
-                    missing.severity === "high" && "bg-orange-500/10 border-orange-500/30",
-                    missing.severity === "medium" && "bg-amber-500/10 border-amber-500/30"
-                  )}
-                >
-                  <AlertOctagon className={cn(
-                    "w-5 h-5 shrink-0",
-                    missing.severity === "critical" && "text-red-400",
-                    missing.severity === "high" && "text-orange-400",
-                    missing.severity === "medium" && "text-amber-400"
-                  )} />
-                  <div className="flex-1">
-                    <div className="flex items-center justify-between">
-                      <span className="font-medium">{missing.clause}</span>
-                      <Badge variant="outline" className={cn(
-                        "text-xs capitalize",
-                        missing.severity === "critical" && "text-red-400 border-red-400/50",
-                        missing.severity === "high" && "text-orange-400 border-orange-400/50",
-                        missing.severity === "medium" && "text-amber-400 border-amber-400/50"
-                      )}>
-                        {missing.severity}
-                      </Badge>
+                {/* Quick Concerns Preview */}
+                {analysis.potentialConcerns && analysis.potentialConcerns.length > 0 && (
+                  <div className="grid md:grid-cols-2 gap-2">
+                    <div className="border border-[#262626] p-3">
+                      <div className="flex items-center gap-2 mb-2">
+                        <AlertTriangle className="w-3 h-3 text-red-400" />
+                        <span className="text-xs text-red-400">{analysis.potentialConcerns.length} Concerns Found</span>
+                      </div>
+                      <p className="text-xs text-[#a3a3a3]">{analysis.potentialConcerns[0]}</p>
                     </div>
-                    <p className="text-sm text-muted-foreground mt-1">{missing.description}</p>
+                    {analysis.missingClauses && analysis.missingClauses.length > 0 && (
+                      <div className="border border-[#262626] p-3">
+                        <div className="flex items-center gap-2 mb-2">
+                          <HugeiconsIcon icon={HelpSquareIcon} size={12} className="text-yellow-400" />
+                          <span className="text-xs text-yellow-400">{analysis.missingClauses.length} Missing Protections</span>
+                        </div>
+                        <p className="text-xs text-[#a3a3a3]">{analysis.missingClauses[0].clause}: {analysis.missingClauses[0].description}</p>
+                      </div>
+                    )}
                   </div>
-                </div>
-              ))}
-            </TabsContent>
+                )}
+              </TabsContent>
 
-            {/* Advice Tab */}
-            <TabsContent value="advice" className="space-y-3">
-              {analysis.recommendations?.map((rec, i) => (
-                <div key={i} className="flex gap-3 p-4 rounded-xl bg-green-500/5 border border-green-500/20">
-                  <CheckCircle2 className="w-5 h-5 text-green-500 shrink-0" />
-                  <p className="text-sm">{rec}</p>
-                </div>
-              ))}
-            </TabsContent>
+              {/* Key Terms Tab - Expandable Cards */}
+              <TabsContent value="terms" className="space-y-2">
+                {(!analysis.keyTerms || analysis.keyTerms.length === 0) && (
+                  <div className="border border-[#262626] p-8 text-center">
+                    <FileText className="w-6 h-6 text-[#525252] mx-auto mb-2" />
+                    <p className="text-xs text-[#878787]">No key terms extracted</p>
+                  </div>
+                )}
+                {analysis.keyTerms?.map((term, i) => {
+                  const isExpanded = expandedTerm === i;
+                  return (
+                    <div
+                      key={i}
+                      className={cn(
+                        "border border-[#262626] transition-all",
+                        isExpanded && "bg-[#0a0a0a] border-[#404040]"
+                      )}
+                    >
+                      <button
+                        onClick={() => setExpandedTerm(isExpanded ? null : i)}
+                        className="w-full p-3 flex items-center gap-3 text-left hover:bg-[#1a1a1a] transition-colors"
+                      >
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className="text-xs text-white font-medium">{term.title}</span>
+                            <span className={cn("text-[10px] px-1.5 py-0.5 border capitalize", getRiskColor(term.riskLevel))}>
+                              {term.riskLevel}
+                            </span>
+                          </div>
+                          <p className="text-xs text-[#878787] line-clamp-1">{term.content}</p>
+                        </div>
+                        <div className={cn(
+                          "text-[#525252] transition-transform shrink-0",
+                          isExpanded && "rotate-180"
+                        )}>
+                          <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                            <path d="M2.5 4.5L6 8L9.5 4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                          </svg>
+                        </div>
+                      </button>
+                      <motion.div
+                        initial={false}
+                        animate={{ height: isExpanded ? "auto" : 0, opacity: isExpanded ? 1 : 0 }}
+                        transition={{ duration: 0.2, ease: "easeOut" }}
+                        className="overflow-hidden"
+                      >
+                        <div className="border-t border-[#262626]">
+                          <div className="p-3 space-y-4">
+                            {/* Full Term Value */}
+                            <div>
+                              <p className="text-[10px] text-[#525252] uppercase tracking-wider mb-1">What This Says</p>
+                              <p className="text-xs text-[#a3a3a3]">{term.content}</p>
+                            </div>
 
-            {/* Negotiation Tab */}
-            <TabsContent value="negotiate">
-              <NegotiationAssistant 
-                analysis={analysis}
-                contractTitle={analysis.contractType}
-              />
-            </TabsContent>
-          </Tabs>
-        </main>
-      </div>
+                            {/* Plain English Explanation */}
+                            <div>
+                              <p className="text-[10px] text-[#525252] uppercase tracking-wider mb-1">In Plain English</p>
+                              <p className="text-xs text-[#878787]">{term.explanation}</p>
+                            </div>
+
+                            {/* Risk Assessment */}
+                            <div>
+                              <p className="text-[10px] text-[#525252] uppercase tracking-wider mb-1">Risk Assessment</p>
+                              <div className="flex items-start gap-2">
+                                <span className={cn("text-[10px] px-1.5 py-0.5 border capitalize shrink-0", getRiskColor(term.riskLevel))}>
+                                  {term.riskLevel}
+                                </span>
+                                <p className="text-xs text-[#878787]">
+                                  {term.riskLevel === "high" && "This term significantly favors the other party and could limit your rights or earnings."}
+                                  {term.riskLevel === "medium" && "This term has some elements that could be improved but is within industry norms."}
+                                  {term.riskLevel === "low" && "This term is favorable or standard for agreements of this type."}
+                                </p>
+                              </div>
+                            </div>
+
+                            {/* What to Look For */}
+                            <div>
+                              <p className="text-[10px] text-[#525252] uppercase tracking-wider mb-1">What to Look For</p>
+                              <ul className="text-xs text-[#878787] space-y-1">
+                                {getTermChecklist(term.title).map((item, idx) => (
+                                  <li key={idx} className="flex items-start gap-2">
+                                    <span className="text-[#525252] mt-1">•</span>
+                                    <span>{item}</span>
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+
+                            {/* Actions */}
+                            <div className="flex items-center gap-3 pt-2 border-t border-[#1a1a1a]">
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleClauseClick(term.originalText);
+                                }}
+                                className="text-[10px] text-[#525252] hover:text-white flex items-center gap-1 transition-colors"
+                              >
+                                <Eye className="w-2.5 h-2.5" /> View in contract
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      </motion.div>
+                    </div>
+                  );
+                })}
+              </TabsContent>
+
+              {/* Financial Calculator Tab */}
+              <TabsContent value="financial">
+                <FinancialCalculator
+                  contractData={{
+                    royaltyRate: analysis.financialTerms?.royaltyRate,
+                    advanceAmount: analysis.financialTerms?.advanceAmount,
+                    termLength: analysis.termLength,
+                  }}
+                />
+              </TabsContent>
+
+              {/* Concerns Tab - Expandable Cards */}
+              <TabsContent value="concerns" className="space-y-2">
+                {(!analysis.potentialConcerns || analysis.potentialConcerns.length === 0) && (
+                  <div className="border border-[#262626] p-8 text-center">
+                    <AlertTriangle className="w-6 h-6 text-[#525252] mx-auto mb-2" />
+                    <p className="text-xs text-[#878787]">No concerns identified</p>
+                  </div>
+                )}
+                {analysis.potentialConcerns?.map((concern, i) => {
+                  const snippet = analysis.concernSnippets?.[i];
+                  const isExpanded = expandedConcern === i;
+                  return (
+                    <div
+                      key={i}
+                      className={cn(
+                        "border border-[#262626] transition-all",
+                        isExpanded && "bg-[#0a0a0a] border-[#404040]"
+                      )}
+                    >
+                      <button
+                        onClick={() => setExpandedConcern(isExpanded ? null : i)}
+                        className="w-full p-3 flex items-start gap-3 text-left hover:bg-[#1a1a1a] transition-colors"
+                      >
+                        <div className="w-5 h-5 border border-[#262626] flex items-center justify-center shrink-0">
+                          <span className="text-[10px] text-[#878787]">{i + 1}</span>
+                        </div>
+                        <div className="flex-1">
+                          <p className="text-xs text-[#a3a3a3]">{concern}</p>
+                        </div>
+                        <div className={cn(
+                          "text-[#525252] transition-transform",
+                          isExpanded && "rotate-180"
+                        )}>
+                          <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                            <path d="M2.5 4.5L6 8L9.5 4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                          </svg>
+                        </div>
+                      </button>
+                      <motion.div
+                        initial={false}
+                        animate={{ height: isExpanded ? "auto" : 0, opacity: isExpanded ? 1 : 0 }}
+                        transition={{ duration: 0.2, ease: "easeOut" }}
+                        className="overflow-hidden"
+                      >
+                        <div className="border-t border-[#262626]">
+                          <div className="p-3 space-y-3">
+                            <div>
+                              <p className="text-[10px] text-[#525252] uppercase tracking-wider mb-1">Why This Matters</p>
+                              <p className="text-xs text-[#878787]">
+                                This clause could limit your flexibility or create obligations that may not be in your best interest. Consider negotiating for more favorable terms or adding protective language.
+                              </p>
+                            </div>
+                            <div>
+                              <p className="text-[10px] text-[#525252] uppercase tracking-wider mb-1">Suggested Action</p>
+                              <p className="text-xs text-[#878787]">
+                                Review this section carefully with legal counsel before signing. Ask for clarification on any ambiguous terms.
+                              </p>
+                            </div>
+                            {snippet && (
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleClauseClick(snippet);
+                                }}
+                                className="text-[10px] text-[#525252] hover:text-white flex items-center gap-1 transition-colors"
+                              >
+                                <Eye className="w-2.5 h-2.5" /> View in contract
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      </motion.div>
+                    </div>
+                  );
+                })}
+              </TabsContent>
+
+              {/* Advice Tab - Expandable Cards */}
+              <TabsContent value="advice" className="space-y-2">
+                {(!analysis.recommendations || analysis.recommendations.length === 0) && (
+                  <div className="border border-[#262626] p-8 text-center">
+                    <CheckCircle2 className="w-6 h-6 text-[#525252] mx-auto mb-2" />
+                    <p className="text-xs text-[#878787]">No recommendations available</p>
+                  </div>
+                )}
+                {analysis.recommendations?.map((rec, i) => {
+                  const isExpanded = expandedAdvice === i;
+                  // Handle both legacy string format and new object format
+                  const isStructured = typeof rec === 'object' && rec !== null;
+                  const advice = isStructured ? rec.advice : rec;
+                  const rationale = isStructured ? rec.rationale : "Following this recommendation helps protect your rights and ensures you maintain leverage in negotiations. Industry standards support this approach.";
+                  const howToImplement = isStructured ? rec.howToImplement : "Bring this up during your next negotiation session. Frame it as a standard industry practice.";
+                  const priority = isStructured ? rec.priority : "medium";
+
+                  const priorityColor = priority === "high" ? "text-red-400" : priority === "medium" ? "text-amber-500" : "text-green-400";
+                  const priorityLabel = priority === "high" ? "Address immediately" : priority === "medium" ? "Address before signing" : "Nice to have";
+
+                  return (
+                    <div
+                      key={i}
+                      className={cn(
+                        "border border-[#262626] transition-all",
+                        isExpanded && "bg-[#0a0a0a] border-[#404040]"
+                      )}
+                    >
+                      <button
+                        onClick={() => setExpandedAdvice(isExpanded ? null : i)}
+                        className="w-full p-3 flex items-start gap-2.5 text-left hover:bg-[#1a1a1a] transition-colors"
+                      >
+                        <CheckCircle2 className="w-3.5 h-3.5 text-[#878787] shrink-0 mt-0.5" />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs text-[#a3a3a3]">{advice}</p>
+                          {isStructured && (
+                            <span className={cn("text-[10px] mt-1 inline-block", priorityColor)}>
+                              {priority.charAt(0).toUpperCase() + priority.slice(1)} priority
+                            </span>
+                          )}
+                        </div>
+                        <div className={cn(
+                          "text-[#525252] transition-transform shrink-0",
+                          isExpanded && "rotate-180"
+                        )}>
+                          <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                            <path d="M2.5 4.5L6 8L9.5 4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                          </svg>
+                        </div>
+                      </button>
+                      <motion.div
+                        initial={false}
+                        animate={{ height: isExpanded ? "auto" : 0, opacity: isExpanded ? 1 : 0 }}
+                        transition={{ duration: 0.2, ease: "easeOut" }}
+                        className="overflow-hidden"
+                      >
+                        <div className="border-t border-[#262626]">
+                          <div className="p-3 space-y-3">
+                            <div>
+                              <p className="text-[10px] text-[#525252] uppercase tracking-wider mb-1">Rationale</p>
+                              <p className="text-xs text-[#878787]">{rationale}</p>
+                            </div>
+                            <div>
+                              <p className="text-[10px] text-[#525252] uppercase tracking-wider mb-1">How to Implement</p>
+                              <p className="text-xs text-[#878787]">{howToImplement}</p>
+                            </div>
+                            <div>
+                              <p className="text-[10px] text-[#525252] uppercase tracking-wider mb-1">Priority</p>
+                              <div className="flex items-center gap-2">
+                                <span className={cn("text-xs", priorityColor)}>{priority.charAt(0).toUpperCase() + priority.slice(1)}</span>
+                                <span className="text-[10px] text-[#525252]">{priorityLabel}</span>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </motion.div>
+                    </div>
+                  );
+                })}
+              </TabsContent>
+
+              {/* Version History Tab - Only for logged in users with saved contract */}
+              {savedContractId && (
+                <TabsContent value="versions" className="space-y-2">
+                  <div className="flex items-center justify-between mb-3">
+                    <h4 className="text-xs font-medium text-white">Version History</h4>
+                    <button
+                      onClick={() => versionInputRef.current?.click()}
+                      disabled={uploadingVersion}
+                      className="h-7 px-2.5 text-xs text-[#878787] hover:text-white border border-[#262626] hover:border-[#404040] flex items-center gap-1.5 transition-colors disabled:opacity-50"
+                    >
+                      {uploadingVersion ? (
+                        <Loader2 className="w-3 h-3 animate-spin" />
+                      ) : (
+                        <Upload className="w-3 h-3" />
+                      )}
+                      Upload New Version
+                    </button>
+                  </div>
+
+                  {loadingVersions ? (
+                    <div className="flex items-center justify-center py-8">
+                      <Loader2 className="w-4 h-4 animate-spin text-[#525252]" />
+                    </div>
+                  ) : versions.length === 0 ? (
+                    <div className="text-center py-10 border border-[#262626]">
+                      <History className="w-6 h-6 mx-auto text-[#525252] mb-2" />
+                      <p className="text-xs text-[#878787] mb-1">No version history yet</p>
+                      <p className="text-[10px] text-[#525252]">Upload a new version to start tracking changes</p>
+                    </div>
+                  ) : (
+                    <div className="relative">
+                      {/* Timeline line */}
+                      <div className="absolute left-3 top-0 bottom-0 w-px bg-[#262626]" />
+
+                      {versions.map((version, i) => (
+                        <div key={version.id} className="relative pl-8 pb-4">
+                          {/* Timeline dot */}
+                          <div className={cn(
+                            "absolute left-1.5 w-4 h-4 flex items-center justify-center",
+                            i === 0 ? "bg-white text-black" : "bg-[#1a1a1a] border border-[#262626] text-[#878787]"
+                          )}>
+                            <span className="text-[8px] font-bold">{version.version_number}</span>
+                          </div>
+
+                          <div className={cn(
+                            "border border-[#262626] p-3",
+                            i === 0 && "border-[#404040]"
+                          )}>
+                            <div className="flex items-center justify-between mb-2">
+                              <span className="text-[10px] text-[#878787] px-1.5 py-0.5 border border-[#262626]">
+                                Version {version.version_number}
+                              </span>
+                              <span className="text-[10px] text-[#525252]">
+                                {new Date(version.created_at).toLocaleDateString()}
+                              </span>
+                            </div>
+
+                            <p className="text-xs text-[#a3a3a3] mb-2">{version.changes_summary}</p>
+
+                            {version.analysis?.improvements && version.analysis.improvements.length > 0 && (
+                              <div className="space-y-1 mb-2">
+                                {version.analysis.improvements.slice(0, 2).map((imp, j) => (
+                                  <div key={j} className="flex items-center gap-1.5 text-[10px] text-green-400">
+                                    <ArrowUpRight className="w-2.5 h-2.5" />
+                                    <span>{imp}</span>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+
+                            {version.analysis?.regressions && version.analysis.regressions.length > 0 && (
+                              <div className="space-y-1">
+                                {version.analysis.regressions.slice(0, 2).map((reg, j) => (
+                                  <div key={j} className="flex items-center gap-1.5 text-[10px] text-red-400">
+                                    <ArrowDownRight className="w-2.5 h-2.5" />
+                                    <span>{reg}</span>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </TabsContent>
+              )}
+
+              {/* Key Dates Tab - Only for logged in users with saved contract */}
+              {savedContractId && (
+                <TabsContent value="dates" className="space-y-2">
+                  <div className="flex items-center justify-between mb-3">
+                    <h4 className="text-xs font-medium text-white">Key Dates & Deadlines</h4>
+                    <Dialog open={showAddDate} onOpenChange={setShowAddDate}>
+                      <DialogTrigger asChild>
+                        <button className="h-7 px-2.5 text-xs text-[#878787] hover:text-white border border-[#262626] hover:border-[#404040] flex items-center gap-1.5 transition-colors">
+                          <Plus className="w-3 h-3" />
+                          Add Date
+                        </button>
+                      </DialogTrigger>
+                      <DialogContent className="bg-[#0a0a0a] border-[#262626]">
+                        <DialogHeader>
+                          <DialogTitle className="text-white text-sm">Add Key Date</DialogTitle>
+                          <DialogDescription className="text-[#878787] text-xs">
+                            Track important deadlines for this contract
+                          </DialogDescription>
+                        </DialogHeader>
+                        <div className="space-y-3 py-3">
+                          <div className="space-y-1.5">
+                            <label className="text-xs font-medium text-[#878787]">Type</label>
+                            <Select
+                              value={newDate.date_type}
+                              onValueChange={(v) => setNewDate({ ...newDate, date_type: v })}
+                            >
+                              <SelectTrigger className="bg-transparent border-[#262626] text-white text-xs h-8">
+                                <SelectValue placeholder="Select type" />
+                              </SelectTrigger>
+                              <SelectContent className="bg-[#0a0a0a] border-[#262626]">
+                                <SelectItem value="option_period">Option Period</SelectItem>
+                                <SelectItem value="termination_window">Termination Window</SelectItem>
+                                <SelectItem value="renewal">Renewal Date</SelectItem>
+                                <SelectItem value="expiration">Expiration</SelectItem>
+                                <SelectItem value="payment">Payment Due</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          <div className="space-y-1.5">
+                            <label className="text-xs font-medium text-[#878787]">Date</label>
+                            <Input
+                              type="date"
+                              value={newDate.date}
+                              onChange={(e) => setNewDate({ ...newDate, date: e.target.value })}
+                              className="bg-transparent border-[#262626] text-white text-xs h-8"
+                            />
+                          </div>
+                          <div className="space-y-1.5">
+                            <label className="text-xs font-medium text-[#878787]">Description (optional)</label>
+                            <Input
+                              placeholder="e.g., Album option deadline"
+                              value={newDate.description}
+                              onChange={(e) => setNewDate({ ...newDate, description: e.target.value })}
+                              className="bg-transparent border-[#262626] text-white placeholder:text-[#525252] text-xs h-8"
+                            />
+                          </div>
+                        </div>
+                        <button
+                          onClick={addDate}
+                          className="w-full h-8 bg-white text-black hover:bg-white/90 text-xs font-medium transition-colors"
+                        >
+                          Add Date
+                        </button>
+                      </DialogContent>
+                    </Dialog>
+                  </div>
+
+                  {loadingDates ? (
+                    <div className="flex items-center justify-center py-8">
+                      <Loader2 className="w-4 h-4 animate-spin text-[#525252]" />
+                    </div>
+                  ) : dates.length === 0 ? (
+                    <div className="text-center py-10 border border-[#262626]">
+                      <Calendar className="w-6 h-6 mx-auto text-[#525252] mb-2" />
+                      <p className="text-xs text-[#878787] mb-1">No key dates tracked</p>
+                      <p className="text-[10px] text-[#525252]">Add important deadlines to get reminders</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-1.5">
+                      {dates.map((date) => {
+                        const dateObj = new Date(date.date);
+                        const today = new Date();
+                        const daysUntil = Math.ceil((dateObj.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+                        const isPast = daysUntil < 0;
+                        const isUrgent = daysUntil >= 0 && daysUntil <= 7;
+
+                        const typeLabels: Record<string, string> = {
+                          option_period: "Option Period",
+                          termination_window: "Termination",
+                          renewal: "Renewal",
+                          expiration: "Expiration",
+                          payment: "Payment",
+                        };
+
+                        return (
+                          <div
+                            key={date.id}
+                            className={cn(
+                              "p-2.5 border border-[#262626] flex items-center gap-2.5",
+                              isPast && "border-red-400/30",
+                              isUrgent && !isPast && "border-yellow-400/30"
+                            )}
+                          >
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2">
+                                <span className="text-[10px] text-[#525252]">
+                                  {typeLabels[date.date_type] || date.date_type}
+                                </span>
+                                {isPast && (
+                                  <span className="text-[9px] text-red-400 px-1 py-0.5 border border-red-400/30">Overdue</span>
+                                )}
+                                {isUrgent && !isPast && (
+                                  <span className="text-[9px] text-yellow-400 px-1 py-0.5 border border-yellow-400/30">
+                                    {daysUntil === 0 ? "Today" : daysUntil === 1 ? "Tomorrow" : `${daysUntil} days`}
+                                  </span>
+                                )}
+                              </div>
+                              <p className="text-xs text-white truncate">
+                                {date.description || dateObj.toLocaleDateString("en-US", {
+                                  weekday: "short",
+                                  month: "short",
+                                  day: "numeric",
+                                  year: "numeric",
+                                })}
+                              </p>
+                            </div>
+                            <button
+                              onClick={() => deleteDate(date.id)}
+                              className="shrink-0 w-6 h-6 flex items-center justify-center hover:bg-[#1a1a1a] transition-colors"
+                            >
+                              <Trash2 className="w-2.5 h-2.5 text-[#525252] hover:text-red-400" />
+                            </button>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </TabsContent>
+              )}
+            </Tabs>
+          </main>
+        </div>
       </div>
 
       {/* Sticky Action Footer */}
-      <div className="fixed bottom-0 left-0 right-0 border-t border-border/50 bg-background/95 backdrop-blur p-4 z-30">
-        <div className="max-w-6xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <Shield className="w-4 h-4" />
-            <span className="hidden sm:inline">AI analysis • Always consult a lawyer</span>
-          </div>
-          <div className="flex items-center gap-3">
-            <Button variant="outline" onClick={() => setShowELI5Modal(true)}>
-              <HelpCircle className="w-4 h-4 mr-2" />
-              <span className="hidden sm:inline">Explain Like I'm 5</span>
-            </Button>
-            <Button variant="outline" onClick={handleDownloadReport} disabled={downloading}>
-              {downloading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4 mr-2" />}
-              <span className="hidden sm:inline">Download Report</span>
-            </Button>
-            <Button onClick={() => setShowCounterOfferModal(true)} className="bg-primary">
-              <Mail className="w-4 h-4 mr-2" />
-              <span className="hidden sm:inline">Draft Counter-Offer</span>
-            </Button>
+      <div className="fixed bottom-0 left-0 right-0 border-t border-[#262626] bg-black p-3 z-30">
+        <div className="max-w-7xl mx-auto px-6">
+          <div className="flex items-center gap-2 text-[10px] text-[#525252]">
+            <Shield className="w-3 h-3" />
+            <span>AI analysis · Always consult a lawyer</span>
           </div>
         </div>
       </div>
 
-      {/* ELI5 Modal */}
-      {showELI5Modal && (
-        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4" onClick={() => setShowELI5Modal(false)}>
-          <Card className="max-w-2xl w-full max-h-[80vh] overflow-auto" onClick={(e) => e.stopPropagation()}>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold flex items-center gap-2">
-                  <HelpCircle className="w-5 h-5" />
-                  Plain English Summary
-                </h3>
-                <Button variant="ghost" size="sm" onClick={() => setShowELI5Modal(false)}>
-                  <X className="w-4 h-4" />
-                </Button>
-              </div>
-              <div className="space-y-4">
-                <div className="p-4 rounded-xl bg-blue-500/10 border border-blue-500/20">
-                  <h4 className="font-semibold mb-2">🎵 What is this contract?</h4>
-                  <p className="text-sm text-foreground/80">{analysis.summary}</p>
-                </div>
-                {analysis.recommendations && analysis.recommendations.length > 0 && (
-                  <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/20">
-                    <h4 className="font-semibold mb-2">💡 What should you do?</h4>
-                    <ul className="text-sm text-foreground/80 space-y-1">
-                      {analysis.recommendations.slice(0, 3).map((rec, i) => (
-                        <li key={i}>• {rec}</li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      )}
-
-      {/* Counter-Offer Modal */}
-      {showCounterOfferModal && (
-        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4" onClick={() => setShowCounterOfferModal(false)}>
-          <Card className="max-w-2xl w-full max-h-[80vh] overflow-auto" onClick={(e) => e.stopPropagation()}>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold flex items-center gap-2">
-                  <Mail className="w-5 h-5" />
-                  Draft Counter-Offer
-                </h3>
-                <Button variant="ghost" size="sm" onClick={() => setShowCounterOfferModal(false)}>
-                  <X className="w-4 h-4" />
-                </Button>
-              </div>
-              <NegotiationAssistant 
-                analysis={analysis}
-                contractTitle={analysis.contractType}
-              />
-            </CardContent>
-          </Card>
-        </div>
-      )}
     </div>
   );
 }

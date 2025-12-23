@@ -181,7 +181,8 @@ export const getOutputSchema = (industry: IndustryType): string => {
       "content": "Contract language",
       "riskLevel": "high|medium|low",
       "explanation": "Plain English explanation",
-      "originalText": "Exact quote from contract"
+      "originalText": "Exact quote from contract",
+      "actionItems": ["Specific question or action for this term", "Another specific thing to verify or negotiate", "Third actionable item"]
     }
   ],`;
 
@@ -288,7 +289,14 @@ export const getOutputSchema = (industry: IndustryType): string => {
   const closingSchema = `
   "potentialConcerns": ["List of concerns"],
   "concernSnippets": ["Exact quotes for concerns"],
-  "recommendations": ["Actionable recommendations"],
+  "recommendations": [
+    {
+      "advice": "Specific actionable recommendation",
+      "rationale": "Why this matters for this contract, citing industry standards",
+      "priority": "high|medium|low",
+      "howToImplement": "Concrete steps to take"
+    }
+  ],
   "overallRiskAssessment": "high|medium|low",
   "confidenceScore": 0.85,
   "benchmarkValues": {

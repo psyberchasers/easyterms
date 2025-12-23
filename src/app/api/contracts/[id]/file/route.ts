@@ -7,6 +7,9 @@ export async function GET(
 ) {
   try {
     const { id } = await params;
+    const url = new URL(request.url);
+    const versionPath = url.searchParams.get("versionPath");
+    
     const supabase = await createClient();
     
     // Check if user is authenticated
@@ -41,7 +44,10 @@ export async function GET(
       );
     }
 
-    if (!contract.file_url) {
+    // Use version path if provided, otherwise use original contract file
+    const filePath = versionPath || contract.file_url;
+
+    if (!filePath) {
       return NextResponse.json(
         { error: "No file associated with this contract" },
         { status: 404 }
@@ -51,7 +57,7 @@ export async function GET(
     // Generate signed URL (valid for 1 hour)
     const { data: signedUrlData, error: signedUrlError } = await supabase.storage
       .from("contracts")
-      .createSignedUrl(contract.file_url, 3600);
+      .createSignedUrl(filePath, 3600);
 
     if (signedUrlError || !signedUrlData) {
       console.error("Signed URL error:", signedUrlError);

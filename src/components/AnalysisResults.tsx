@@ -482,7 +482,7 @@ export function AnalysisResults({ analysis, isDemo }: AnalysisResultsProps) {
                   style={{ animationDelay: `${index * 0.1}s` }}
                 >
                   <CheckCircle2 className="w-4 h-4 text-success shrink-0 mt-0.5" />
-                  <span className="text-foreground/90">{rec}</span>
+                  <span className="text-foreground/90">{typeof rec === 'string' ? rec : rec.advice}</span>
                 </li>
               ))}
             </ul>
