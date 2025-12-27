@@ -430,7 +430,7 @@ function generateReportHTML(
       ${analysis.parties.artist ? `<div class="grid-item"><div class="grid-item-label">Artist / Creator</div><div class="grid-item-value">${analysis.parties.artist}</div></div>` : ""}
       ${analysis.parties.label ? `<div class="grid-item"><div class="grid-item-label">Label / Company</div><div class="grid-item-value">${analysis.parties.label}</div></div>` : ""}
       ${analysis.parties.publisher ? `<div class="grid-item"><div class="grid-item-label">Publisher</div><div class="grid-item-value">${analysis.parties.publisher}</div></div>` : ""}
-      ${(analysis.parties as Record<string, unknown>).producer ? `<div class="grid-item"><div class="grid-item-label">Producer</div><div class="grid-item-value">${(analysis.parties as Record<string, unknown>).producer}</div></div>` : ""}
+      ${(analysis.parties as unknown as Record<string, unknown>).producer ? `<div class="grid-item"><div class="grid-item-label">Producer</div><div class="grid-item-value">${(analysis.parties as unknown as Record<string, unknown>).producer}</div></div>` : ""}
       ${analysis.parties.manager ? `<div class="grid-item"><div class="grid-item-label">Manager</div><div class="grid-item-value">${analysis.parties.manager}</div></div>` : ""}
     </div>
   </div>
@@ -440,8 +440,8 @@ function generateReportHTML(
     <h2 class="section-title">Contract Overview</h2>
     <div class="grid grid-3">
       ${analysis.termLength ? `<div class="grid-item"><div class="grid-item-label">Term Length</div><div class="grid-item-value">${analysis.termLength}</div></div>` : ""}
-      ${analysis.territory ? `<div class="grid-item"><div class="grid-item-label">Territory</div><div class="grid-item-value">${analysis.territory}</div></div>` : ""}
-      ${analysis.exclusivity ? `<div class="grid-item"><div class="grid-item-label">Exclusivity</div><div class="grid-item-value">${analysis.exclusivity}</div></div>` : ""}
+      ${(analysis as unknown as Record<string, unknown>).territory ? `<div class="grid-item"><div class="grid-item-label">Territory</div><div class="grid-item-value">${(analysis as unknown as Record<string, unknown>).territory}</div></div>` : ""}
+      ${(analysis as unknown as Record<string, unknown>).exclusivity ? `<div class="grid-item"><div class="grid-item-label">Exclusivity</div><div class="grid-item-value">${(analysis as unknown as Record<string, unknown>).exclusivity}</div></div>` : ""}
     </div>
   </div>
 
@@ -453,20 +453,18 @@ function generateReportHTML(
       ${analysis.financialTerms.advanceAmount ? `<div class="grid-item"><div class="grid-item-label">Advance</div><div class="grid-item-value">${analysis.financialTerms.advanceAmount}</div></div>` : ""}
       ${analysis.financialTerms.paymentSchedule ? `<div class="grid-item"><div class="grid-item-label">Payment Schedule</div><div class="grid-item-value">${analysis.financialTerms.paymentSchedule}</div></div>` : ""}
       ${analysis.financialTerms.recoupment ? `<div class="grid-item"><div class="grid-item-label">Recoupment</div><div class="grid-item-value">${analysis.financialTerms.recoupment}</div></div>` : ""}
-      ${analysis.financialTerms.mechanicalRate ? `<div class="grid-item"><div class="grid-item-label">Mechanical Rate</div><div class="grid-item-value">${analysis.financialTerms.mechanicalRate}</div></div>` : ""}
-      ${analysis.financialTerms.syncFees ? `<div class="grid-item"><div class="grid-item-label">Sync Fees</div><div class="grid-item-value">${analysis.financialTerms.syncFees}</div></div>` : ""}
     </div>
   </div>
   ` : ""}
 
-  ${analysis.rightsGranted ? `
+  ${analysis.rightsAndOwnership ? `
   <div class="section">
-    <h2 class="section-title">Rights Granted</h2>
+    <h2 class="section-title">Rights &amp; Ownership</h2>
     <div class="grid">
-      ${analysis.rightsGranted.masterRights !== undefined ? `<div class="grid-item"><div class="grid-item-label">Master Rights</div><div class="grid-item-value">${analysis.rightsGranted.masterRights ? "Granted" : "Retained"}</div></div>` : ""}
-      ${analysis.rightsGranted.publishingRights !== undefined ? `<div class="grid-item"><div class="grid-item-label">Publishing Rights</div><div class="grid-item-value">${analysis.rightsGranted.publishingRights ? "Granted" : "Retained"}</div></div>` : ""}
-      ${analysis.rightsGranted.syncRights !== undefined ? `<div class="grid-item"><div class="grid-item-label">Sync Rights</div><div class="grid-item-value">${analysis.rightsGranted.syncRights ? "Granted" : "Retained"}</div></div>` : ""}
-      ${analysis.rightsGranted.merchandisingRights !== undefined ? `<div class="grid-item"><div class="grid-item-label">Merchandising</div><div class="grid-item-value">${analysis.rightsGranted.merchandisingRights ? "Granted" : "Retained"}</div></div>` : ""}
+      ${analysis.rightsAndOwnership.masterOwnership ? `<div class="grid-item"><div class="grid-item-label">Master Ownership</div><div class="grid-item-value">${analysis.rightsAndOwnership.masterOwnership}</div></div>` : ""}
+      ${analysis.rightsAndOwnership.publishingRights ? `<div class="grid-item"><div class="grid-item-label">Publishing Rights</div><div class="grid-item-value">${analysis.rightsAndOwnership.publishingRights}</div></div>` : ""}
+      ${analysis.rightsAndOwnership.territorialRights ? `<div class="grid-item"><div class="grid-item-label">Territorial Rights</div><div class="grid-item-value">${analysis.rightsAndOwnership.territorialRights}</div></div>` : ""}
+      ${analysis.rightsAndOwnership.exclusivity ? `<div class="grid-item"><div class="grid-item-label">Exclusivity</div><div class="grid-item-value">${analysis.rightsAndOwnership.exclusivity}</div></div>` : ""}
     </div>
   </div>
   ` : ""}
