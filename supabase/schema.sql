@@ -116,12 +116,32 @@ create policy "Users can view own contract versions"
     )
   );
 
-create policy "Users can insert own contract versions" 
-  on public.contract_versions for insert 
+create policy "Users can insert own contract versions"
+  on public.contract_versions for insert
   with check (
     exists (
-      select 1 from public.contracts 
-      where contracts.id = contract_versions.contract_id 
+      select 1 from public.contracts
+      where contracts.id = contract_versions.contract_id
+      and contracts.user_id = auth.uid()
+    )
+  );
+
+create policy "Users can delete own contract versions"
+  on public.contract_versions for delete
+  using (
+    exists (
+      select 1 from public.contracts
+      where contracts.id = contract_versions.contract_id
+      and contracts.user_id = auth.uid()
+    )
+  );
+
+create policy "Users can update own contract versions"
+  on public.contract_versions for update
+  using (
+    exists (
+      select 1 from public.contracts
+      where contracts.id = contract_versions.contract_id
       and contracts.user_id = auth.uid()
     )
   );

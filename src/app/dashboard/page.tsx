@@ -30,7 +30,6 @@ import {
   RefreshCw,
   Plus,
   Calendar,
-  History,
 } from "lucide-react";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { RepeatOffIcon, FolderBlockIcon, AiSheetsIcon } from "@hugeicons-pro/core-solid-rounded";
@@ -46,7 +45,7 @@ export default function DashboardPage() {
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [filter, setFilter] = useState<"all" | "starred" | "high-risk">("all");
-  const [versionCounts, setVersionCounts] = useState<Record<string, number>>({});
+  const [contractVersions, setContractVersions] = useState<Record<string, number[]>>({});
   const [deleteModal, setDeleteModal] = useState<{ open: boolean; contract: Contract | null }>({
     open: false,
     contract: null,
@@ -79,20 +78,25 @@ export default function DashboardPage() {
       } else {
         setContracts(data as Contract[] || []);
 
-        // Fetch version counts for all contracts
+        // Fetch version numbers for all contracts
         if (data && data.length > 0) {
           const contractIds = data.map((c: Contract) => c.id);
           const { data: versions } = await supabase
             .from("contract_versions")
-            .select("contract_id")
-            .in("contract_id", contractIds);
+            .select("contract_id, version_number")
+            .in("contract_id", contractIds)
+            .order("version_number", { ascending: true });
 
           if (versions) {
-            const counts: Record<string, number> = {};
-            versions.forEach((v: { contract_id: string }) => {
-              counts[v.contract_id] = (counts[v.contract_id] || 0) + 1;
+            const versionMap: Record<string, number[]> = {};
+            versions.forEach((v: { contract_id: string; version_number: number }) => {
+              if (!versionMap[v.contract_id]) {
+                versionMap[v.contract_id] = [];
+              }
+              // version_number starts at 1 in DB (first upload = v2), so add 1 to display
+              versionMap[v.contract_id].push(v.version_number + 1);
             });
-            setVersionCounts(counts);
+            setContractVersions(versionMap);
           }
         }
       }
@@ -138,10 +142,10 @@ export default function DashboardPage() {
 
     await supabase.from("contracts").delete().eq("id", deleteModal.contract.id);
     setContracts((prev) => prev.filter((c) => c.id !== deleteModal.contract?.id));
-    setVersionCounts((prev) => {
-      const newCounts = { ...prev };
-      delete newCounts[deleteModal.contract!.id];
-      return newCounts;
+    setContractVersions((prev) => {
+      const newVersions = { ...prev };
+      delete newVersions[deleteModal.contract!.id];
+      return newVersions;
     });
   };
 
@@ -163,14 +167,6 @@ export default function DashboardPage() {
     active: contracts.filter((c) => c.status === "active").length,
     negotiating: contracts.filter((c) => c.status === "negotiating").length,
     starred: contracts.filter((c) => c.is_starred).length,
-  };
-
-  // Calculate risk distribution for chart
-  const riskTotal = stats.highRisk + stats.mediumRisk + stats.lowRisk;
-  const riskPercentages = {
-    high: riskTotal > 0 ? Math.round((stats.highRisk / riskTotal) * 100) : 0,
-    medium: riskTotal > 0 ? Math.round((stats.mediumRisk / riskTotal) * 100) : 0,
-    low: riskTotal > 0 ? Math.round((stats.lowRisk / riskTotal) * 100) : 0,
   };
 
   const getRiskBadge = (risk: string | null) => {
@@ -274,35 +270,6 @@ export default function DashboardPage() {
             <Star className="w-3 h-3 text-[#525252]" />
             <span className="text-lg font-light text-white">{stats.starred}</span>
           </div>
-          
-          {/* Risk Bar - inline */}
-          {riskTotal > 0 && (
-            <>
-              <div className="w-px h-6 bg-[#262626]" />
-              <div className="flex items-center gap-3">
-                <span className="text-xs text-[#525252]">Risk</span>
-                <div className="h-1.5 w-32 overflow-hidden flex bg-[#1a1a1a]">
-                  <div className="bg-red-500" style={{ width: `${riskPercentages.high}%` }} />
-                  <div className="bg-amber-500" style={{ width: `${riskPercentages.medium}%` }} />
-                  <div className="bg-green-500" style={{ width: `${riskPercentages.low}%` }} />
-                </div>
-                <div className="flex items-center gap-2 text-[10px]">
-                  <span className="flex items-center gap-1">
-                    <span className="w-1.5 h-1.5 bg-red-500" />
-                    <span className="text-[#525252]">{stats.highRisk}</span>
-                  </span>
-                  <span className="flex items-center gap-1">
-                    <span className="w-1.5 h-1.5 bg-amber-500" />
-                    <span className="text-[#525252]">{stats.mediumRisk}</span>
-                  </span>
-                  <span className="flex items-center gap-1">
-                    <span className="w-1.5 h-1.5 bg-green-500" />
-                    <span className="text-[#525252]">{stats.lowRisk}</span>
-                  </span>
-                </div>
-              </div>
-            </>
-          )}
           
           {/* Spacer to push actions right */}
           <div className="flex-1" />
@@ -436,11 +403,14 @@ export default function DashboardPage() {
                       {/* Title row */}
                       <div className="flex items-center gap-2 mb-1">
                         <h3 className="font-medium text-white truncate">{contract.title}</h3>
-                        {versionCounts[contract.id] > 0 && (
-                          <span className="flex items-center gap-1 text-[10px] text-[#878787] px-1.5 py-0.5 border border-border bg-[#1a1a1a]">
-                            <History className="w-2.5 h-2.5" />
-                            v{versionCounts[contract.id] + 1}
-                          </span>
+                        {contractVersions[contract.id]?.length > 0 && (
+                          <div className="flex items-center gap-1">
+                            {contractVersions[contract.id].map((vNum) => (
+                              <span key={vNum} className="flex items-center gap-1 text-[10px] text-[#878787] px-1.5 py-0.5 border border-border bg-[#1a1a1a]">
+                                v{vNum}
+                              </span>
+                            ))}
+                          </div>
                         )}
                         {contract.is_starred && (
                           <Star className="w-3.5 h-3.5 text-amber-500 fill-amber-500 shrink-0" />
@@ -550,7 +520,7 @@ export default function DashboardPage() {
         onOpenChange={(open) => setDeleteModal({ open, contract: open ? deleteModal.contract : null })}
         onConfirm={handleDeleteConfirm}
         title={deleteModal.contract?.title || ""}
-        versionCount={deleteModal.contract ? versionCounts[deleteModal.contract.id] || 0 : 0}
+        versionCount={deleteModal.contract ? contractVersions[deleteModal.contract.id]?.length || 0 : 0}
       />
     </div>
   );

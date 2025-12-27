@@ -3,7 +3,6 @@
 import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { createClient } from "@/lib/supabase/client";
 import {
@@ -21,12 +20,6 @@ import {
   CommandList,
   CommandShortcut,
 } from "@/components/ui/command";
-import {
-  FileText,
-  Calendar,
-  CreditCard,
-  Home,
-} from "lucide-react";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
   DashboardSquare01Icon,
@@ -39,6 +32,9 @@ import {
   Logout01Icon,
   Settings02Icon,
   SparklesIcon,
+  Calendar03Icon,
+  Home11Icon,
+  FileAttachmentIcon,
 } from "@hugeicons-pro/core-solid-rounded";
 
 interface NavbarProps {
@@ -57,7 +53,6 @@ export function Navbar({ showNewAnalysis = true, showBorder = false }: NavbarPro
   const { user, profile, loading, signOut } = useAuth();
   const router = useRouter();
   const [commandOpen, setCommandOpen] = useState(false);
-  const [commandTab, setCommandTab] = useState<"commands" | "contracts">("commands");
   const [contracts, setContracts] = useState<Contract[]>([]);
   const supabase = createClient();
 
@@ -202,120 +197,72 @@ export function Navbar({ showNewAnalysis = true, showBorder = false }: NavbarPro
       </header>
 
       {/* Command Menu Dialog */}
-      <CommandDialog open={commandOpen} onOpenChange={(open) => { setCommandOpen(open); if (!open) setCommandTab("commands"); }} showCloseButton={false}>
-        {/* Tabs */}
-        <div className="relative flex bg-black">
-          <button
-            onClick={() => setCommandTab("commands")}
-            className={`relative flex-1 px-4 py-2.5 text-sm font-medium transition-colors ${
-              commandTab === "commands"
-                ? "text-primary"
-                : "text-[#525252] hover:text-[#878787]"
-            }`}
-          >
-            Commands
-            {commandTab === "commands" && (
-              <motion.div
-                layoutId="command-tab-underline"
-                className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary"
-                transition={{ type: "spring", stiffness: 500, damping: 30 }}
-              />
-            )}
-          </button>
-          <button
-            onClick={() => setCommandTab("contracts")}
-            className={`relative flex-1 px-4 py-2.5 text-sm font-medium transition-colors ${
-              commandTab === "contracts"
-                ? "text-primary"
-                : "text-[#525252] hover:text-[#878787]"
-            }`}
-          >
-            Contracts
-            {commandTab === "contracts" && (
-              <motion.div
-                layoutId="command-tab-underline"
-                className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary"
-                transition={{ type: "spring", stiffness: 500, damping: 30 }}
-              />
-            )}
-          </button>
-        </div>
-        <CommandInput placeholder={commandTab === "commands" ? "Search commands..." : "Search contracts..."} showShortcut={false} />
+      <CommandDialog open={commandOpen} onOpenChange={setCommandOpen} showCloseButton={false}>
+        <CommandInput placeholder="Run a command or search..." showShortcut={false} />
         <CommandList>
           <CommandEmpty>No results found</CommandEmpty>
-          <motion.div
-              key={commandTab}
-              initial={false}
-              animate={{ height: "auto" }}
-              transition={{ duration: 0.35, ease: "easeInOut" }}
-              style={{ overflow: "hidden" }}
-            >
-              {commandTab === "contracts" ? (
-                <CommandGroup heading="Recent Contracts">
-                  {contracts.length > 0 ? (
-                    contracts.map((contract) => (
-                      <CommandItem
-                        key={contract.id}
-                        onSelect={() => runCommand(() => router.push(`/contract/${contract.id}`))}
-                      >
-                        <FileText className="mr-2 h-4 w-4" />
-                        <span className="flex-1 truncate">{contract.title}</span>
-                        {contract.overall_risk && (
-                          <span className={`text-[10px] px-1.5 py-0.5 ${
-                            contract.overall_risk === 'high' ? 'text-red-400 bg-red-400/10' :
-                            contract.overall_risk === 'medium' ? 'text-amber-400 bg-amber-400/10' :
-                            'text-green-400 bg-green-400/10'
-                          }`}>
-                            {contract.overall_risk}
-                          </span>
-                        )}
-                      </CommandItem>
-                    ))
-                  ) : (
-                    <div className="py-6 text-center text-sm text-[#525252]">No contracts yet</div>
+          <CommandGroup heading="ACTIONS">
+            <CommandItem onSelect={() => runCommand(() => router.push("/analyze"))}>
+              <HugeiconsIcon icon={AiSheetsIcon} size={16} className="mr-3 text-[#525252]" />
+              New Analysis
+            </CommandItem>
+            <CommandItem onSelect={() => runCommand(() => router.push("/compare"))}>
+              <HugeiconsIcon icon={RepeatOffIcon} size={16} className="mr-3 text-[#525252]" />
+              Compare Contracts
+            </CommandItem>
+            <CommandItem onSelect={() => runCommand(() => router.push("/pricing"))}>
+              <HugeiconsIcon icon={SparklesIcon} size={16} className="mr-3 text-[#525252]" />
+              Upgrade Plan
+            </CommandItem>
+          </CommandGroup>
+          {contracts.length > 0 && (
+            <CommandGroup heading="CONTRACTS">
+              {contracts.map((contract) => (
+                <CommandItem
+                  key={contract.id}
+                  onSelect={() => runCommand(() => router.push(`/contract/${contract.id}`))}
+                >
+                  <HugeiconsIcon icon={FileAttachmentIcon} size={16} className="mr-3 text-[#525252]" />
+                  <span className="flex-1 truncate">{contract.title}</span>
+                  {contract.overall_risk && (
+                    <span className={`text-[10px] px-1.5 py-0.5 ${
+                      contract.overall_risk === 'high' ? 'text-red-400 bg-red-400/10' :
+                      contract.overall_risk === 'medium' ? 'text-amber-400 bg-amber-400/10' :
+                      'text-green-400 bg-green-400/10'
+                    }`}>
+                      {contract.overall_risk}
+                    </span>
                   )}
-                </CommandGroup>
-              ) : (
-                <>
-                  <CommandGroup heading="Navigation">
-                    <CommandItem onSelect={() => runCommand(() => router.push("/"))}>
-                      <Home className="mr-2 h-4 w-4" />
-                      Home
-                    </CommandItem>
-                    <CommandItem onSelect={() => runCommand(() => router.push("/dashboard"))}>
-                      <HugeiconsIcon icon={DashboardSquare01Icon} size={16} className="mr-2" />
-                      Dashboard
-                      <CommandShortcut>⌘D</CommandShortcut>
-                    </CommandItem>
-                    <CommandItem onSelect={() => runCommand(() => router.push("/analyze"))}>
-                      <HugeiconsIcon icon={AiSheetsIcon} size={16} className="mr-2" />
-                      New Analysis
-                      <CommandShortcut>⌘N</CommandShortcut>
-                    </CommandItem>
-                    <CommandItem onSelect={() => runCommand(() => router.push("/compare"))}>
-                      <HugeiconsIcon icon={RepeatOffIcon} size={16} className="mr-2" />
-                      Compare Contracts
-                    </CommandItem>
-                    <CommandItem onSelect={() => runCommand(() => router.push("/calendar"))}>
-                      <Calendar className="mr-2 h-4 w-4" />
-                      Calendar
-                    </CommandItem>
-                  </CommandGroup>
-                  <CommandGroup heading="Actions">
-                    <CommandItem onSelect={() => runCommand(() => router.push("/pricing"))}>
-                      <HugeiconsIcon icon={SparklesIcon} size={16} className="mr-2" />
-                      Pricing & Upgrade
-                    </CommandItem>
-                    {user && (
-                      <CommandItem onSelect={() => runCommand(() => signOut())}>
-                        <HugeiconsIcon icon={Logout01Icon} size={16} className="mr-2" />
-                        Sign Out
-                      </CommandItem>
-                    )}
-                  </CommandGroup>
-                </>
-              )}
-            </motion.div>
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          )}
+          <CommandGroup heading="NAVIGATION">
+            <CommandItem onSelect={() => runCommand(() => router.push("/"))}>
+              <HugeiconsIcon icon={Home11Icon} size={16} className="mr-3 text-[#525252]" />
+              Home
+            </CommandItem>
+            <CommandItem onSelect={() => runCommand(() => router.push("/dashboard"))}>
+              <HugeiconsIcon icon={DashboardSquare01Icon} size={16} className="mr-3 text-[#525252]" />
+              Dashboard
+            </CommandItem>
+            <CommandItem onSelect={() => runCommand(() => router.push("/calendar"))}>
+              <HugeiconsIcon icon={Calendar03Icon} size={16} className="mr-3 text-[#525252]" />
+              Calendar
+            </CommandItem>
+            <CommandItem onSelect={() => runCommand(() => router.push("/settings"))}>
+              <HugeiconsIcon icon={Settings02Icon} size={16} className="mr-3 text-[#525252]" />
+              Settings
+            </CommandItem>
+          </CommandGroup>
+          {user && (
+            <CommandGroup heading="ACCOUNT">
+              <CommandItem onSelect={() => runCommand(() => signOut())}>
+                <HugeiconsIcon icon={Logout01Icon} size={16} className="mr-3 text-[#525252]" />
+                Sign Out
+              </CommandItem>
+            </CommandGroup>
+          )}
         </CommandList>
       </CommandDialog>
     </>

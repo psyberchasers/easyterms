@@ -122,11 +122,89 @@ export async function POST(
         .replace(/\s+/g, '')              // Remove all spaces for final comparison
         .trim();
 
+    // Calculate similarity between two strings (0-1)
+    const calculateSimilarity = (str1: string, str2: string): number => {
+      if (str1 === str2) return 1;
+      if (!str1 || !str2) return 0;
+
+      const len1 = str1.length;
+      const len2 = str2.length;
+      const minLen = Math.min(len1, len2);
+      const maxLen = Math.max(len1, len2);
+
+      const lengthDiff = Math.abs(len1 - len2) / maxLen;
+      console.log(`[Duplicate Check] Length difference: ${(lengthDiff * 100).toFixed(1)}%`);
+
+      // Use multiple comparison methods for robustness
+
+      // Method 1: Compare chunks (handles minor extraction differences)
+      const chunkSize = 500;
+      const numChunks = Math.min(Math.floor(minLen / chunkSize), 20);
+      let chunkMatches = 0;
+
+      for (let i = 0; i < numChunks; i++) {
+        const start = Math.floor((minLen - chunkSize) * (i / numChunks));
+        const chunk1 = str1.substring(start, start + chunkSize);
+        const chunk2 = str2.substring(start, start + chunkSize);
+        if (chunk1 === chunk2) chunkMatches++;
+      }
+
+      const chunkSimilarity = numChunks > 0 ? chunkMatches / numChunks : 0;
+      console.log(`[Duplicate Check] Chunk similarity: ${(chunkSimilarity * 100).toFixed(1)}% (${chunkMatches}/${numChunks} chunks match)`);
+
+      // Method 2: Character-by-character for first N characters
+      let matchCount = 0;
+      const compareLen = Math.min(minLen, 30000);
+      for (let i = 0; i < compareLen; i++) {
+        if (str1[i] === str2[i]) matchCount++;
+      }
+      const charSimilarity = matchCount / compareLen;
+      console.log(`[Duplicate Check] Character similarity: ${(charSimilarity * 100).toFixed(1)}%`);
+
+      // Method 3: Check if one contains most of the other (handles extra whitespace/headers)
+      const shorter = len1 < len2 ? str1 : str2;
+      const longer = len1 < len2 ? str2 : str1;
+      const containsCheck = longer.includes(shorter.substring(0, Math.min(shorter.length, 5000)));
+      console.log(`[Duplicate Check] Contains check: ${containsCheck}`);
+
+      // High similarity if any method indicates duplicate
+      if (chunkSimilarity >= 0.8 || charSimilarity >= 0.9 || containsCheck) {
+        const maxSim = Math.max(chunkSimilarity, charSimilarity, containsCheck ? 0.95 : 0);
+        console.log(`[Duplicate Check] Final similarity: ${(maxSim * 100).toFixed(1)}%`);
+        return maxSim;
+      }
+
+      const avgSimilarity = (chunkSimilarity + charSimilarity) / 2;
+      console.log(`[Duplicate Check] Final similarity (avg): ${(avgSimilarity * 100).toFixed(1)}%`);
+      return avgSimilarity;
+    };
+
     const normalizedNewText = normalizeForComparison(extractedText);
     const normalizedOriginalText = normalizeForComparison(contract.extracted_text || '');
 
-    // Check if identical to original
-    if (normalizedNewText === normalizedOriginalText) {
+    console.log(`[Duplicate Check] New text length: ${normalizedNewText.length}, Original length: ${normalizedOriginalText.length}`);
+
+    // Quick check: compare first 10k characters directly (catches most duplicates fast)
+    const quickCompareLen = Math.min(normalizedNewText.length, normalizedOriginalText.length, 10000);
+    const quickMatch = normalizedNewText.substring(0, quickCompareLen) === normalizedOriginalText.substring(0, quickCompareLen);
+    console.log(`[Duplicate Check] Quick match (first ${quickCompareLen} chars): ${quickMatch}`);
+
+    if (quickMatch && Math.abs(normalizedNewText.length - normalizedOriginalText.length) < 100) {
+      console.log(`[Duplicate Check] Quick match detected - likely duplicate`);
+      await supabase.storage.from("contracts").remove([fileName]);
+      return NextResponse.json({
+        error: "This document is identical to the original contract (Version 1). No changes detected.",
+        isDuplicate: true
+      }, { status: 400 });
+    }
+
+    console.log(`[Duplicate Check] Exact match: ${normalizedNewText === normalizedOriginalText}`);
+
+    // Check if identical or very similar to original (>95% similarity)
+    const originalSimilarity = calculateSimilarity(normalizedNewText, normalizedOriginalText);
+    console.log(`[Duplicate Check] Original similarity result: ${originalSimilarity}`);
+
+    if (normalizedNewText === normalizedOriginalText || originalSimilarity >= 0.95) {
       // Clean up the uploaded file since we're not using it
       await supabase.storage.from("contracts").remove([fileName]);
       return NextResponse.json({
@@ -135,7 +213,7 @@ export async function POST(
       }, { status: 400 });
     }
 
-    // Check if identical to any existing version
+    // Check if identical or very similar to any existing version
     const { data: existingVersions } = await supabase
       .from("contract_versions")
       .select("extracted_text, version_number, created_at")
@@ -146,7 +224,9 @@ export async function POST(
       for (let i = 0; i < existingVersions.length; i++) {
         const version = existingVersions[i];
         const normalizedVersionText = normalizeForComparison(version.extracted_text || '');
-        if (normalizedNewText === normalizedVersionText) {
+        const similarity = calculateSimilarity(normalizedNewText, normalizedVersionText);
+
+        if (normalizedNewText === normalizedVersionText || similarity >= 0.95) {
           // Clean up the uploaded file since we're not using it
           await supabase.storage.from("contracts").remove([fileName]);
           // Use display version number (1-indexed position in list + 1 for "Version 2", "Version 3", etc.)
@@ -200,32 +280,54 @@ ${extractedText.substring(0, 15000)}`;
 
     const fullAnalysis = JSON.parse(fullAnalysisResponse.choices[0].message.content || "{}");
 
-    // Now compare with previous version to get changes summary
-    const comparisonResponse = await openai.chat.completions.create({
-      model: "gpt-4o",
-      messages: [
-        {
-          role: "system",
-          content: `You are a legal contract analyst. Compare these two contract analyses and identify what changed between versions. Focus on changes that affect the individual/artist - better or worse.
+    // Compare actual contract text to determine if there are real changes
+    const previousText = normalizeForComparison(contract.extracted_text || '');
+    const newText = normalizeForComparison(extractedText);
+    const textSimilarity = calculateSimilarity(newText, previousText);
+
+    console.log(`[Version Compare] Text similarity with original: ${(textSimilarity * 100).toFixed(1)}%`);
+
+    let comparison;
+
+    // If texts are very similar (>85%), don't ask AI to find differences - it will hallucinate
+    if (textSimilarity >= 0.85) {
+      console.log(`[Version Compare] High similarity detected - skipping AI comparison to prevent hallucination`);
+      comparison = {
+        changesSummary: "No significant changes detected between versions.",
+        improvements: [],
+        regressions: [],
+        unchanged: ["All major terms appear unchanged"]
+      };
+    } else {
+      // Now compare with previous version to get changes summary
+      const comparisonResponse = await openai.chat.completions.create({
+        model: "gpt-4o",
+        messages: [
+          {
+            role: "system",
+            content: `You are a legal contract analyst. Compare these two contract analyses and identify what ACTUALLY changed between versions. Focus on changes that affect the individual/artist - better or worse.
+
+IMPORTANT: Only report changes that are REAL and SUBSTANTIVE. If the contracts are essentially the same with minor wording differences, report that there are no significant changes. Do NOT invent or hallucinate differences.
 
 Return JSON with:
 {
-  "changesSummary": "Human-readable 1-2 sentence summary of key changes",
-  "improvements": ["Specific term/clause that got better for the individual"],
-  "regressions": ["Specific term/clause that got worse for the individual"],
+  "changesSummary": "Human-readable 1-2 sentence summary of key changes. If no real changes, say 'No significant changes detected.'",
+  "improvements": ["Specific term/clause that got better for the individual - ONLY if actually changed"],
+  "regressions": ["Specific term/clause that got worse for the individual - ONLY if actually changed"],
   "unchanged": ["Major terms that stayed the same"]
 }`
-        },
-        {
-          role: "user",
-          content: `PREVIOUS VERSION ANALYSIS:\n${JSON.stringify(previousAnalysis, null, 2)}\n\nNEW VERSION ANALYSIS:\n${JSON.stringify(fullAnalysis, null, 2)}`
-        }
-      ],
-      response_format: { type: "json_object" },
-      temperature: 0.3,
-    });
+          },
+          {
+            role: "user",
+            content: `PREVIOUS VERSION ANALYSIS:\n${JSON.stringify(previousAnalysis, null, 2)}\n\nNEW VERSION ANALYSIS:\n${JSON.stringify(fullAnalysis, null, 2)}`
+          }
+        ],
+        response_format: { type: "json_object" },
+        temperature: 0.3,
+      });
 
-    const comparison = JSON.parse(comparisonResponse.choices[0].message.content || "{}");
+      comparison = JSON.parse(comparisonResponse.choices[0].message.content || "{}");
+    }
 
     // Merge full analysis with comparison data
     const analysis = {
@@ -329,16 +431,36 @@ export async function DELETE(
   }
 
   // Delete the version record
-  const { error } = await supabase
+  const { error, count } = await supabase
     .from("contract_versions")
     .delete()
     .eq("id", versionId)
-    .eq("contract_id", contractId);
+    .eq("contract_id", contractId)
+    .select();
+
+  console.log(`[Version Delete] Attempted to delete version ${versionId}, error: ${error?.message || 'none'}, deleted count: ${count}`);
 
   if (error) {
+    console.error("[Version Delete] Error:", error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
+  // Verify the version is actually deleted
+  const { data: checkVersion } = await supabase
+    .from("contract_versions")
+    .select("id")
+    .eq("id", versionId)
+    .single();
+
+  if (checkVersion) {
+    console.error("[Version Delete] Version still exists after delete attempt!");
+    return NextResponse.json({
+      error: "Delete operation did not complete. Please check database permissions.",
+      stillExists: true
+    }, { status: 500 });
+  }
+
+  console.log(`[Version Delete] Successfully deleted version ${versionId}`);
   return NextResponse.json({ success: true, message: "Version deleted" });
 }
 

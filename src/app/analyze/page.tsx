@@ -979,22 +979,74 @@ export default function AnalyzePage() {
               {/* Key Terms Tab - Expandable Cards */}
               <TabsContent value="terms" className="space-y-4">
                 {/* Concerns Section */}
-                {analysis.potentialConcerns && analysis.potentialConcerns.length > 0 && (
-                  <div className="border border-red-500/30 bg-red-500/5 p-4">
+                {analysis.potentialConcerns && analysis.potentialConcerns.length > 0 && (() => {
+                  // Determine highest risk level among matched concerns
+                  const matchedRiskLevels = analysis.potentialConcerns.map((concern) => {
+                    const matchingTerm = analysis.keyTerms?.find(term => {
+                      const concernLower = concern.toLowerCase();
+                      const titleLower = term.title.toLowerCase();
+                      const contentLower = term.content.toLowerCase();
+                      const keywords = concernLower.split(/\s+/).filter(w => w.length > 4);
+                      return keywords.some(kw => titleLower.includes(kw) || contentLower.includes(kw));
+                    });
+                    return matchingTerm?.riskLevel || 'medium';
+                  });
+
+                  const hasHigh = matchedRiskLevels.includes('high');
+                  const hasMedium = matchedRiskLevels.includes('medium');
+                  const highestRisk = hasHigh ? 'high' : hasMedium ? 'medium' : 'low';
+
+                  const colorScheme = {
+                    high: { border: 'border-red-500/30', bg: 'bg-red-500/5', text: 'text-red-400', dot: 'bg-red-400/60' },
+                    medium: { border: 'border-amber-500/30', bg: 'bg-amber-500/5', text: 'text-amber-400', dot: 'bg-amber-400/60' },
+                    low: { border: 'border-green-500/30', bg: 'bg-green-500/5', text: 'text-green-400', dot: 'bg-green-400/60' },
+                  }[highestRisk];
+
+                  return (
+                  <div className={`border ${colorScheme.border} ${colorScheme.bg} p-4`}>
                     <div className="flex items-center gap-2 mb-3">
-                      <HugeiconsIcon icon={Alert02Icon} size={14} className="text-red-400" />
-                      <span className="text-xs font-medium text-red-400 leading-none">{analysis.potentialConcerns.length} Concerns to Address</span>
+                      <HugeiconsIcon icon={Alert02Icon} size={14} className={colorScheme.text} />
+                      <span className={`text-xs font-medium ${colorScheme.text} leading-none`}>{analysis.potentialConcerns.length} Concerns to Address</span>
                     </div>
                     <ul className="space-y-2">
-                      {analysis.potentialConcerns.map((concern, i) => (
-                        <li key={i} className="flex items-center gap-2 text-xs text-[#e5e5e5]">
-                          <span className="w-1 h-1 rounded-full bg-red-400/60 shrink-0" />
-                          <span className="leading-tight">{concern}</span>
-                        </li>
-                      ))}
+                      {analysis.potentialConcerns.map((concern, i) => {
+                        // Find matching key term by checking if concern keywords appear in term title/content
+                        const matchingTermIndex = analysis.keyTerms?.findIndex(term => {
+                          const concernLower = concern.toLowerCase();
+                          const titleLower = term.title.toLowerCase();
+                          const contentLower = term.content.toLowerCase();
+                          const keywords = concernLower.split(/\s+/).filter(w => w.length > 4);
+                          return keywords.some(kw => titleLower.includes(kw) || contentLower.includes(kw));
+                        });
+                        const snippet = analysis.concernSnippets?.[i];
+                        const matchingTerm = matchingTermIndex !== undefined && matchingTermIndex >= 0
+                          ? analysis.keyTerms?.[matchingTermIndex]
+                          : null;
+
+                        return (
+                          <li
+                            key={i}
+                            className="flex items-center gap-2 text-xs text-[#e5e5e5] cursor-pointer hover:text-white transition-colors group"
+                            onClick={() => {
+                              const textToHighlight = snippet || matchingTerm?.originalText;
+                              if (textToHighlight) {
+                                handleClauseClick(textToHighlight);
+                              }
+                              if (matchingTermIndex !== undefined && matchingTermIndex >= 0) {
+                                setExpandedTerm(matchingTermIndex);
+                              }
+                            }}
+                          >
+                            <span className={`w-1 h-1 rounded-full ${colorScheme.dot} shrink-0 group-hover:bg-primary`} />
+                            <span className="leading-tight">{concern}</span>
+                            <Eye className="w-3 h-3 text-[#525252] group-hover:text-primary ml-auto shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" />
+                          </li>
+                        );
+                      })}
                     </ul>
                   </div>
-                )}
+                  );
+                })()}
 
                 {(!analysis.keyTerms || analysis.keyTerms.length === 0) && (
                   <div className="border border-border p-8 text-center">

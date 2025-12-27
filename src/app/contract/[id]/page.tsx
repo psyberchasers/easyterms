@@ -227,13 +227,18 @@ export default function ContractDetailPage() {
     }
   };
 
-  const fetchVersions = async () => {
+  const fetchVersions = async (selectLatest = false) => {
     setLoadingVersions(true);
     try {
       const response = await fetch(`/api/contracts/${contractId}/versions`);
       const data = await response.json();
       if (response.ok && data.versions) {
         setVersions(data.versions);
+        // If selectLatest is true and there are versions, select the most recent one
+        // versions are ordered by version_number descending, so first is latest
+        if (selectLatest && data.versions.length > 0) {
+          setSelectedVersionId(data.versions[0].id);
+        }
       }
     } catch (err) {
       console.error("Error fetching versions:", err);
@@ -258,6 +263,7 @@ export default function ContractDetailPage() {
   };
 
   const uploadNewVersion = async (file: File) => {
+    console.log("uploadNewVersion called with file:", file.name, file.size);
     setUploadingVersion(true);
     try {
       const formData = new FormData();
@@ -292,6 +298,10 @@ export default function ContractDetailPage() {
       alert("Failed to upload version");
     } finally {
       setUploadingVersion(false);
+      // Reset the file input so the same file can be selected again
+      if (versionInputRef.current) {
+        versionInputRef.current.value = "";
+      }
     }
   };
 
@@ -370,7 +380,7 @@ export default function ContractDetailPage() {
   // Fetch versions and dates when contract loads
   useEffect(() => {
     if (contract) {
-      fetchVersions();
+      fetchVersions(true); // Select latest version by default
       fetchDates();
     }
   }, [contract?.id]);
@@ -879,12 +889,19 @@ export default function ContractDetailPage() {
                     accept=".pdf,.doc,.docx,.txt"
                     className="hidden"
                     onChange={(e) => {
+                      console.log("File input onChange triggered", e.target.files);
                       const file = e.target.files?.[0];
-                      if (file) uploadNewVersion(file);
+                      if (file) {
+                        console.log("Uploading file:", file.name);
+                        uploadNewVersion(file);
+                      }
                     }}
                   />
                   <button
-                    onClick={() => versionInputRef.current?.click()}
+                    onClick={() => {
+                      console.log("Upload button clicked, ref:", versionInputRef.current);
+                      versionInputRef.current?.click();
+                    }}
                     disabled={uploadingVersion}
                     className="h-7 w-7 flex items-center justify-center border border-border hover:border-[#404040] transition-colors disabled:opacity-50"
                   >
@@ -1044,47 +1061,128 @@ export default function ContractDetailPage() {
                   )}
 
                   {/* Quick Concerns Preview */}
-                  {analysis.potentialConcerns && analysis.potentialConcerns.length > 0 && (
+                  {analysis.potentialConcerns && analysis.potentialConcerns.length > 0 && (() => {
+                    // Determine color based on overall risk assessment
+                    const riskLevel = analysis.overallRiskAssessment || 'medium';
+                    const colorScheme = {
+                      high: { border: 'border-red-500/20', bg: 'bg-red-500/5', text: 'text-red-400' },
+                      medium: { border: 'border-amber-500/20', bg: 'bg-amber-500/5', text: 'text-amber-400' },
+                      low: { border: 'border-green-500/20', bg: 'bg-green-500/5', text: 'text-green-400' },
+                    }[riskLevel] || { border: 'border-amber-500/20', bg: 'bg-amber-500/5', text: 'text-amber-400' };
+
+                    return (
                     <div className="grid md:grid-cols-2 gap-2">
-                      <div className="border border-border p-3">
+                      <div className={`border ${colorScheme.border} ${colorScheme.bg} p-3`}>
                         <div className="flex items-center gap-2 mb-2">
-                          <AlertTriangle className="w-3 h-3 text-red-400" />
-                          <span className="text-xs text-red-400">{analysis.potentialConcerns.length} Concerns Found</span>
+                          <AlertTriangle className={`w-3 h-3 ${colorScheme.text}`} />
+                          <span className={`text-xs ${colorScheme.text}`}>{analysis.potentialConcerns.length} Concerns Found</span>
                         </div>
                         <p className="text-xs text-[#a3a3a3]">{analysis.potentialConcerns[0]}</p>
                       </div>
                       {analysis.missingClauses && analysis.missingClauses.length > 0 && (
-                        <div className="border border-border p-3">
+                        <div className="border border-yellow-500/20 bg-yellow-500/5 p-3">
                           <div className="flex items-center gap-2 mb-2">
                             <HugeiconsIcon icon={HelpSquareIcon} size={12} className="text-yellow-400" />
                             <span className="text-xs text-yellow-400">{analysis.missingClauses.length} Missing Protections</span>
                           </div>
-                          <p className="text-xs text-[#a3a3a3]">{analysis.missingClauses[0].clause}: {analysis.missingClauses[0].description}</p>
+                          <div className="space-y-1.5">
+                            {analysis.missingClauses.slice(0, 3).map((clause, i) => (
+                              <div key={i} className="flex items-start gap-2">
+                                <span className={`text-[10px] px-1 mt-0.5 ${
+                                  clause.severity === 'critical' ? 'text-red-400 bg-red-400/10' :
+                                  clause.severity === 'high' ? 'text-amber-400 bg-amber-400/10' :
+                                  'text-yellow-400 bg-yellow-400/10'
+                                }`}>
+                                  {clause.severity}
+                                </span>
+                                <span className="text-xs text-[#a3a3a3]">{clause.clause}</span>
+                              </div>
+                            ))}
+                            {analysis.missingClauses.length > 3 && (
+                              <p className="text-[10px] text-[#525252]">+{analysis.missingClauses.length - 3} more</p>
+                            )}
+                          </div>
                         </div>
                       )}
                     </div>
-                  )}
+                    );
+                  })()}
                 </TabsContent>
 
                 {/* Key Terms Tab - Expandable Cards */}
                 <TabsContent value="terms" className="space-y-4">
                   {/* Concerns Section */}
-                  {analysis.potentialConcerns && analysis.potentialConcerns.length > 0 && (
-                    <div className="border border-red-500/30 bg-red-500/5 p-4">
+                  {analysis.potentialConcerns && analysis.potentialConcerns.length > 0 && (() => {
+                    // Determine highest risk level among matched concerns
+                    const matchedRiskLevels = analysis.potentialConcerns.map((concern) => {
+                      const matchingTerm = analysis.keyTerms?.find(term => {
+                        const concernLower = concern.toLowerCase();
+                        const titleLower = term.title.toLowerCase();
+                        const contentLower = term.content.toLowerCase();
+                        const keywords = concernLower.split(/\s+/).filter(w => w.length > 4);
+                        return keywords.some(kw => titleLower.includes(kw) || contentLower.includes(kw));
+                      });
+                      return matchingTerm?.riskLevel || 'medium';
+                    });
+
+                    const hasHigh = matchedRiskLevels.includes('high');
+                    const hasMedium = matchedRiskLevels.includes('medium');
+                    const highestRisk = hasHigh ? 'high' : hasMedium ? 'medium' : 'low';
+
+                    const colorScheme = {
+                      high: { border: 'border-red-500/30', bg: 'bg-red-500/5', text: 'text-red-400', dot: 'bg-red-400/60' },
+                      medium: { border: 'border-amber-500/30', bg: 'bg-amber-500/5', text: 'text-amber-400', dot: 'bg-amber-400/60' },
+                      low: { border: 'border-green-500/30', bg: 'bg-green-500/5', text: 'text-green-400', dot: 'bg-green-400/60' },
+                    }[highestRisk];
+
+                    return (
+                    <div className={`border ${colorScheme.border} ${colorScheme.bg} p-4`}>
                       <div className="flex items-center gap-2 mb-3">
-                        <HugeiconsIcon icon={Alert02Icon} size={14} className="text-red-400" />
-                        <span className="text-xs font-medium text-red-400 leading-none">{analysis.potentialConcerns.length} Concerns to Address</span>
+                        <HugeiconsIcon icon={Alert02Icon} size={14} className={colorScheme.text} />
+                        <span className={`text-xs font-medium ${colorScheme.text} leading-none`}>{analysis.potentialConcerns.length} Concerns to Address</span>
                       </div>
                       <ul className="space-y-2">
-                        {analysis.potentialConcerns.map((concern, i) => (
-                          <li key={i} className="flex items-center gap-2 text-xs text-[#e5e5e5]">
-                            <span className="w-1 h-1 rounded-full bg-red-400/60 shrink-0" />
-                            <span className="leading-tight">{concern}</span>
-                          </li>
-                        ))}
+                        {analysis.potentialConcerns.map((concern, i) => {
+                          // Find matching key term by checking if concern keywords appear in term title/content
+                          const matchingTermIndex = analysis.keyTerms?.findIndex(term => {
+                            const concernLower = concern.toLowerCase();
+                            const titleLower = term.title.toLowerCase();
+                            const contentLower = term.content.toLowerCase();
+                            // Check if key words from concern appear in the term
+                            const keywords = concernLower.split(/\s+/).filter(w => w.length > 4);
+                            return keywords.some(kw => titleLower.includes(kw) || contentLower.includes(kw));
+                          });
+                          const snippet = analysis.concernSnippets?.[i];
+                          const matchingTerm = matchingTermIndex !== undefined && matchingTermIndex >= 0
+                            ? analysis.keyTerms?.[matchingTermIndex]
+                            : null;
+
+                          return (
+                            <li
+                              key={i}
+                              className="flex items-center gap-2 text-xs text-[#e5e5e5] cursor-pointer hover:text-white transition-colors group"
+                              onClick={() => {
+                                // Highlight in PDF - use snippet if available, otherwise matching term's originalText
+                                const textToHighlight = snippet || matchingTerm?.originalText;
+                                if (textToHighlight) {
+                                  handleClauseClick(textToHighlight);
+                                }
+                                // Expand matching key term if found
+                                if (matchingTermIndex !== undefined && matchingTermIndex >= 0) {
+                                  setExpandedTerm(matchingTermIndex);
+                                }
+                              }}
+                            >
+                              <span className={`w-1 h-1 rounded-full ${colorScheme.dot} shrink-0 group-hover:bg-primary`} />
+                              <span className="leading-tight">{concern}</span>
+                              <Eye className="w-3 h-3 text-[#525252] group-hover:text-primary ml-auto shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" />
+                            </li>
+                          );
+                        })}
                       </ul>
                     </div>
-                  )}
+                    );
+                  })()}
 
                   {(!analysis.keyTerms || analysis.keyTerms.length === 0) && (
                     <div className="border border-border p-8 text-center">
@@ -1208,12 +1306,50 @@ export default function ContractDetailPage() {
                 </TabsContent>
 
                 {/* Advice Tab - Midday style */}
-                <TabsContent value="advice" className="space-y-2">
-                  {(!analysis.recommendations || analysis.recommendations.length === 0) && (
+                <TabsContent value="advice" className="space-y-4">
+                  {/* Missing Protections Section */}
+                  {analysis.missingClauses && analysis.missingClauses.length > 0 && (
+                    <div className="border border-yellow-500/30 bg-yellow-500/5">
+                      <div className="p-3 border-b border-yellow-500/20">
+                        <div className="flex items-center gap-2">
+                          <HugeiconsIcon icon={HelpSquareIcon} size={14} className="text-yellow-400" />
+                          <span className="text-sm text-yellow-400 font-medium">Missing Protections</span>
+                          <span className="text-[10px] text-yellow-400/60 ml-auto">Consider adding these clauses</span>
+                        </div>
+                      </div>
+                      <div className="divide-y divide-yellow-500/10">
+                        {analysis.missingClauses.map((clause, i) => (
+                          <div key={i} className="p-3">
+                            <div className="flex items-start gap-3">
+                              <span className={`text-[10px] px-1.5 py-0.5 mt-0.5 shrink-0 ${
+                                clause.severity === 'critical' ? 'text-red-400 bg-red-400/10 border border-red-400/20' :
+                                clause.severity === 'high' ? 'text-amber-400 bg-amber-400/10 border border-amber-400/20' :
+                                'text-yellow-400 bg-yellow-400/10 border border-yellow-400/20'
+                              }`}>
+                                {clause.severity}
+                              </span>
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm text-white font-medium mb-1">{clause.clause}</p>
+                                <p className="text-xs text-[#878787]">{clause.description}</p>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Recommendations Section */}
+                  {analysis.recommendations && analysis.recommendations.length > 0 && (
+                    <div>
+                      <p className="text-[10px] text-[#525252] uppercase tracking-wider mb-2 px-1">Recommendations</p>
+                    </div>
+                  )}
+                  {(!analysis.recommendations || analysis.recommendations.length === 0) && (!analysis.missingClauses || analysis.missingClauses.length === 0) && (
                     <div className="border border-border p-8 text-center">
                       <CheckCircle2 className="w-6 h-6 text-[#525252] mx-auto mb-2" />
                       <p className="text-xs text-[#878787]">
-                        {selectedVersion && !versionHasFullAnalysis 
+                        {selectedVersion && !versionHasFullAnalysis
                           ? "Full recommendations not available for this version"
                           : "No recommendations available"}
                       </p>
