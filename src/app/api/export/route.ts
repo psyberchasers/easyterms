@@ -430,7 +430,7 @@ function generateReportHTML(
       ${analysis.parties.artist ? `<div class="grid-item"><div class="grid-item-label">Artist / Creator</div><div class="grid-item-value">${analysis.parties.artist}</div></div>` : ""}
       ${analysis.parties.label ? `<div class="grid-item"><div class="grid-item-label">Label / Company</div><div class="grid-item-value">${analysis.parties.label}</div></div>` : ""}
       ${analysis.parties.publisher ? `<div class="grid-item"><div class="grid-item-label">Publisher</div><div class="grid-item-value">${analysis.parties.publisher}</div></div>` : ""}
-      ${analysis.parties.producer ? `<div class="grid-item"><div class="grid-item-label">Producer</div><div class="grid-item-value">${analysis.parties.producer}</div></div>` : ""}
+      ${(analysis.parties as Record<string, unknown>).producer ? `<div class="grid-item"><div class="grid-item-label">Producer</div><div class="grid-item-value">${(analysis.parties as Record<string, unknown>).producer}</div></div>` : ""}
       ${analysis.parties.manager ? `<div class="grid-item"><div class="grid-item-label">Manager</div><div class="grid-item-value">${analysis.parties.manager}</div></div>` : ""}
     </div>
   </div>
