@@ -204,11 +204,12 @@ export default function Home() {
           {/* Main Features Grid */}
           <div className="grid lg:grid-cols-2 gap-6 mb-12">
             {/* Large Feature Card - AI Analysis */}
-            <div className="lg:row-span-2 p-8 rounded-3xl bg-gradient-to-br from-primary/20 via-primary/10 to-transparent border border-primary/30 relative overflow-hidden group">
+            <div className="lg:row-span-2 p-8 bg-gradient-to-br from-primary/10 via-primary/5 to-transparent relative overflow-hidden group corner-brackets corner-brackets-primary">
+              <span className="corner-tl" /><span className="corner-br" />
               <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 rounded-full blur-3xl group-hover:bg-primary/20 transition-colors" />
               <div className="relative">
                 <div className="flex items-center gap-3 mb-6">
-                  <div className="p-4 rounded-2xl bg-primary/20">
+                  <div className="p-4 bg-primary/20">
                     <Eye className="w-8 h-8 text-primary" />
                   </div>
                   <div>
@@ -216,27 +217,28 @@ export default function Home() {
                   </div>
                 </div>
                 <p className="text-foreground/80 text-lg leading-relaxed">
-                  Our AI doesn&apos;t just scan for keywords. It understands context, industry standards, 
+                  Our AI doesn&apos;t just scan for keywords. It understands context, industry standards,
                   and the subtle implications that could cost you in the long run.
                 </p>
               </div>
             </div>
 
             {/* Risk Detection Card */}
-            <div className="p-6 rounded-3xl bg-gradient-to-br from-red-500/10 to-transparent border border-red-500/20 group hover:border-red-500/40 transition-colors">
+            <div className="p-6 bg-gradient-to-br from-red-500/10 to-transparent group transition-colors corner-brackets corner-brackets-red">
+              <span className="corner-tl" /><span className="corner-br" />
               <div className="flex items-start gap-4">
-                <div className="p-3 rounded-2xl bg-red-500/20 group-hover:bg-red-500/30 transition-colors">
+                <div className="p-3 bg-red-500/20 group-hover:bg-red-500/30 transition-colors">
                   <AlertTriangle className="w-6 h-6 text-red-400" />
                 </div>
                 <div>
                   <h3 className="text-xl font-bold text-foreground mb-2">Red Flag Detection</h3>
                   <p className="text-muted-foreground mb-4">
-                    Instantly identify problematic clauses that labels hope you&apos;ll miss. 
+                    Instantly identify problematic clauses that labels hope you&apos;ll miss.
                     Get warned before it&apos;s too late.
                   </p>
                   <div className="flex flex-wrap gap-2">
                     {["Ownership Traps", "Hidden Fees", "Term Extensions"].map((tag) => (
-                      <span key={tag} className="px-3 py-1 rounded-full bg-red-500/10 text-red-400 text-xs font-medium">
+                      <span key={tag} className="px-3 py-1 bg-red-500/10 text-red-400 text-xs font-medium">
                         {tag}
                       </span>
                     ))}
@@ -246,20 +248,21 @@ export default function Home() {
             </div>
 
             {/* Financial Breakdown Card */}
-            <div className="p-6 rounded-3xl bg-gradient-to-br from-green-500/10 to-transparent border border-green-500/20 group hover:border-green-500/40 transition-colors">
+            <div className="p-6 bg-gradient-to-br from-green-500/10 to-transparent group transition-colors corner-brackets corner-brackets-green">
+              <span className="corner-tl" /><span className="corner-br" />
               <div className="flex items-start gap-4">
-                <div className="p-3 rounded-2xl bg-green-500/20 group-hover:bg-green-500/30 transition-colors">
+                <div className="p-3 bg-green-500/20 group-hover:bg-green-500/30 transition-colors">
                   <DollarSign className="w-6 h-6 text-green-400" />
                 </div>
                 <div>
                   <h3 className="text-xl font-bold text-foreground mb-2">Financial Clarity</h3>
                   <p className="text-muted-foreground mb-4">
-                    Understand exactly where your money goes. Advances, royalties, recoupment: all 
+                    Understand exactly where your money goes. Advances, royalties, recoupment: all
                     broken down in plain terms.
                   </p>
                   <div className="flex flex-wrap gap-2">
                     {["Royalty Rates", "Recoupment", "Payment Terms"].map((tag) => (
-                      <span key={tag} className="px-3 py-1 rounded-full bg-green-500/10 text-green-400 text-xs font-medium">
+                      <span key={tag} className="px-3 py-1 bg-green-500/10 text-green-400 text-xs font-medium">
                         {tag}
                       </span>
                     ))}
@@ -280,9 +283,9 @@ export default function Home() {
                 gradient: "from-cyan-500/20 to-blue-500/20",
                 iconBg: "bg-cyan-500/20",
                 iconColor: "text-cyan-400",
-                borderHover: "hover:border-cyan-500/40",
                 pillBg: "bg-cyan-500/10",
                 pillText: "text-cyan-400",
+                cornerClass: "corner-brackets-cyan",
               },
               {
                 icon: Lock,
@@ -292,31 +295,32 @@ export default function Home() {
                 gradient: "from-emerald-500/20 to-green-500/20",
                 iconBg: "bg-emerald-500/20",
                 iconColor: "text-emerald-400",
-                borderHover: "hover:border-emerald-500/40",
                 pillBg: "bg-emerald-500/10",
                 pillText: "text-emerald-400",
+                cornerClass: "corner-brackets-emerald",
               },
             ].map((feature, i) => (
-              <div 
+              <div
                 key={i}
-                className={`group relative p-8 rounded-3xl bg-gradient-to-br from-card/80 to-card/40 border border-border ${feature.borderHover} transition-all duration-300 hover:-translate-y-1`}
+                className={`group relative p-8 bg-gradient-to-br from-card/80 to-card/40 transition-all duration-300 hover:-translate-y-1 corner-brackets ${feature.cornerClass}`}
               >
+                <span className="corner-tl" /><span className="corner-br" />
                 {/* Subtle gradient glow on hover */}
-                <div className={`absolute inset-0 rounded-3xl bg-gradient-to-br ${feature.gradient} opacity-0 group-hover:opacity-100 transition-opacity duration-300 blur-xl -z-10`} />
-                
+                <div className={`absolute inset-0 bg-gradient-to-br ${feature.gradient} opacity-0 group-hover:opacity-100 transition-opacity duration-300 blur-xl -z-10`} />
+
                 {/* Icon with ring */}
-                <div className={`inline-flex p-4 rounded-2xl ${feature.iconBg} mb-6 ring-1 ring-white/10`}>
+                <div className={`inline-flex p-4 ${feature.iconBg} mb-6 ring-1 ring-white/10`}>
                   <feature.icon className={`w-7 h-7 ${feature.iconColor}`} />
                 </div>
-                
+
                 {/* Content */}
                 <h3 className="text-xl font-semibold text-foreground mb-3">{feature.title}</h3>
                 <p className="text-muted-foreground mb-4 leading-relaxed">
                   {feature.description}
                 </p>
-                
+
                 {/* Highlight badge */}
-                <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full ${feature.pillBg} ${feature.pillText} text-xs font-medium`}>
+                <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 ${feature.pillBg} ${feature.pillText} text-xs font-medium`}>
                   <CheckCircle2 className="w-3.5 h-3.5" />
                   {feature.highlight}
                 </span>
