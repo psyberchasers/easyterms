@@ -77,7 +77,7 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="h-screen flex bg-black overflow-hidden">
+    <div className="h-screen flex bg-background overflow-hidden">
       {/* Left Panel - Branding */}
       <div className="hidden lg:flex lg:w-1/2 flex-col justify-between p-12 border-r border-border">
         <div>
@@ -87,7 +87,7 @@ export default function LoginPage() {
         </div>
 
         <div className="flex-1 flex items-center">
-          <h1 className="text-5xl font-medium text-white leading-tight">
+          <h1 className="text-5xl font-medium text-foreground leading-tight">
             Understand your{" "}
             <span className="relative inline-block min-w-[280px]">
               <AnimatePresence mode="wait">
@@ -120,8 +120,8 @@ export default function LoginPage() {
 
           <div className="space-y-6">
             <div>
-              <h2 className="text-2xl font-medium text-white">Welcome back</h2>
-              <p className="text-[#525252] mt-1 text-sm">Sign in to access your contracts</p>
+              <h2 className="text-2xl font-medium text-foreground">Welcome back</h2>
+              <p className="text-muted-foreground/60 mt-1 text-sm">Sign in to access your contracts</p>
             </div>
 
             {error && (
@@ -133,16 +133,16 @@ export default function LoginPage() {
 
             <form onSubmit={handleLogin} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="email" className="text-white text-sm">Email</Label>
+                <Label htmlFor="email" className="text-foreground text-sm">Email</Label>
                 <div className="relative">
-                  <HugeiconsIcon icon={Mail01Icon} className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#525252]" />
+                  <HugeiconsIcon icon={Mail01Icon} className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/60" />
                   <Input
                     id="email"
                     type="email"
                     placeholder="you@example.com"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="pl-10 bg-black border-border text-white placeholder:text-[#404040] focus:border-[#404040] focus:ring-0 h-10"
+                    className="pl-10 bg-background border-border text-foreground placeholder:text-muted-foreground/40 focus:border-[#404040] focus:ring-0 h-10"
                     required
                   />
                 </div>
@@ -150,20 +150,20 @@ export default function LoginPage() {
 
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <Label htmlFor="password" className="text-white text-sm">Password</Label>
-                  <Link href="/forgot-password" className="text-xs text-[#525252] hover:text-[#878787] transition-colors">
+                  <Label htmlFor="password" className="text-foreground text-sm">Password</Label>
+                  <Link href="/forgot-password" className="text-xs text-muted-foreground/60 hover:text-muted-foreground transition-colors">
                     Forgot password?
                   </Link>
                 </div>
                 <div className="relative">
-                  <HugeiconsIcon icon={LockPasswordIcon} className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#525252]" />
+                  <HugeiconsIcon icon={LockPasswordIcon} className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/60" />
                   <Input
                     id="password"
                     type="password"
                     placeholder="••••••••"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="pl-10 bg-black border-border text-white placeholder:text-[#404040] focus:border-[#404040] focus:ring-0 h-10"
+                    className="pl-10 bg-background border-border text-foreground placeholder:text-muted-foreground/40 focus:border-[#404040] focus:ring-0 h-10"
                     required
                   />
                 </div>
@@ -190,13 +190,13 @@ export default function LoginPage() {
                 <div className="w-full border-t border-border" />
               </div>
               <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-black px-2 text-[#404040]">Or continue with</span>
+                <span className="bg-background px-2 text-muted-foreground/40">Or continue with</span>
               </div>
             </div>
 
             <Button
               variant="outline"
-              className="w-full border-border bg-black text-white hover:bg-[#1a1a1a] hover:text-white h-10 rounded-none"
+              className="w-full border-border bg-background text-foreground hover:bg-muted hover:text-foreground h-10 rounded-none"
               onClick={handleGoogleLogin}
               disabled={loading}
             >
@@ -221,19 +221,19 @@ export default function LoginPage() {
               Continue with Google
             </Button>
 
-            <p className="text-center text-sm text-[#525252]">
+            <p className="text-center text-sm text-muted-foreground/60">
               Don&apos;t have an account?{" "}
-              <Link href="/signup" className="text-white hover:underline">
+              <Link href="/signup" className="text-foreground hover:underline">
                 Sign up
               </Link>
             </p>
           </div>
 
-          <p className="text-center text-xs text-[#404040] mt-8">
+          <p className="text-center text-xs text-muted-foreground/40 mt-8">
             By signing in, you agree to our{" "}
-            <Link href="/terms" className="text-[#525252] hover:text-[#878787] transition-colors">Terms of Service</Link>
+            <Link href="/terms" className="text-muted-foreground/60 hover:text-muted-foreground transition-colors">Terms of Service</Link>
             {" "}and{" "}
-            <Link href="/privacy" className="text-[#525252] hover:text-[#878787] transition-colors">Privacy Policy</Link>
+            <Link href="/privacy" className="text-muted-foreground/60 hover:text-muted-foreground transition-colors">Privacy Policy</Link>
           </p>
         </div>
       </div>

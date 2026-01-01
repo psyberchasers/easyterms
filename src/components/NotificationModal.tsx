@@ -47,7 +47,7 @@ export function NotificationModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="bg-[#0a0a0a] border-border max-w-md" showCloseButton={false}>
+      <DialogContent className="bg-card border-border max-w-md" showCloseButton={false}>
         <DialogHeader>
           <div className="flex items-center gap-3 mb-2">
             <div className={`w-10 h-10 border ${colorScheme.border} ${colorScheme.bg} flex items-center justify-center`}>
@@ -55,7 +55,7 @@ export function NotificationModal({
             </div>
             <DialogTitle className="text-white text-base">{title}</DialogTitle>
           </div>
-          <DialogDescription className="text-[#878787] text-sm">
+          <DialogDescription className="text-muted-foreground text-sm">
             {message}
           </DialogDescription>
         </DialogHeader>

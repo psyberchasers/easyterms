@@ -6,7 +6,6 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { Contract } from "@/types/database";
-import { Navbar } from "@/components/Navbar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -24,11 +23,9 @@ import {
   StarOff,
   MoreVertical,
   Trash2,
-  Eye,
   Search,
   AlertTriangle,
   RefreshCw,
-  Plus,
   Calendar,
 } from "lucide-react";
 import { HugeiconsIcon } from "@hugeicons/react";
@@ -38,7 +35,7 @@ import { MusicLoader } from "@/components/MusicLoader";
 import { DeleteConfirmModal } from "@/components/DeleteConfirmModal";
 
 export default function DashboardPage() {
-  const { user, profile, loading: authLoading, signOut } = useAuth();
+  const { user, profile, loading: authLoading } = useAuth();
   const [contracts, setContracts] = useState<Contract[]>([]);
   const [loading, setLoading] = useState(false);
   const [initialLoad, setInitialLoad] = useState(true);
@@ -55,12 +52,11 @@ export default function DashboardPage() {
 
   const fetchContracts = useCallback(async (isInitial = false) => {
     if (!user) return;
-    
+
     setLoading(true);
     setError(null);
-    
+
     try {
-      // Add timeout to prevent hanging
       const timeoutPromise = new Promise<{ data: null; error: { message: string } }>((resolve) =>
         setTimeout(() => resolve({ data: null, error: { message: "Request timed out. Please try again." } }), 8000)
       );
@@ -78,7 +74,6 @@ export default function DashboardPage() {
       } else {
         setContracts(data as Contract[] || []);
 
-        // Fetch version numbers for all contracts
         if (data && data.length > 0) {
           const contractIds = data.map((c: Contract) => c.id);
           const { data: versions } = await supabase
@@ -93,7 +88,6 @@ export default function DashboardPage() {
               if (!versionMap[v.contract_id]) {
                 versionMap[v.contract_id] = [];
               }
-              // version_number starts at 1 in DB (first upload = v2), so add 1 to display
               versionMap[v.contract_id].push(v.version_number + 1);
             });
             setContractVersions(versionMap);
@@ -169,350 +163,314 @@ export default function DashboardPage() {
     starred: contracts.filter((c) => c.is_starred).length,
   };
 
-  const getRiskBadge = (risk: string | null) => {
-    switch (risk) {
-      case "high":
-        return <Badge className="bg-red-500/20 text-red-400 border-red-500/30">High Risk</Badge>;
-      case "medium":
-        return <Badge className="bg-amber-500/20 text-amber-400 border-amber-500/30">Medium Risk</Badge>;
-      case "low":
-        return <Badge className="bg-green-500/20 text-green-400 border-green-500/30">Low Risk</Badge>;
-      default:
-        return null;
-    }
-  };
-
-  // Only show full-page loader during initial auth check
-  if (authLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <MusicLoader />
-      </div>
-    );
-  }
-
-  // Show loader during initial data fetch (but not subsequent refreshes)
   if (initialLoad && loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
+      <div className="flex items-center justify-center h-full min-h-[400px]">
         <MusicLoader />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <Navbar />
-
-      {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-6 py-8 pt-24">
-        {/* Welcome & Stats */}
-        <div className="mb-8 flex items-start justify-between">
-          <div>
-            <h1 className="text-3xl font-normal mb-2">
-              Welcome back, <span className="text-primary">{profile?.full_name?.split(" ")[0] || "there"}</span>
-            </h1>
-            <p className="text-muted-foreground">
-              Manage and analyze your music contracts
-            </p>
-          </div>
-          <div className="flex items-center gap-2">
-            <Link href="/compare">
-              <Button variant="outline" size="sm" className="rounded-none">
-                <HugeiconsIcon icon={RepeatOffIcon} size={16} className="mr-2" />
-                Compare
-              </Button>
-            </Link>
-            <Button variant="outline" size="sm" className="rounded-none" onClick={() => fetchContracts(false)} disabled={loading}>
-              <RefreshCw className={cn("w-4 h-4 mr-2", loading && "animate-spin")} />
-              Refresh
-            </Button>
-          </div>
+    <div className="p-6">
+      {/* Welcome & Stats */}
+      <div className="mb-8 flex items-start justify-between">
+        <div>
+          <h1 className="text-2xl font-normal mb-1">
+            Welcome back, <span className="text-primary">{profile?.full_name?.split(" ")[0] || "there"}</span>
+          </h1>
+          <p className="text-sm text-muted-foreground">
+            Manage and analyze your music contracts
+          </p>
         </div>
+        <div className="flex items-center gap-2">
+          <Link href="/compare">
+            <Button variant="outline" size="sm" className="rounded-none">
+              <HugeiconsIcon icon={RepeatOffIcon} size={16} className="mr-2" />
+              Compare
+            </Button>
+          </Link>
+          <Button variant="outline" size="sm" className="rounded-none" onClick={() => fetchContracts(false)} disabled={loading}>
+            <RefreshCw className={cn("w-4 h-4 mr-2", loading && "animate-spin")} />
+            Refresh
+          </Button>
+        </div>
+      </div>
 
-        {/* Error Display */}
-        {error && (
-          <Card className="mb-6 border-red-500/30 bg-red-500/5">
-            <CardContent className="py-4">
-              <div className="flex items-center gap-3">
-                <AlertTriangle className="w-5 h-5 text-red-500" />
-                <div className="flex-1">
-                  <p className="font-medium text-red-400">Failed to load contracts</p>
-                  <p className="text-sm text-muted-foreground">{error}</p>
-                </div>
-                <Button variant="outline" size="sm" className="rounded-none" onClick={() => fetchContracts(false)}>
-                  Try Again
-                </Button>
+      {/* Error Display */}
+      {error && (
+        <Card className="mb-6 border-red-500/30 bg-red-500/5">
+          <CardContent className="py-4">
+            <div className="flex items-center gap-3">
+              <AlertTriangle className="w-5 h-5 text-red-500" />
+              <div className="flex-1">
+                <p className="font-medium text-red-400">Failed to load contracts</p>
+                <p className="text-sm text-muted-foreground">{error}</p>
               </div>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Compact Stats Row */}
-        <div className="flex flex-wrap items-center gap-6 mb-8 py-4">
-          {/* Stats */}
-          <div className="flex items-center gap-1">
-            <span className="text-2xl font-light text-white">{stats.total}</span>
-            <span className="text-xs text-[#525252] ml-1">contracts</span>
-          </div>
-          <div className="w-px h-6 bg-[#262626]" />
-          <div className="flex items-center gap-1">
-            <span className="text-2xl font-light text-green-500">{stats.active}</span>
-            <span className="text-xs text-[#525252] ml-1">active</span>
-          </div>
-          <div className="w-px h-6 bg-[#262626]" />
-          <div className="flex items-center gap-1">
-            <span className="text-2xl font-light text-amber-500">{stats.negotiating}</span>
-            <span className="text-xs text-[#525252] ml-1">negotiating</span>
-          </div>
-          <div className="w-px h-6 bg-[#262626]" />
-          <div className="flex items-center gap-1">
-            <Star className="w-3 h-3 text-[#525252]" />
-            <span className="text-lg font-light text-white">{stats.starred}</span>
-          </div>
-          
-          {/* Spacer to push actions right */}
-          <div className="flex-1" />
-          
-          {/* Quick Actions - inline */}
-          <div className="flex items-center gap-2">
-            <Link href="/analyze">
-              <Button variant="outline" size="sm" className="h-7 text-xs border-border bg-transparent hover:bg-[#1a1a1a] rounded-none">
-                <HugeiconsIcon icon={AiSheetsIcon} size={12} className="mr-1" />
-                New
+              <Button variant="outline" size="sm" className="rounded-none" onClick={() => fetchContracts(false)}>
+                Try Again
               </Button>
-            </Link>
-            <Link href="/calendar">
-              <Button variant="ghost" size="sm" className="h-7 text-xs text-[#525252] hover:text-white rounded-none">
-                <Calendar className="w-3 h-3 mr-1" />
-                Calendar
-              </Button>
-            </Link>
-          </div>
-        </div>
-
-        {/* Filters & Search */}
-        <div className="flex flex-col sm:flex-row gap-4 mb-6">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-            <Input
-              placeholder="Search contracts..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10"
-            />
-          </div>
-          <div className="flex gap-2">
-            <Button
-              variant={filter === "all" ? "default" : "outline"}
-              size="sm"
-              className="rounded-none"
-              onClick={() => setFilter("all")}
-            >
-              All
-            </Button>
-            <Button
-              variant={filter === "starred" ? "default" : "outline"}
-              size="sm"
-              className="rounded-none"
-              onClick={() => setFilter("starred")}
-            >
-              <Star className="w-4 h-4 mr-1" />
-              Starred
-            </Button>
-            <Button
-              variant={filter === "high-risk" ? "default" : "outline"}
-              size="sm"
-              className="rounded-none"
-              onClick={() => setFilter("high-risk")}
-            >
-              <AlertTriangle className="w-4 h-4 mr-1" />
-              High Risk
-            </Button>
-          </div>
-        </div>
-
-        {/* Contracts List */}
-        {filteredContracts.length === 0 ? (
-          <div className="border-2 border-dashed border-border bg-[#0a0a0a]">
-            <div className="py-16 text-center">
-              <div className="w-16 h-16 mx-auto border border-border flex items-center justify-center mb-6 bg-[#1a1a1a]">
-                <HugeiconsIcon icon={FolderBlockIcon} className="w-8 h-8 text-[#525252]" />
-              </div>
-              <h3 className="text-lg font-medium text-white mb-2">
-                {contracts.length === 0 ? "No contracts yet" : "No matching contracts"}
-              </h3>
-              <p className="text-[#525252] mb-6">
-                {contracts.length === 0
-                  ? "Upload your first contract to get started"
-                  : "Try adjusting your search or filters"}
-              </p>
-              {contracts.length === 0 && (
-                <Link href="/analyze">
-                  <Button className="rounded-none bg-primary text-black hover:bg-primary/90">
-                    <HugeiconsIcon icon={AiSheetsIcon} size={16} className="mr-2" />
-                    New Analysis
-                  </Button>
-                </Link>
-              )}
             </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Compact Stats Row */}
+      <div className="flex flex-wrap items-center gap-6 mb-8 py-4 border-y border-border">
+        <div className="flex items-center gap-1">
+          <span className="text-2xl font-light text-foreground">{stats.total}</span>
+          <span className="text-xs text-muted-foreground ml-1">contracts</span>
+        </div>
+        <div className="w-px h-6 bg-border" />
+        <div className="flex items-center gap-1">
+          <span className="text-2xl font-light text-green-500">{stats.active}</span>
+          <span className="text-xs text-muted-foreground ml-1">active</span>
+        </div>
+        <div className="w-px h-6 bg-border" />
+        <div className="flex items-center gap-1">
+          <span className="text-2xl font-light text-amber-500">{stats.negotiating}</span>
+          <span className="text-xs text-muted-foreground ml-1">negotiating</span>
+        </div>
+        <div className="w-px h-6 bg-border" />
+        <div className="flex items-center gap-1">
+          <Star className="w-3 h-3 text-muted-foreground" />
+          <span className="text-lg font-light text-foreground">{stats.starred}</span>
+        </div>
+
+        <div className="flex-1" />
+
+        <div className="flex items-center gap-2">
+          <Link href="/analyze">
+            <Button variant="outline" size="sm" className="h-7 text-xs border-border bg-transparent hover:bg-muted rounded-none">
+              <HugeiconsIcon icon={AiSheetsIcon} size={12} className="mr-1" />
+              New
+            </Button>
+          </Link>
+          <Link href="/calendar">
+            <Button variant="ghost" size="sm" className="h-7 text-xs text-muted-foreground hover:text-foreground rounded-none">
+              <Calendar className="w-3 h-3 mr-1" />
+              Calendar
+            </Button>
+          </Link>
+        </div>
+      </div>
+
+      {/* Filters & Search */}
+      <div className="flex flex-col sm:flex-row gap-4 mb-6">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <Input
+            placeholder="Search contracts..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-10"
+          />
+        </div>
+        <div className="flex gap-2">
+          <Button
+            variant={filter === "all" ? "default" : "outline"}
+            size="sm"
+            className="rounded-none"
+            onClick={() => setFilter("all")}
+          >
+            All
+          </Button>
+          <Button
+            variant={filter === "starred" ? "default" : "outline"}
+            size="sm"
+            className="rounded-none"
+            onClick={() => setFilter("starred")}
+          >
+            <Star className="w-4 h-4 mr-1" />
+            Starred
+          </Button>
+          <Button
+            variant={filter === "high-risk" ? "default" : "outline"}
+            size="sm"
+            className="rounded-none"
+            onClick={() => setFilter("high-risk")}
+          >
+            <AlertTriangle className="w-4 h-4 mr-1" />
+            High Risk
+          </Button>
+        </div>
+      </div>
+
+      {/* Contracts List */}
+      {filteredContracts.length === 0 ? (
+        <div className="border-2 border-dashed border-border bg-muted/10">
+          <div className="py-16 text-center">
+            <div className="w-16 h-16 mx-auto border border-border flex items-center justify-center mb-6 bg-muted/30">
+              <HugeiconsIcon icon={FolderBlockIcon} className="w-8 h-8 text-muted-foreground" />
+            </div>
+            <h3 className="text-lg font-medium text-foreground mb-2">
+              {contracts.length === 0 ? "No contracts yet" : "No matching contracts"}
+            </h3>
+            <p className="text-muted-foreground mb-6">
+              {contracts.length === 0
+                ? "Upload your first contract to get started"
+                : "Try adjusting your search or filters"}
+            </p>
+            {contracts.length === 0 && (
+              <Link href="/analyze">
+                <Button className="rounded-none bg-primary text-primary-foreground hover:bg-primary/90">
+                  <HugeiconsIcon icon={AiSheetsIcon} size={16} className="mr-2" />
+                  New Analysis
+                </Button>
+              </Link>
+            )}
           </div>
-        ) : (
-          <div className="space-y-3">
-            {filteredContracts.map((contract) => {
-              const statusColor = contract.status === "active"
-                ? "text-green-400"
-                : contract.status === "negotiating"
-                  ? "text-amber-400"
-                  : "text-[#525252]";
-              const statusLabel = contract.status === "active"
-                ? "Active"
-                : contract.status === "negotiating"
-                  ? "Negotiating"
-                  : "Draft";
+        </div>
+      ) : (
+        <div className="space-y-2">
+          {filteredContracts.map((contract) => {
+            const statusColor = contract.status === "active"
+              ? "text-green-400"
+              : contract.status === "negotiating"
+                ? "text-amber-400"
+                : "text-muted-foreground";
+            const statusLabel = contract.status === "active"
+              ? "Active"
+              : contract.status === "negotiating"
+                ? "Negotiating"
+                : "Draft";
 
-              return (
-                <Link
-                  href={`/contract/${contract.id}`}
-                  key={contract.id}
-                  className="block border border-border hover:border-[#404040] bg-[#0a0a0a] hover:bg-[#111] transition-all"
-                >
-                  <div className="p-4 flex items-start gap-4">
-                    {/* Left: Icon with status indicator */}
-                    <div className="relative shrink-0">
-                      <div className="w-10 h-10 border border-border flex items-center justify-center bg-[#1a1a1a]">
-                        <FileText className="w-5 h-5 text-[#525252]" />
-                      </div>
+            return (
+              <Link
+                href={`/contract/${contract.id}`}
+                key={contract.id}
+                className="block border border-border hover:border-muted-foreground/30 bg-card hover:bg-muted/20 transition-all"
+              >
+                <div className="p-4 flex items-start gap-4">
+                  {/* Left: Icon with status indicator */}
+                  <div className="relative shrink-0">
+                    <div className="w-10 h-10 border border-border flex items-center justify-center bg-muted/30">
+                      <FileText className="w-5 h-5 text-muted-foreground" />
+                    </div>
+                    <div className={cn(
+                      "absolute -bottom-1 -right-1 w-4 h-4 rounded-full flex items-center justify-center",
+                      contract.overall_risk === "high" ? "bg-red-500/20" :
+                      contract.overall_risk === "medium" ? "bg-amber-500/20" :
+                      "bg-green-500/20"
+                    )}>
                       <div className={cn(
-                        "absolute -bottom-1 -right-1 w-4 h-4 rounded-full flex items-center justify-center",
-                        contract.overall_risk === "high" ? "bg-red-500/20" :
-                        contract.overall_risk === "medium" ? "bg-amber-500/20" :
-                        "bg-green-500/20"
-                      )}>
-                        <div className={cn(
-                          "w-2 h-2 rounded-full",
-                          contract.overall_risk === "high" ? "bg-red-400" :
-                          contract.overall_risk === "medium" ? "bg-amber-400" :
-                          "bg-green-400"
-                        )} />
-                      </div>
-                    </div>
-
-                    {/* Main content */}
-                    <div className="flex-1 min-w-0">
-                      {/* Title row */}
-                      <div className="flex items-center gap-2 mb-1">
-                        <h3 className="font-medium text-white truncate">{contract.title}</h3>
-                        {contractVersions[contract.id]?.length > 0 && (
-                          <div className="flex items-center gap-1">
-                            {contractVersions[contract.id].map((vNum) => (
-                              <span key={vNum} className="flex items-center gap-1 text-[10px] text-[#878787] px-1.5 py-0.5 border border-border bg-[#1a1a1a]">
-                                v{vNum}
-                              </span>
-                            ))}
-                          </div>
-                        )}
-                        {contract.is_starred && (
-                          <Star className="w-3.5 h-3.5 text-amber-500 fill-amber-500 shrink-0" />
-                        )}
-                      </div>
-
-                      {/* Description */}
-                      <p className="text-sm text-[#878787] line-clamp-1 mb-3">
-                        {(contract.analysis as { summary?: string })?.summary || "Contract uploaded for analysis"}
-                      </p>
-
-                      {/* Tags row */}
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs px-2 py-0.5 border border-border text-[#878787]">
-                          {new Date(contract.created_at).getFullYear()}
-                        </span>
-                        {contract.contract_type && (
-                          <span className="text-xs px-2 py-0.5 border border-border text-[#878787]">
-                            {contract.contract_type}
-                          </span>
-                        )}
-                        {contract.overall_risk && (
-                          <span className={cn(
-                            "text-xs px-2 py-0.5 border",
-                            contract.overall_risk === "high"
-                              ? "border-red-500/30 text-red-400 bg-red-500/10"
-                              : contract.overall_risk === "medium"
-                                ? "border-amber-500/30 text-amber-400 bg-amber-500/10"
-                                : "border-green-500/30 text-green-400 bg-green-500/10"
-                          )}>
-                            {contract.overall_risk === "high" ? "High Risk" : contract.overall_risk === "medium" ? "Medium Risk" : "Low Risk"}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Right section: Status & Actions */}
-                    <div className="flex items-center gap-4 shrink-0">
-                      {/* Status badge */}
-                      <div className={cn("flex items-center gap-1.5 text-sm", statusColor)}>
-                        <div className={cn(
-                          "w-2 h-2 rounded-full",
-                          contract.status === "active" ? "bg-green-400" :
-                          contract.status === "negotiating" ? "bg-amber-400" :
-                          "bg-[#525252]"
-                        )} />
-                        {statusLabel}
-                      </div>
-
-                      {/* Actions */}
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild onClick={(e) => e.preventDefault()}>
-                          <Button variant="ghost" size="icon" className="h-8 w-8 rounded-none">
-                            <MoreVertical className="w-4 h-4 text-[#525252]" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="rounded-none">
-                          <DropdownMenuItem
-                            onClick={(e) => {
-                              e.preventDefault();
-                              toggleStar(contract.id, contract.is_starred);
-                            }}
-                          >
-                            {contract.is_starred ? (
-                              <>
-                                <StarOff className="w-4 h-4 mr-2" />
-                                Unstar
-                              </>
-                            ) : (
-                              <>
-                                <Star className="w-4 h-4 mr-2" />
-                                Star
-                              </>
-                            )}
-                          </DropdownMenuItem>
-                          <DropdownMenuItem asChild>
-                            <Link href={`/compare?contracts=${contract.id}`} onClick={(e) => e.stopPropagation()}>
-                              <HugeiconsIcon icon={RepeatOffIcon} size={16} className="mr-2" />
-                              Compare
-                            </Link>
-                          </DropdownMenuItem>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem
-                            onClick={(e) => {
-                              e.preventDefault();
-                              openDeleteModal(contract);
-                            }}
-                            className="text-red-400"
-                          >
-                            <Trash2 className="w-4 h-4 mr-2" />
-                            Delete
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
+                        "w-2 h-2 rounded-full",
+                        contract.overall_risk === "high" ? "bg-red-400" :
+                        contract.overall_risk === "medium" ? "bg-amber-400" :
+                        "bg-green-400"
+                      )} />
                     </div>
                   </div>
-                </Link>
-              );
-            })}
-          </div>
-        )}
-      </main>
+
+                  {/* Main content */}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1">
+                      <h3 className="font-medium text-foreground truncate">{contract.title}</h3>
+                      {contractVersions[contract.id]?.length > 0 && (
+                        <div className="flex items-center gap-1">
+                          {contractVersions[contract.id].map((vNum) => (
+                            <span key={vNum} className="flex items-center gap-1 text-[10px] text-muted-foreground px-1.5 py-0.5 border border-border bg-muted/30">
+                              v{vNum}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                      {contract.is_starred && (
+                        <Star className="w-3.5 h-3.5 text-amber-500 fill-amber-500 shrink-0" />
+                      )}
+                    </div>
+
+                    <p className="text-sm text-muted-foreground line-clamp-1 mb-3">
+                      {(contract.analysis as { summary?: string })?.summary || "Contract uploaded for analysis"}
+                    </p>
+
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs px-2 py-0.5 border border-border text-muted-foreground">
+                        {new Date(contract.created_at).getFullYear()}
+                      </span>
+                      {contract.contract_type && (
+                        <span className="text-xs px-2 py-0.5 border border-border text-muted-foreground">
+                          {contract.contract_type}
+                        </span>
+                      )}
+                      {contract.overall_risk && (
+                        <span className={cn(
+                          "text-xs px-2 py-0.5 border",
+                          contract.overall_risk === "high"
+                            ? "border-red-500/30 text-red-400 bg-red-500/10"
+                            : contract.overall_risk === "medium"
+                              ? "border-amber-500/30 text-amber-400 bg-amber-500/10"
+                              : "border-green-500/30 text-green-400 bg-green-500/10"
+                        )}>
+                          {contract.overall_risk === "high" ? "High Risk" : contract.overall_risk === "medium" ? "Medium Risk" : "Low Risk"}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Right section: Status & Actions */}
+                  <div className="flex items-center gap-4 shrink-0">
+                    <div className={cn("flex items-center gap-1.5 text-sm", statusColor)}>
+                      <div className={cn(
+                        "w-2 h-2 rounded-full",
+                        contract.status === "active" ? "bg-green-400" :
+                        contract.status === "negotiating" ? "bg-amber-400" :
+                        "bg-muted-foreground"
+                      )} />
+                      {statusLabel}
+                    </div>
+
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild onClick={(e) => e.preventDefault()}>
+                        <Button variant="ghost" size="icon" className="h-8 w-8 rounded-none">
+                          <MoreVertical className="w-4 h-4 text-muted-foreground" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="rounded-none">
+                        <DropdownMenuItem
+                          onClick={(e) => {
+                            e.preventDefault();
+                            toggleStar(contract.id, contract.is_starred);
+                          }}
+                        >
+                          {contract.is_starred ? (
+                            <>
+                              <StarOff className="w-4 h-4 mr-2" />
+                              Unstar
+                            </>
+                          ) : (
+                            <>
+                              <Star className="w-4 h-4 mr-2" />
+                              Star
+                            </>
+                          )}
+                        </DropdownMenuItem>
+                        <DropdownMenuItem asChild>
+                          <Link href={`/compare?contracts=${contract.id}`} onClick={(e) => e.stopPropagation()}>
+                            <HugeiconsIcon icon={RepeatOffIcon} size={16} className="mr-2" />
+                            Compare
+                          </Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem
+                          onClick={(e) => {
+                            e.preventDefault();
+                            openDeleteModal(contract);
+                          }}
+                          className="text-red-400"
+                        >
+                          <Trash2 className="w-4 h-4 mr-2" />
+                          Delete
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
+                </div>
+              </Link>
+            );
+          })}
+        </div>
+      )}
 
       {/* Delete Confirmation Modal */}
       <DeleteConfirmModal
@@ -525,5 +483,3 @@ export default function DashboardPage() {
     </div>
   );
 }
-
-

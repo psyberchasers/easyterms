@@ -48,7 +48,7 @@ export function DeleteConfirmModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="bg-[#0a0a0a] border-border max-w-md" showCloseButton={false}>
+      <DialogContent className="bg-card border-border max-w-md" showCloseButton={false}>
         <DialogHeader>
           <div className="flex items-center gap-3 mb-2">
             <div className="w-10 h-10 border border-red-500/30 bg-red-500/10 flex items-center justify-center">
@@ -56,7 +56,7 @@ export function DeleteConfirmModal({
             </div>
             <DialogTitle className="text-white text-base">{dialogTitle}</DialogTitle>
           </div>
-          <DialogDescription className="text-[#878787] text-sm">
+          <DialogDescription className="text-muted-foreground text-sm">
             {description || <>Are you sure you want to delete <span className="text-white">{title}</span>?</>}
           </DialogDescription>
         </DialogHeader>
@@ -69,7 +69,7 @@ export function DeleteConfirmModal({
           </div>
         )}
 
-        <p className="text-xs text-[#525252]">
+        <p className="text-xs text-muted-foreground/60">
           This action cannot be undone.
         </p>
 
@@ -77,7 +77,7 @@ export function DeleteConfirmModal({
           <button
             onClick={() => onOpenChange(false)}
             disabled={deleting}
-            className="flex-1 h-9 text-sm text-[#878787] hover:text-white border border-border hover:border-[#404040] transition-colors disabled:opacity-50"
+            className="flex-1 h-9 text-sm text-muted-foreground hover:text-foreground border border-border hover:border-muted-foreground/30 transition-colors disabled:opacity-50"
           >
             Cancel
           </button>

@@ -92,7 +92,7 @@ export function Navbar({ showNewAnalysis = true, showBorder = false }: NavbarPro
 
   return (
     <>
-      <header className={`fixed top-0 left-0 right-0 z-50 bg-black ${showBorder ? 'border-b border-border' : ''}`}>
+      <header className={`fixed top-0 left-0 right-0 z-50 bg-background ${showBorder ? 'border-b border-border' : ''}`}>
         <div className="max-w-full mx-auto px-4 h-14 grid grid-cols-3 items-center">
           {/* Left - Logo */}
           <Link href="/" className="flex items-center gap-2">
@@ -103,9 +103,9 @@ export function Navbar({ showNewAnalysis = true, showBorder = false }: NavbarPro
           <div className="flex justify-center items-center">
             <button
               onClick={() => setCommandOpen(true)}
-              className="group hidden sm:flex items-center justify-center gap-3 h-10 px-4 text-base text-[#878787] hover:text-white bg-transparent transition-colors min-w-[240px] relative"
+              className="group hidden sm:flex items-center justify-center gap-3 h-10 px-4 text-base text-muted-foreground hover:text-foreground bg-transparent transition-colors min-w-[240px] relative"
             >
-              <HugeiconsIcon icon={AiSearch02Icon} size={18} className="text-[#525252] group-hover:text-primary transition-colors" />
+              <HugeiconsIcon icon={AiSearch02Icon} size={18} className="text-muted-foreground/60 group-hover:text-primary transition-colors" />
               <span>Search</span>
               {/* Underline that expands from middle */}
               <span className="absolute bottom-0 left-1/2 h-0.5 w-0 bg-primary -translate-x-1/2 transition-all duration-300 ease-out group-hover:w-full" />
@@ -115,7 +115,7 @@ export function Navbar({ showNewAnalysis = true, showBorder = false }: NavbarPro
           {/* Right - Nav */}
           <nav className="flex items-center gap-2 justify-end">
           {loading ? (
-            <div className="w-8 h-8 bg-[#1a1a1a] animate-pulse" />
+            <div className="w-8 h-8 bg-muted animate-pulse" />
           ) : user ? (
             <>
               {showNewAnalysis && (
@@ -129,45 +129,45 @@ export function Navbar({ showNewAnalysis = true, showBorder = false }: NavbarPro
               )}
               <Link
                 href="/dashboard"
-                className="h-8 px-3 text-sm text-[#878787] hover:text-primary flex items-center gap-2 transition-colors group"
+                className="h-8 px-3 text-sm text-muted-foreground hover:text-primary flex items-center gap-2 transition-colors group"
               >
                 <HugeiconsIcon icon={DashboardSquare01Icon} size={18} className="group-hover:text-primary transition-colors" />
                 Dashboard
               </Link>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <button className="w-8 h-8 border border-border flex items-center justify-center hover:border-[#404040] transition-colors">
-                    <HugeiconsIcon icon={UserFullViewIcon} size={16} className="text-[#878787]" />
+                  <button className="w-8 h-8 border border-border flex items-center justify-center hover:border-muted-foreground/30 transition-colors">
+                    <HugeiconsIcon icon={UserFullViewIcon} size={16} className="text-muted-foreground" />
                   </button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56 bg-[#0a0a0a] border-border rounded-none">
+                <DropdownMenuContent align="end" className="w-56 bg-card border-border rounded-none">
                   <div className="px-3 py-2">
-                    <p className="text-sm font-medium text-white">{profile?.full_name || "User"}</p>
-                    <p className="text-xs text-[#525252]">{user.email}</p>
+                    <p className="text-sm font-medium text-foreground">{profile?.full_name || "User"}</p>
+                    <p className="text-xs text-muted-foreground/60">{user.email}</p>
                   </div>
-                  <DropdownMenuItem asChild className="text-[#878787] hover:text-white focus:text-white focus:bg-[#1a1a1a]">
+                  <DropdownMenuItem asChild className="text-muted-foreground hover:text-foreground focus:text-foreground focus:bg-muted">
                     <Link href="/dashboard">
                       <HugeiconsIcon icon={DashboardSquare01Icon} size={16} className="mr-2" />
                       Dashboard
                     </Link>
                   </DropdownMenuItem>
-                  <DropdownMenuItem asChild className="text-[#878787] hover:text-white focus:text-white focus:bg-[#1a1a1a]">
+                  <DropdownMenuItem asChild className="text-muted-foreground hover:text-foreground focus:text-foreground focus:bg-muted">
                     <Link href="/compare">
                       <HugeiconsIcon icon={RepeatOffIcon} size={16} className="mr-2" />
                       Compare
                     </Link>
                   </DropdownMenuItem>
-                  <DropdownMenuItem asChild className="text-[#878787] hover:text-white focus:text-white focus:bg-[#1a1a1a]">
+                  <DropdownMenuItem asChild className="text-muted-foreground hover:text-foreground focus:text-foreground focus:bg-muted">
                     <Link href="/pricing">
                       <HugeiconsIcon icon={SparklesIcon} size={16} className="mr-2" />
                       Upgrade
                     </Link>
                   </DropdownMenuItem>
-                  <DropdownMenuItem className="text-[#878787] hover:text-white focus:text-white focus:bg-[#1a1a1a]">
+                  <DropdownMenuItem className="text-muted-foreground hover:text-foreground focus:text-foreground focus:bg-muted">
                     <HugeiconsIcon icon={Settings02Icon} size={16} className="mr-2" />
                     Settings
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={signOut} className="text-red-400 focus:text-red-400 focus:bg-[#1a1a1a]">
+                  <DropdownMenuItem onClick={signOut} className="text-red-400 focus:text-red-400 focus:bg-muted">
                     <HugeiconsIcon icon={Logout01Icon} size={16} className="mr-2" />
                     Sign out
                   </DropdownMenuItem>
@@ -178,7 +178,7 @@ export function Navbar({ showNewAnalysis = true, showBorder = false }: NavbarPro
             <>
               <Link
                 href="/login"
-                className="h-8 px-3 text-sm text-[#878787] hover:text-white flex items-center gap-2 transition-colors"
+                className="h-8 px-3 text-sm text-muted-foreground hover:text-foreground flex items-center gap-2 transition-colors"
               >
                 <HugeiconsIcon icon={Login01Icon} size={14} />
                 Log In
@@ -203,15 +203,15 @@ export function Navbar({ showNewAnalysis = true, showBorder = false }: NavbarPro
           <CommandEmpty>No results found</CommandEmpty>
           <CommandGroup heading="ACTIONS">
             <CommandItem onSelect={() => runCommand(() => router.push("/analyze"))}>
-              <HugeiconsIcon icon={AiSheetsIcon} size={16} className="mr-3 text-[#525252]" />
+              <HugeiconsIcon icon={AiSheetsIcon} size={16} className="mr-3 text-muted-foreground/60" />
               New Analysis
             </CommandItem>
             <CommandItem onSelect={() => runCommand(() => router.push("/compare"))}>
-              <HugeiconsIcon icon={RepeatOffIcon} size={16} className="mr-3 text-[#525252]" />
+              <HugeiconsIcon icon={RepeatOffIcon} size={16} className="mr-3 text-muted-foreground/60" />
               Compare Contracts
             </CommandItem>
             <CommandItem onSelect={() => runCommand(() => router.push("/pricing"))}>
-              <HugeiconsIcon icon={SparklesIcon} size={16} className="mr-3 text-[#525252]" />
+              <HugeiconsIcon icon={SparklesIcon} size={16} className="mr-3 text-muted-foreground/60" />
               Upgrade Plan
             </CommandItem>
           </CommandGroup>
@@ -222,7 +222,7 @@ export function Navbar({ showNewAnalysis = true, showBorder = false }: NavbarPro
                   key={contract.id}
                   onSelect={() => runCommand(() => router.push(`/contract/${contract.id}`))}
                 >
-                  <HugeiconsIcon icon={FileAttachmentIcon} size={16} className="mr-3 text-[#525252]" />
+                  <HugeiconsIcon icon={FileAttachmentIcon} size={16} className="mr-3 text-muted-foreground/60" />
                   <span className="flex-1 truncate">{contract.title}</span>
                   {contract.overall_risk && (
                     <span className={`text-[10px] px-1.5 py-0.5 ${
@@ -239,26 +239,26 @@ export function Navbar({ showNewAnalysis = true, showBorder = false }: NavbarPro
           )}
           <CommandGroup heading="NAVIGATION">
             <CommandItem onSelect={() => runCommand(() => router.push("/"))}>
-              <HugeiconsIcon icon={Home11Icon} size={16} className="mr-3 text-[#525252]" />
+              <HugeiconsIcon icon={Home11Icon} size={16} className="mr-3 text-muted-foreground/60" />
               Home
             </CommandItem>
             <CommandItem onSelect={() => runCommand(() => router.push("/dashboard"))}>
-              <HugeiconsIcon icon={DashboardSquare01Icon} size={16} className="mr-3 text-[#525252]" />
+              <HugeiconsIcon icon={DashboardSquare01Icon} size={16} className="mr-3 text-muted-foreground/60" />
               Dashboard
             </CommandItem>
             <CommandItem onSelect={() => runCommand(() => router.push("/calendar"))}>
-              <HugeiconsIcon icon={Calendar03Icon} size={16} className="mr-3 text-[#525252]" />
+              <HugeiconsIcon icon={Calendar03Icon} size={16} className="mr-3 text-muted-foreground/60" />
               Calendar
             </CommandItem>
             <CommandItem onSelect={() => runCommand(() => router.push("/settings"))}>
-              <HugeiconsIcon icon={Settings02Icon} size={16} className="mr-3 text-[#525252]" />
+              <HugeiconsIcon icon={Settings02Icon} size={16} className="mr-3 text-muted-foreground/60" />
               Settings
             </CommandItem>
           </CommandGroup>
           {user && (
             <CommandGroup heading="ACCOUNT">
               <CommandItem onSelect={() => runCommand(() => signOut())}>
-                <HugeiconsIcon icon={Logout01Icon} size={16} className="mr-3 text-[#525252]" />
+                <HugeiconsIcon icon={Logout01Icon} size={16} className="mr-3 text-muted-foreground/60" />
                 Sign Out
               </CommandItem>
             </CommandGroup>

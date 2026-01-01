@@ -92,6 +92,50 @@
   --sidebar-ring: oklch(0.78 0.16 75);
 }
 
+/* Light theme - Inverted colors */
+[data-theme="light"] {
+  --background: #ffffff;
+  --foreground: oklch(0.15 0.01 250);
+  --card: #f9f9f8;
+  --card-foreground: oklch(0.15 0.01 250);
+  --popover: #ffffff;
+  --popover-foreground: oklch(0.15 0.01 250);
+  /* Amber/Gold primary - slightly darker for light mode */
+  --primary: oklch(0.65 0.18 75);
+  --primary-foreground: oklch(0.98 0.01 75);
+  --secondary: #f9f9f8;
+  --secondary-foreground: oklch(0.2 0.01 250);
+  --muted: #f9f9f8;
+  --muted-foreground: oklch(0.45 0.01 250);
+  --accent: #f9f9f8;
+  --accent-foreground: oklch(0.15 0.01 250);
+  --destructive: oklch(0.55 0.22 25);
+  --destructive-foreground: oklch(0.98 0.01 25);
+  --border: oklch(0.88 0.01 250);
+  --input: #f9f9f8;
+  --ring: oklch(0.65 0.18 75);
+  /* Status colors - slightly adjusted for light bg */
+  --warning: oklch(0.7 0.17 60);
+  --warning-foreground: oklch(0.2 0.02 60);
+  --success: oklch(0.6 0.17 145);
+  --success-foreground: oklch(0.2 0.02 145);
+  /* Charts */
+  --chart-1: oklch(0.65 0.18 75);
+  --chart-2: oklch(0.55 0.17 200);
+  --chart-3: oklch(0.55 0.17 145);
+  --chart-4: oklch(0.55 0.22 25);
+  --chart-5: oklch(0.55 0.2 300);
+  /* Sidebar */
+  --sidebar: #f9f9f8;
+  --sidebar-foreground: oklch(0.15 0.01 250);
+  --sidebar-primary: oklch(0.65 0.18 75);
+  --sidebar-primary-foreground: oklch(0.98 0.01 75);
+  --sidebar-accent: oklch(0.92 0.01 250);
+  --sidebar-accent-foreground: oklch(0.15 0.01 250);
+  --sidebar-border: oklch(0.88 0.01 250);
+  --sidebar-ring: oklch(0.65 0.18 75);
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;
@@ -153,8 +197,14 @@ html, body {
 .gradient-bg {
   background:
     radial-gradient(ellipse at 50% 100%, oklch(0.2 0.08 250 / 0.3) 0%, transparent 50%),
-    #000000;
+    var(--background);
   background-size: 100% 100%, 100% 100%;
+}
+
+[data-theme="light"] .gradient-bg {
+  background:
+    radial-gradient(ellipse at 50% 100%, oklch(0.85 0.05 250 / 0.2) 0%, transparent 50%),
+    var(--background);
 }
 
 /* Glow effects */
@@ -302,3 +352,14 @@ input[type="number"] {
 .corner-brackets-green { --corner-color: rgb(34 197 94 / 0.4); }
 .corner-brackets-cyan { --corner-color: rgb(6 182 212 / 0.4); }
 .corner-brackets-emerald { --corner-color: rgb(52 211 153 / 0.4); }
+
+.dark {
+  --sidebar: hsl(240 5.9% 10%);
+  --sidebar-foreground: hsl(240 4.8% 95.9%);
+  --sidebar-primary: hsl(224.3 76.3% 48%);
+  --sidebar-primary-foreground: hsl(0 0% 100%);
+  --sidebar-accent: hsl(240 3.7% 15.9%);
+  --sidebar-accent-foreground: hsl(240 4.8% 95.9%);
+  --sidebar-border: hsl(240 3.7% 15.9%);
+  --sidebar-ring: hsl(217.2 91.2% 59.8%);
+}

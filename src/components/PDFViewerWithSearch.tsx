@@ -261,26 +261,26 @@ export function PDFViewerWithSearch({
   return (
     <div className={cn("flex flex-col h-full bg-muted/20", className)}>
       {/* Controls - Always visible with skeletons while loading */}
-      <div className="flex items-center justify-between px-4 py-2 bg-black border-b border-border shrink-0 gap-2 flex-wrap">
+      <div className="flex items-center justify-between px-4 py-2 bg-background border-b border-border shrink-0 gap-2 flex-wrap">
         <div className="flex items-center gap-2">
           <Button 
             variant="outline" 
             size="icon" 
-            className="h-8 w-8 border-border bg-black hover:bg-[#1a1a1a]" 
+            className="h-8 w-8 border-border bg-background hover:bg-muted" 
             onClick={() => setScale(s => Math.max(0.5, s - 0.1))}
             disabled={loading}
           >
             <ZoomOut className="h-4 w-4" />
           </Button>
           {loading ? (
-            <div className="w-14 h-4 bg-[#262626] animate-pulse rounded" />
+            <div className="w-14 h-4 bg-muted animate-pulse rounded" />
           ) : (
-            <span className="text-sm text-[#878787] w-14 text-center">{Math.round(scale * 100)}%</span>
+            <span className="text-sm text-muted-foreground w-14 text-center">{Math.round(scale * 100)}%</span>
           )}
           <Button 
             variant="outline" 
             size="icon" 
-            className="h-8 w-8 border-border bg-black hover:bg-[#1a1a1a]" 
+            className="h-8 w-8 border-border bg-background hover:bg-muted" 
             onClick={() => setScale(s => Math.min(2, s + 0.1))}
             disabled={loading}
           >
@@ -292,21 +292,21 @@ export function PDFViewerWithSearch({
           <Button 
             variant="outline" 
             size="icon" 
-            className="h-8 w-8 border-border bg-black hover:bg-[#1a1a1a]" 
+            className="h-8 w-8 border-border bg-background hover:bg-muted" 
             onClick={() => setCurrentPage(p => Math.max(1, p - 1))} 
             disabled={loading || currentPage <= 1}
           >
             <ChevronLeft className="h-4 w-4" />
           </Button>
           {loading ? (
-            <div className="w-16 h-4 bg-[#262626] animate-pulse rounded" />
+            <div className="w-16 h-4 bg-muted animate-pulse rounded" />
           ) : (
-            <span className="text-sm text-[#878787] w-16 text-center">{currentPage}/{numPages}</span>
+            <span className="text-sm text-muted-foreground w-16 text-center">{currentPage}/{numPages}</span>
           )}
           <Button 
             variant="outline" 
             size="icon" 
-            className="h-8 w-8 border-border bg-black hover:bg-[#1a1a1a]" 
+            className="h-8 w-8 border-border bg-background hover:bg-muted" 
             onClick={() => setCurrentPage(p => Math.min(numPages, p + 1))} 
             disabled={loading || currentPage >= numPages}
           >
@@ -318,8 +318,8 @@ export function PDFViewerWithSearch({
         {searchText && (
           <div className={cn(
             "flex items-center gap-2 px-3 py-1 text-xs",
-            searching ? "text-[#878787]" :
-            match ? "text-white" : "text-[#525252]"
+            searching ? "text-muted-foreground" :
+            match ? "text-foreground" : "text-muted-foreground/60"
           )}>
             {searching ? (
               <>
@@ -342,7 +342,7 @@ export function PDFViewerWithSearch({
       </div>
 
       {/* PDF Container */}
-      <div ref={scrollContainerRef} className="flex-1 overflow-auto flex justify-center p-4 bg-[#0a0a0a]">
+      <div ref={scrollContainerRef} className="flex-1 overflow-auto flex justify-center p-4 bg-card">
         {loading && (
           <div className="flex items-center justify-center h-full">
             <MusicLoader />
@@ -407,7 +407,7 @@ export function PDFViewerWithSearch({
             </div>
           )}
           {pageError && (
-            <div className="flex items-center justify-center h-64 text-[#878787] text-sm">
+            <div className="flex items-center justify-center h-64 text-muted-foreground text-sm">
               <div className="text-center">
                 <AlertCircle className="w-8 h-8 mx-auto mb-2" />
                 <p>Failed to load page</p>

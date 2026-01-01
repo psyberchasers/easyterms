@@ -486,7 +486,7 @@ export default function AnalyzePage() {
   // ============================================
   if (status === "idle") {
     return (
-      <div className="min-h-screen bg-black flex flex-col">
+      <div className="min-h-screen bg-background flex flex-col">
         <Navbar showNewAnalysis={false} />
 
         {/* Upload Area */}
@@ -494,7 +494,7 @@ export default function AnalyzePage() {
           <div className="w-full max-w-md space-y-6">
             <div className="text-center">
               <h1 className="text-2xl font-medium text-white mb-2">Upload Contract</h1>
-              <p className="text-[#878787] text-sm">
+              <p className="text-muted-foreground text-sm">
                 Drop a file to get instant AI analysis
               </p>
             </div>
@@ -542,7 +542,7 @@ export default function AnalyzePage() {
     ];
 
     return (
-      <div className="min-h-screen bg-black flex flex-col items-center justify-center p-4">
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4">
         <div className="w-full max-w-md space-y-8">
           {/* Music Loader - Prominent */}
           <div className="flex justify-center">
@@ -561,7 +561,7 @@ export default function AnalyzePage() {
                 <span className="animate-pulse" style={{ animationDelay: "0.4s" }}>.</span>
               </span>
             </h2>
-            <p className="text-sm text-[#878787]">{steps[currentStep].sublabel}</p>
+            <p className="text-sm text-muted-foreground">{steps[currentStep].sublabel}</p>
           </div>
 
           {/* Progress Bar */}
@@ -597,7 +597,7 @@ export default function AnalyzePage() {
                       ? "bg-primary text-primary-foreground"
                       : i === currentStep
                         ? "border border-primary text-primary"
-                        : "border border-border text-[#525252]"
+                        : "border border-border text-muted-foreground/60"
                   )}>
                     {i < currentStep ? (
                       <CheckCircle2 className="w-3 h-3" />
@@ -607,7 +607,7 @@ export default function AnalyzePage() {
                   </div>
                   <span className={cn(
                     "text-xs hidden sm:inline transition-colors",
-                    i <= currentStep ? "text-[#878787]" : "text-[#525252]"
+                    i <= currentStep ? "text-muted-foreground" : "text-muted-foreground/60"
                   )}>
                     {step.label}
                   </span>
@@ -623,7 +623,7 @@ export default function AnalyzePage() {
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium text-white truncate">{fileName}</p>
-              <p className="text-xs text-[#525252] mt-0.5">
+              <p className="text-xs text-muted-foreground/60 mt-0.5">
                 {status === "uploading" ? "Uploading..." : "Processing with AI..."}
               </p>
             </div>
@@ -649,14 +649,14 @@ export default function AnalyzePage() {
   // ============================================
   if (status === "error") {
     return (
-      <div className="min-h-screen bg-black flex items-center justify-center">
+      <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center space-y-4 max-w-md p-6 border border-border rounded-lg">
           <div className="w-12 h-12 rounded-lg border border-red-400/30 flex items-center justify-center mx-auto">
             <AlertTriangle className="w-5 h-5 text-red-400" />
           </div>
           <div>
             <p className="text-base font-medium text-white">Analysis Failed</p>
-            <p className="text-sm text-[#878787] mt-1">{error}</p>
+            <p className="text-sm text-muted-foreground mt-1">{error}</p>
           </div>
           <Button 
             onClick={handleReset}
@@ -687,7 +687,7 @@ export default function AnalyzePage() {
   ];
 
   return (
-    <div className="flex flex-col h-screen bg-black overflow-hidden overflow-x-hidden pt-[57px]">
+    <div className="flex flex-col h-screen bg-background overflow-hidden overflow-x-hidden pt-[57px]">
       <Navbar showBorder />
 
       {/* Main Content Area */}
@@ -695,40 +695,40 @@ export default function AnalyzePage() {
         {/* Document Side Panel */}
         <div
           className={cn(
-            "h-full flex flex-col bg-black transition-all duration-300 ease-in-out overflow-hidden",
+            "h-full flex flex-col bg-background transition-all duration-300 ease-in-out overflow-hidden",
             showDocument ? "w-1/2 max-w-2xl border-r border-border" : "w-0"
           )}
         >
           {showDocument && (
             <>
               {/* Panel Header */}
-              <div className="shrink-0 h-12 px-4 border-b border-border bg-black flex items-center justify-between">
+              <div className="shrink-0 h-12 px-4 border-b border-border bg-background flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <FileText className="w-4 h-4 text-[#878787]" />
+                  <FileText className="w-4 h-4 text-muted-foreground" />
                   <span className="text-sm text-white">{fileName}</span>
                   {highlightedClause && (
-                    <span className="text-xs text-[#525252] px-2 py-0.5 border border-border">Highlighting</span>
+                    <span className="text-xs text-muted-foreground/60 px-2 py-0.5 border border-border">Highlighting</span>
                   )}
                 </div>
                 <div className="flex items-center gap-2">
                   {highlightedClause && (
                     <button
                       onClick={() => setHighlightedClause(null)}
-                      className="text-xs text-[#878787] hover:text-white transition-colors"
+                      className="text-xs text-muted-foreground hover:text-foreground transition-colors"
                     >
                       Clear
                     </button>
                   )}
                   <button
                     onClick={() => { setShowDocument(false); setHighlightedClause(null); }}
-                    className="w-7 h-7 flex items-center justify-center hover:bg-[#1a1a1a] transition-colors"
+                    className="w-7 h-7 flex items-center justify-center hover:bg-muted transition-colors"
                   >
-                    <X className="w-4 h-4 text-[#878787]" />
+                    <X className="w-4 h-4 text-muted-foreground" />
                   </button>
                 </div>
               </div>
               {/* PDF Content */}
-              <div className="flex-1 overflow-hidden bg-[#0a0a0a]">
+              <div className="flex-1 overflow-hidden bg-card">
                 <PDFViewerWithSearch
                   fileUrl={fileUrl}
                   searchText={highlightedClause || ""}
@@ -748,15 +748,15 @@ export default function AnalyzePage() {
             {/* Breadcrumbs */}
             <div className="flex items-center gap-2 mb-6">
               <Link href={savedContractId ? "/dashboard" : "/"} className="flex items-center justify-center w-7 h-7 border border-border hover:border-[#404040] transition-colors">
-                <ArrowLeft className="w-3.5 h-3.5 text-[#878787]" />
+                <ArrowLeft className="w-3.5 h-3.5 text-muted-foreground" />
               </Link>
               <nav className="flex items-center gap-2 text-sm">
-                <Link href="/" className="text-[#878787] hover:text-white transition-colors">
+                <Link href="/" className="text-muted-foreground hover:text-foreground transition-colors">
                   Home
                 </Link>
-                <span className="text-[#525252]">/</span>
-                <span className="text-[#878787]">{analysis.contractType || "Contract"}</span>
-                <span className="text-[#525252]">/</span>
+                <span className="text-muted-foreground/60">/</span>
+                <span className="text-muted-foreground">{analysis.contractType || "Contract"}</span>
+                <span className="text-muted-foreground/60">/</span>
                 <span className="text-white font-medium">Analysis</span>
               </nav>
             </div>
@@ -771,7 +771,7 @@ export default function AnalyzePage() {
                     analysis.overallRiskAssessment === "low" ? "border-green-500/30 text-green-400" :
                     analysis.overallRiskAssessment === "medium" ? "border-yellow-500/30 text-yellow-400" :
                     analysis.overallRiskAssessment === "high" ? "border-red-500/30 text-red-400" :
-                    "border-border text-[#525252]"
+                    "border-border text-muted-foreground/60"
                   )}>
                     {analysis.overallRiskAssessment === "low" ? "Low Risk" :
                      analysis.overallRiskAssessment === "medium" ? "Medium Risk" :
@@ -779,7 +779,7 @@ export default function AnalyzePage() {
                   </span>
                 </div>
                 {analysis.parties?.label && (
-                  <span className="text-[#525252] text-sm">
+                  <span className="text-muted-foreground/60 text-sm">
                     {analysis.parties.label}
                     {analysis.parties?.artist && ` · ${analysis.parties.artist}`}
                   </span>
@@ -789,7 +789,7 @@ export default function AnalyzePage() {
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => setShowDocument(!showDocument)}
-                  className="h-7 px-2.5 text-xs text-[#878787] hover:text-white border border-border hover:border-[#404040] flex items-center gap-1.5 transition-colors"
+                  className="h-7 px-2.5 text-xs text-muted-foreground hover:text-foreground border border-border hover:border-[#404040] flex items-center gap-1.5 transition-colors"
                 >
                   <FileText className="w-3 h-3" />
                   {showDocument ? "Hide" : "Show"} PDF
@@ -797,7 +797,7 @@ export default function AnalyzePage() {
                 <button
                   onClick={handleDownloadReport}
                   disabled={downloading}
-                  className="h-7 px-2.5 text-xs text-[#878787] hover:text-white border border-border hover:border-[#404040] flex items-center gap-1.5 transition-colors disabled:opacity-50"
+                  className="h-7 px-2.5 text-xs text-muted-foreground hover:text-foreground border border-border hover:border-[#404040] flex items-center gap-1.5 transition-colors disabled:opacity-50"
                 >
                   {downloading ? (
                     <Loader2 className="w-3 h-3 animate-spin" />
@@ -826,9 +826,9 @@ export default function AnalyzePage() {
                       className="h-7 w-7 flex items-center justify-center border border-border hover:border-[#404040] transition-colors disabled:opacity-50"
                     >
                       {uploadingVersion ? (
-                        <Loader2 className="w-3 h-3 text-[#525252] animate-spin" />
+                        <Loader2 className="w-3 h-3 text-muted-foreground/60 animate-spin" />
                       ) : (
-                        <Upload className="w-3 h-3 text-[#878787]" />
+                        <Upload className="w-3 h-3 text-muted-foreground" />
                       )}
                     </button>
                   </>
@@ -837,7 +837,7 @@ export default function AnalyzePage() {
                 {/* Save indicator */}
                 {saving ? (
                   <div className="h-7 w-7 flex items-center justify-center border border-border">
-                    <Loader2 className="w-3 h-3 text-[#525252] animate-spin" />
+                    <Loader2 className="w-3 h-3 text-muted-foreground/60 animate-spin" />
                   </div>
                 ) : savedContractId ? (
                   <div className="h-7 w-7 flex items-center justify-center border border-border">
@@ -856,7 +856,7 @@ export default function AnalyzePage() {
                     onClick={() => setActiveTab(tab.id)}
                     className={cn(
                       "relative pb-3 text-sm transition-colors",
-                      activeTab === tab.id ? "text-white" : "text-[#525252] hover:text-[#878787]"
+                      activeTab === tab.id ? "text-white" : "text-muted-foreground/60 hover:text-muted-foreground"
                     )}
                   >
                     {tab.label}
@@ -876,7 +876,7 @@ export default function AnalyzePage() {
                 {/* Summary */}
                 <div className="border border-border p-4">
                   <div className="flex items-center gap-2 mb-3">
-                    <span className="text-[10px] text-[#525252] uppercase tracking-wider">Summary</span>
+                    <span className="text-[10px] text-muted-foreground/60 uppercase tracking-wider">Summary</span>
                     <div className="h-px flex-1 bg-[#262626]" />
                   </div>
                   <p className="text-sm text-white leading-relaxed">{analysis.summary}</p>
@@ -884,18 +884,18 @@ export default function AnalyzePage() {
                   {/* Quick Stats Row */}
                   <div className="flex flex-wrap items-center gap-4 mt-4 pt-4 border-t border-border">
                     {analysis.parties?.artist && (
-                      <div className="text-xs text-[#525252]">
-                        <span className="text-[#878787]">{analysis.parties.artist}</span>
+                      <div className="text-xs text-muted-foreground/60">
+                        <span className="text-muted-foreground">{analysis.parties.artist}</span>
                       </div>
                     )}
                     {analysis.parties?.label && (
-                      <div className="text-xs text-[#525252]">
-                        <span className="text-[#878787]">{analysis.parties.label}</span>
+                      <div className="text-xs text-muted-foreground/60">
+                        <span className="text-muted-foreground">{analysis.parties.label}</span>
                       </div>
                     )}
                     {analysis.contractType && (
                       <div className="text-xs">
-                        <span className="text-[#878787]">{analysis.contractType}</span>
+                        <span className="text-muted-foreground">{analysis.contractType}</span>
                       </div>
                     )}
                   </div>
@@ -905,47 +905,47 @@ export default function AnalyzePage() {
                 {analysis.financialTerms && (
                   <div>
                     <div className="flex items-center gap-2 mb-4">
-                      <span className="text-[10px] text-[#525252] uppercase tracking-wider">Financial Terms</span>
+                      <span className="text-[10px] text-muted-foreground/60 uppercase tracking-wider">Financial Terms</span>
                       <div className="h-px flex-1 bg-[#262626]" />
                     </div>
                     <div className="grid grid-cols-3 gap-3">
                       {analysis.financialTerms.royaltyRate && (
                         <div className="border border-border p-3">
                           <div className="flex items-center gap-2 mb-1">
-                            <TrendingUp className="w-3 h-3 text-[#525252]" />
+                            <TrendingUp className="w-3 h-3 text-muted-foreground/60" />
                             <span className="text-[10px] text-white">Royalty</span>
                           </div>
-                          <p className="text-[10px] text-[#525252] mb-3">Your share of net sums</p>
+                          <p className="text-[10px] text-muted-foreground/60 mb-3">Your share of net sums</p>
                           <p className="text-sm text-white">{analysis.financialTerms.royaltyRate}</p>
                         </div>
                       )}
                       {analysis.termLength && (
                         <div className="border border-border p-3">
                           <div className="flex items-center gap-2 mb-1">
-                            <HugeiconsIcon icon={Calendar03Icon} size={12} className="text-[#525252]" />
+                            <HugeiconsIcon icon={Calendar03Icon} size={12} className="text-muted-foreground/60" />
                             <span className="text-[10px] text-white">Term</span>
                           </div>
-                          <p className="text-[10px] text-[#525252] mb-3">Contract duration</p>
+                          <p className="text-[10px] text-muted-foreground/60 mb-3">Contract duration</p>
                           <p className="text-sm text-white">{analysis.termLength}</p>
                         </div>
                       )}
                       {analysis.financialTerms.advanceAmount && (
                         <div className="border border-border p-3">
                           <div className="flex items-center gap-2 mb-1">
-                            <DollarSign className="w-3 h-3 text-[#525252]" />
+                            <DollarSign className="w-3 h-3 text-muted-foreground/60" />
                             <span className="text-[10px] text-white">Advance</span>
                           </div>
-                          <p className="text-[10px] text-[#525252] mb-3">Upfront payment</p>
+                          <p className="text-[10px] text-muted-foreground/60 mb-3">Upfront payment</p>
                           <p className="text-sm text-white">{analysis.financialTerms.advanceAmount}</p>
                         </div>
                       )}
                       {analysis.financialTerms.paymentSchedule && (
                         <div className="border border-border p-3">
                           <div className="flex items-center gap-2 mb-1">
-                            <HugeiconsIcon icon={Invoice03Icon} size={12} className="text-[#525252]" />
+                            <HugeiconsIcon icon={Invoice03Icon} size={12} className="text-muted-foreground/60" />
                             <span className="text-[10px] text-white">Payment</span>
                           </div>
-                          <p className="text-[10px] text-[#525252] mb-3">Payment schedule</p>
+                          <p className="text-[10px] text-muted-foreground/60 mb-3">Payment schedule</p>
                           <p className="text-sm text-white">{analysis.financialTerms.paymentSchedule}</p>
                         </div>
                       )}
@@ -1026,7 +1026,7 @@ export default function AnalyzePage() {
                         return (
                           <li
                             key={i}
-                            className="flex items-center gap-2 text-xs text-[#e5e5e5] cursor-pointer hover:text-white transition-colors group"
+                            className="flex items-center gap-2 text-xs text-[#e5e5e5] cursor-pointer hover:text-foreground transition-colors group"
                             onClick={() => {
                               const textToHighlight = snippet || matchingTerm?.originalText;
                               if (textToHighlight) {
@@ -1039,7 +1039,7 @@ export default function AnalyzePage() {
                           >
                             <span className={`w-1 h-1 rounded-full ${colorScheme.dot} shrink-0 group-hover:bg-primary`} />
                             <span className="leading-tight">{concern}</span>
-                            <Eye className="w-3 h-3 text-[#525252] group-hover:text-primary ml-auto shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" />
+                            <Eye className="w-3 h-3 text-muted-foreground/60 group-hover:text-primary ml-auto shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" />
                           </li>
                         );
                       })}
@@ -1050,8 +1050,8 @@ export default function AnalyzePage() {
 
                 {(!analysis.keyTerms || analysis.keyTerms.length === 0) && (
                   <div className="border border-border p-8 text-center">
-                    <FileText className="w-6 h-6 text-[#525252] mx-auto mb-2" />
-                    <p className="text-xs text-[#878787]">No key terms extracted</p>
+                    <FileText className="w-6 h-6 text-muted-foreground/60 mx-auto mb-2" />
+                    <p className="text-xs text-muted-foreground">No key terms extracted</p>
                   </div>
                 )}
                 {analysis.keyTerms?.map((term, i) => {
@@ -1061,12 +1061,12 @@ export default function AnalyzePage() {
                       key={i}
                       className={cn(
                         "border border-border transition-all",
-                        isExpanded && "bg-[#0a0a0a] border-[#404040]"
+                        isExpanded && "bg-card border-[#404040]"
                       )}
                     >
                       <button
                         onClick={() => setExpandedTerm(isExpanded ? null : i)}
-                        className="w-full p-3 flex items-center gap-3 text-left hover:bg-[#1a1a1a] transition-colors"
+                        className="w-full p-3 flex items-center gap-3 text-left hover:bg-muted transition-colors"
                       >
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 mb-1">
@@ -1078,7 +1078,7 @@ export default function AnalyzePage() {
                           <p className="text-xs text-[#e5e5e5] line-clamp-1">{term.content}</p>
                         </div>
                         <div className={cn(
-                          "text-[#525252] transition-transform shrink-0",
+                          "text-muted-foreground/60 transition-transform shrink-0",
                           isExpanded && "rotate-180"
                         )}>
                           <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
@@ -1096,19 +1096,19 @@ export default function AnalyzePage() {
                           <div className="p-3 space-y-4">
                             {/* Full Term Value */}
                             <div>
-                              <p className="text-[10px] text-[#525252] uppercase tracking-wider mb-1">What This Says</p>
+                              <p className="text-[10px] text-muted-foreground/60 uppercase tracking-wider mb-1">What This Says</p>
                               <p className="text-xs text-white">{term.content}</p>
                             </div>
 
                             {/* Plain English Explanation */}
                             <div>
-                              <p className="text-[10px] text-[#525252] uppercase tracking-wider mb-1">In Plain English</p>
+                              <p className="text-[10px] text-muted-foreground/60 uppercase tracking-wider mb-1">In Plain English</p>
                               <p className="text-xs text-white">{term.explanation}</p>
                             </div>
 
                             {/* Risk Assessment */}
                             <div>
-                              <p className="text-[10px] text-[#525252] uppercase tracking-wider mb-1">Risk Assessment</p>
+                              <p className="text-[10px] text-muted-foreground/60 uppercase tracking-wider mb-1">Risk Assessment</p>
                               <div className="flex items-start gap-2">
                                 <span className={cn("text-[10px] px-1.5 py-0.5 border capitalize shrink-0", getRiskColor(term.riskLevel))}>
                                   {term.riskLevel}
@@ -1123,7 +1123,7 @@ export default function AnalyzePage() {
 
                             {/* Questions to Ask Your Lawyer */}
                             <div>
-                              <p className="text-[10px] text-[#525252] uppercase tracking-wider mb-1">Questions to Ask Your Lawyer</p>
+                              <p className="text-[10px] text-muted-foreground/60 uppercase tracking-wider mb-1">Questions to Ask Your Lawyer</p>
                               <ul className="text-xs text-[#e5e5e5] space-y-2">
                                 {(term.actionItems || getTermChecklist(term.title)).map((item, idx) => (
                                   <li key={idx} className="flex items-center gap-2">
@@ -1141,7 +1141,7 @@ export default function AnalyzePage() {
                                   e.stopPropagation();
                                   handleClauseClick(term.originalText);
                                 }}
-                                className="text-[10px] text-[#525252] hover:text-white flex items-center gap-1 transition-colors"
+                                className="text-[10px] text-muted-foreground/60 hover:text-foreground flex items-center gap-1 transition-colors"
                               >
                                 <Eye className="w-2.5 h-2.5" /> View in contract
                               </button>
@@ -1169,8 +1169,8 @@ export default function AnalyzePage() {
               <TabsContent value="advice" className="space-y-2">
                 {(!analysis.recommendations || analysis.recommendations.length === 0) && (
                   <div className="border border-border p-8 text-center">
-                    <CheckCircle2 className="w-6 h-6 text-[#525252] mx-auto mb-2" />
-                    <p className="text-xs text-[#878787]">No recommendations available</p>
+                    <CheckCircle2 className="w-6 h-6 text-muted-foreground/60 mx-auto mb-2" />
+                    <p className="text-xs text-muted-foreground">No recommendations available</p>
                   </div>
                 )}
                 {analysis.recommendations?.map((rec, i) => {
@@ -1190,14 +1190,14 @@ export default function AnalyzePage() {
                       key={i}
                       className={cn(
                         "border border-border transition-all",
-                        isExpanded && "bg-[#0a0a0a] border-[#404040]"
+                        isExpanded && "bg-card border-[#404040]"
                       )}
                     >
                       <button
                         onClick={() => setExpandedAdvice(isExpanded ? null : i)}
-                        className="w-full p-3 flex items-start gap-2.5 text-left hover:bg-[#1a1a1a] transition-colors"
+                        className="w-full p-3 flex items-start gap-2.5 text-left hover:bg-muted transition-colors"
                       >
-                        <CheckCircle2 className="w-3.5 h-3.5 text-[#878787] shrink-0 mt-0.5" />
+                        <CheckCircle2 className="w-3.5 h-3.5 text-muted-foreground shrink-0 mt-0.5" />
                         <div className="flex-1 min-w-0">
                           <p className="text-xs text-[#a3a3a3]">{advice}</p>
                           {isStructured && (
@@ -1207,7 +1207,7 @@ export default function AnalyzePage() {
                           )}
                         </div>
                         <div className={cn(
-                          "text-[#525252] transition-transform shrink-0",
+                          "text-muted-foreground/60 transition-transform shrink-0",
                           isExpanded && "rotate-180"
                         )}>
                           <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
@@ -1224,18 +1224,18 @@ export default function AnalyzePage() {
                         <div className="border-t border-border">
                           <div className="p-3 space-y-3">
                             <div>
-                              <p className="text-[10px] text-[#525252] uppercase tracking-wider mb-1">Rationale</p>
-                              <p className="text-xs text-[#878787]">{rationale}</p>
+                              <p className="text-[10px] text-muted-foreground/60 uppercase tracking-wider mb-1">Rationale</p>
+                              <p className="text-xs text-muted-foreground">{rationale}</p>
                             </div>
                             <div>
-                              <p className="text-[10px] text-[#525252] uppercase tracking-wider mb-1">How to Implement</p>
-                              <p className="text-xs text-[#878787]">{howToImplement}</p>
+                              <p className="text-[10px] text-muted-foreground/60 uppercase tracking-wider mb-1">How to Implement</p>
+                              <p className="text-xs text-muted-foreground">{howToImplement}</p>
                             </div>
                             <div>
-                              <p className="text-[10px] text-[#525252] uppercase tracking-wider mb-1">Priority</p>
+                              <p className="text-[10px] text-muted-foreground/60 uppercase tracking-wider mb-1">Priority</p>
                               <div className="flex items-center gap-2">
                                 <span className={cn("text-xs", priorityColor)}>{priority.charAt(0).toUpperCase() + priority.slice(1)}</span>
-                                <span className="text-[10px] text-[#525252]">{priorityLabel}</span>
+                                <span className="text-[10px] text-muted-foreground/60">{priorityLabel}</span>
                               </div>
                             </div>
                           </div>
@@ -1254,7 +1254,7 @@ export default function AnalyzePage() {
                     <button
                       onClick={() => versionInputRef.current?.click()}
                       disabled={uploadingVersion}
-                      className="h-7 px-2.5 text-xs text-[#878787] hover:text-white border border-border hover:border-[#404040] flex items-center gap-1.5 transition-colors disabled:opacity-50"
+                      className="h-7 px-2.5 text-xs text-muted-foreground hover:text-foreground border border-border hover:border-[#404040] flex items-center gap-1.5 transition-colors disabled:opacity-50"
                     >
                       {uploadingVersion ? (
                         <Loader2 className="w-3 h-3 animate-spin" />
@@ -1267,13 +1267,13 @@ export default function AnalyzePage() {
 
                   {loadingVersions ? (
                     <div className="flex items-center justify-center py-8">
-                      <Loader2 className="w-4 h-4 animate-spin text-[#525252]" />
+                      <Loader2 className="w-4 h-4 animate-spin text-muted-foreground/60" />
                     </div>
                   ) : versions.length === 0 ? (
                     <div className="text-center py-10 border border-border">
-                      <History className="w-6 h-6 mx-auto text-[#525252] mb-2" />
-                      <p className="text-xs text-[#878787] mb-1">No version history yet</p>
-                      <p className="text-[10px] text-[#525252]">Upload a new version to start tracking changes</p>
+                      <History className="w-6 h-6 mx-auto text-muted-foreground/60 mb-2" />
+                      <p className="text-xs text-muted-foreground mb-1">No version history yet</p>
+                      <p className="text-[10px] text-muted-foreground/60">Upload a new version to start tracking changes</p>
                     </div>
                   ) : (
                     <div className="relative">
@@ -1285,7 +1285,7 @@ export default function AnalyzePage() {
                           {/* Timeline dot */}
                           <div className={cn(
                             "absolute left-1.5 w-4 h-4 flex items-center justify-center",
-                            i === 0 ? "bg-white text-black" : "bg-[#1a1a1a] border border-border text-[#878787]"
+                            i === 0 ? "bg-white text-black" : "bg-muted border border-border text-muted-foreground"
                           )}>
                             <span className="text-[8px] font-bold">{version.version_number + 1}</span>
                           </div>
@@ -1295,10 +1295,10 @@ export default function AnalyzePage() {
                             i === 0 && "border-[#404040]"
                           )}>
                             <div className="flex items-center justify-between mb-2">
-                              <span className="text-[10px] text-[#878787] px-1.5 py-0.5 border border-border">
+                              <span className="text-[10px] text-muted-foreground px-1.5 py-0.5 border border-border">
                                 Version {version.version_number + 1}
                               </span>
-                              <span className="text-[10px] text-[#525252]">
+                              <span className="text-[10px] text-muted-foreground/60">
                                 {new Date(version.created_at).toLocaleDateString()}
                               </span>
                             </div>
@@ -1341,21 +1341,21 @@ export default function AnalyzePage() {
                     <h4 className="text-xs font-medium text-white">Key Dates & Deadlines</h4>
                     <Dialog open={showAddDate} onOpenChange={setShowAddDate}>
                       <DialogTrigger asChild>
-                        <button className="h-7 px-2.5 text-xs text-[#878787] hover:text-white border border-border hover:border-[#404040] flex items-center gap-1.5 transition-colors">
+                        <button className="h-7 px-2.5 text-xs text-muted-foreground hover:text-foreground border border-border hover:border-[#404040] flex items-center gap-1.5 transition-colors">
                           <Plus className="w-3 h-3" />
                           Add Date
                         </button>
                       </DialogTrigger>
-                      <DialogContent className="bg-[#0a0a0a] border-border">
+                      <DialogContent className="bg-card border-border">
                         <DialogHeader>
                           <DialogTitle className="text-white text-sm">Add Key Date</DialogTitle>
-                          <DialogDescription className="text-[#878787] text-xs">
+                          <DialogDescription className="text-muted-foreground text-xs">
                             Track important deadlines for this contract
                           </DialogDescription>
                         </DialogHeader>
                         <div className="space-y-3 py-3">
                           <div className="space-y-1.5">
-                            <label className="text-xs font-medium text-[#878787]">Type</label>
+                            <label className="text-xs font-medium text-muted-foreground">Type</label>
                             <Select
                               value={newDate.date_type}
                               onValueChange={(v) => setNewDate({ ...newDate, date_type: v })}
@@ -1363,7 +1363,7 @@ export default function AnalyzePage() {
                               <SelectTrigger className="bg-transparent border-border text-white text-xs h-8">
                                 <SelectValue placeholder="Select type" />
                               </SelectTrigger>
-                              <SelectContent className="bg-[#0a0a0a] border-border">
+                              <SelectContent className="bg-card border-border">
                                 <SelectItem value="option_period">Option Period</SelectItem>
                                 <SelectItem value="termination_window">Termination Window</SelectItem>
                                 <SelectItem value="renewal">Renewal Date</SelectItem>
@@ -1373,7 +1373,7 @@ export default function AnalyzePage() {
                             </Select>
                           </div>
                           <div className="space-y-1.5">
-                            <label className="text-xs font-medium text-[#878787]">Date</label>
+                            <label className="text-xs font-medium text-muted-foreground">Date</label>
                             <Input
                               type="date"
                               value={newDate.date}
@@ -1382,12 +1382,12 @@ export default function AnalyzePage() {
                             />
                           </div>
                           <div className="space-y-1.5">
-                            <label className="text-xs font-medium text-[#878787]">Description (optional)</label>
+                            <label className="text-xs font-medium text-muted-foreground">Description (optional)</label>
                             <Input
                               placeholder="e.g., Album option deadline"
                               value={newDate.description}
                               onChange={(e) => setNewDate({ ...newDate, description: e.target.value })}
-                              className="bg-transparent border-border text-white placeholder:text-[#525252] text-xs h-8"
+                              className="bg-transparent border-border text-white placeholder:text-muted-foreground/60 text-xs h-8"
                             />
                           </div>
                         </div>
@@ -1403,13 +1403,13 @@ export default function AnalyzePage() {
 
                   {loadingDates ? (
                     <div className="flex items-center justify-center py-8">
-                      <Loader2 className="w-4 h-4 animate-spin text-[#525252]" />
+                      <Loader2 className="w-4 h-4 animate-spin text-muted-foreground/60" />
                     </div>
                   ) : dates.length === 0 ? (
                     <div className="text-center py-10 border border-border">
-                      <Calendar className="w-6 h-6 mx-auto text-[#525252] mb-2" />
-                      <p className="text-xs text-[#878787] mb-1">No key dates tracked</p>
-                      <p className="text-[10px] text-[#525252]">Add important deadlines to get reminders</p>
+                      <Calendar className="w-6 h-6 mx-auto text-muted-foreground/60 mb-2" />
+                      <p className="text-xs text-muted-foreground mb-1">No key dates tracked</p>
+                      <p className="text-[10px] text-muted-foreground/60">Add important deadlines to get reminders</p>
                     </div>
                   ) : (
                     <div className="space-y-1.5">
@@ -1439,7 +1439,7 @@ export default function AnalyzePage() {
                           >
                             <div className="flex-1 min-w-0">
                               <div className="flex items-center gap-2">
-                                <span className="text-[10px] text-[#525252]">
+                                <span className="text-[10px] text-muted-foreground/60">
                                   {typeLabels[date.date_type] || date.date_type}
                                 </span>
                                 {isPast && (
@@ -1462,9 +1462,9 @@ export default function AnalyzePage() {
                             </div>
                             <button
                               onClick={() => deleteDate(date.id)}
-                              className="shrink-0 w-6 h-6 flex items-center justify-center hover:bg-[#1a1a1a] transition-colors"
+                              className="shrink-0 w-6 h-6 flex items-center justify-center hover:bg-muted transition-colors"
                             >
-                              <Trash2 className="w-2.5 h-2.5 text-[#525252] hover:text-red-400" />
+                              <Trash2 className="w-2.5 h-2.5 text-muted-foreground/60 hover:text-red-400" />
                             </button>
                           </div>
                         );
@@ -1479,9 +1479,9 @@ export default function AnalyzePage() {
       </div>
 
       {/* Sticky Action Footer */}
-      <div className="fixed bottom-0 left-0 right-0 border-t border-border bg-black p-3 z-30">
+      <div className="fixed bottom-0 left-0 right-0 border-t border-border bg-background p-3 z-30">
         <div className="max-w-7xl mx-auto px-6">
-          <div className="flex items-center gap-2 text-[10px] text-[#525252]">
+          <div className="flex items-center gap-2 text-[10px] text-muted-foreground/60">
             <Shield className="w-3 h-3" />
             <span>AI analysis · Always consult a lawyer</span>
           </div>
