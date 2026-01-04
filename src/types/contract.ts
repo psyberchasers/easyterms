@@ -77,6 +77,8 @@ export interface ContractAnalysis {
   rightsAndOwnership: RightsAndOwnership;
   obligationsAndDeliverables: ObligationsAndDeliverables;
   potentialConcerns: string[];
+  /** Plain English explanations for each concern */
+  concernExplanations?: string[];
   /** Original text snippets for each concern (for highlighting) */
   concernSnippets?: string[];
   /** Recommendations - can be strings (legacy) or structured objects (new) */

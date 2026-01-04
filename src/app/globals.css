@@ -56,9 +56,9 @@
   --card-foreground: oklch(0.95 0.01 250);
   --popover: oklch(0.14 0.015 250);
   --popover-foreground: oklch(0.95 0.01 250);
-  /* Amber/Gold primary - evokes gold records & prestige */
-  --primary: oklch(0.78 0.16 75);
-  --primary-foreground: oklch(0.15 0.02 75);
+  /* Canary yellow primary */
+  --primary: #FFEF00;
+  --primary-foreground: #1a1a1a;
   --secondary: oklch(0.22 0.02 250);
   --secondary-foreground: oklch(0.9 0.01 250);
   --muted: oklch(0.2 0.015 250);
@@ -69,14 +69,14 @@
   --destructive-foreground: oklch(0.98 0.01 25);
   --border: oklch(0.20 0.01 250);
   --input: oklch(0.22 0.02 250);
-  --ring: oklch(0.78 0.16 75);
+  --ring: #FFEF00;
   /* Status colors */
   --warning: oklch(0.75 0.15 60);
   --warning-foreground: oklch(0.15 0.02 60);
   --success: oklch(0.7 0.15 145);
   --success-foreground: oklch(0.15 0.02 145);
   /* Charts */
-  --chart-1: oklch(0.78 0.16 75);
+  --chart-1: #FFEF00;
   --chart-2: oklch(0.65 0.15 200);
   --chart-3: oklch(0.7 0.15 145);
   --chart-4: oklch(0.6 0.2 25);
@@ -84,12 +84,12 @@
   /* Sidebar */
   --sidebar: oklch(0.14 0.015 250);
   --sidebar-foreground: oklch(0.95 0.01 250);
-  --sidebar-primary: oklch(0.78 0.16 75);
-  --sidebar-primary-foreground: oklch(0.15 0.02 75);
+  --sidebar-primary: #FFEF00;
+  --sidebar-primary-foreground: #1a1a1a;
   --sidebar-accent: oklch(0.22 0.02 250);
   --sidebar-accent-foreground: oklch(0.95 0.01 250);
   --sidebar-border: oklch(0.20 0.01 250);
-  --sidebar-ring: oklch(0.78 0.16 75);
+  --sidebar-ring: #FFEF00;
 }
 
 /* Light theme - Inverted colors */
@@ -100,40 +100,40 @@
   --card-foreground: oklch(0.15 0.01 250);
   --popover: #ffffff;
   --popover-foreground: oklch(0.15 0.01 250);
-  /* Amber/Gold primary - slightly darker for light mode */
-  --primary: oklch(0.65 0.18 75);
-  --primary-foreground: oklch(0.98 0.01 75);
-  --secondary: #f9f9f8;
+  /* Canary yellow primary for light mode */
+  --primary: #FFEF00;
+  --primary-foreground: #1a1a1a;
+  --secondary: #f4f4f3;
   --secondary-foreground: oklch(0.2 0.01 250);
-  --muted: #f9f9f8;
+  --muted: #f0f0ef;
   --muted-foreground: oklch(0.45 0.01 250);
   --accent: #f9f9f8;
   --accent-foreground: oklch(0.15 0.01 250);
   --destructive: oklch(0.55 0.22 25);
   --destructive-foreground: oklch(0.98 0.01 25);
-  --border: oklch(0.88 0.01 250);
+  --border: #ebebeb;
   --input: #f9f9f8;
-  --ring: oklch(0.65 0.18 75);
+  --ring: #FFEF00;
   /* Status colors - slightly adjusted for light bg */
   --warning: oklch(0.7 0.17 60);
   --warning-foreground: oklch(0.2 0.02 60);
   --success: oklch(0.6 0.17 145);
   --success-foreground: oklch(0.2 0.02 145);
   /* Charts */
-  --chart-1: oklch(0.65 0.18 75);
+  --chart-1: #FFEF00;
   --chart-2: oklch(0.55 0.17 200);
   --chart-3: oklch(0.55 0.17 145);
   --chart-4: oklch(0.55 0.22 25);
   --chart-5: oklch(0.55 0.2 300);
   /* Sidebar */
-  --sidebar: #f9f9f8;
-  --sidebar-foreground: oklch(0.15 0.01 250);
-  --sidebar-primary: oklch(0.65 0.18 75);
-  --sidebar-primary-foreground: oklch(0.98 0.01 75);
-  --sidebar-accent: oklch(0.92 0.01 250);
-  --sidebar-accent-foreground: oklch(0.15 0.01 250);
-  --sidebar-border: oklch(0.88 0.01 250);
-  --sidebar-ring: oklch(0.65 0.18 75);
+  --sidebar: #ffffff;
+  --sidebar-foreground: #565c65;
+  --sidebar-primary: #FFEF00;
+  --sidebar-primary-foreground: #1a1a1a;
+  --sidebar-accent: #f0f0f0;
+  --sidebar-accent-foreground: #565c65;
+  --sidebar-border: #e5e6e7;
+  --sidebar-ring: #FFEF00;
 }
 
 @layer base {
@@ -142,17 +142,16 @@
   }
   html {
     @apply bg-background text-foreground;
-    overflow-x: hidden;
   }
   body {
     @apply bg-background text-foreground;
-    overflow-x: hidden;
   }
 
-  /* All inputs: no radius, yellow focus border */
-  input, textarea, select, [role="combobox"], [data-slot="select-trigger"] {
+  /* All inputs: no radius, yellow focus border (except rounded inputs) */
+  input:not([data-rounded]), textarea, select, [role="combobox"], [data-slot="select-trigger"] {
     border-radius: 0 !important;
   }
+
 
   input:focus,
   input:focus-visible,

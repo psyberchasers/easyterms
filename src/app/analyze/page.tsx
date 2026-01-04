@@ -531,113 +531,89 @@ export default function AnalyzePage() {
   }
 
   // ============================================
-  // LOADING STATE - Fresh Design
+  // LOADING STATE - Clean, Rounded Design
   // ============================================
   if (status === "uploading" || status === "analyzing") {
     const currentStep = status === "uploading" ? 0 : 1;
     const steps = [
       { label: "Uploading", sublabel: "Securing your document" },
-      { label: "Analyzing", sublabel: "AI reading contract terms" },
-      { label: "Generating", sublabel: "Building your insights" },
+      { label: "Analyzing", sublabel: "Reading contract terms" },
+      { label: "Generating", sublabel: "Building insights" },
     ];
 
     return (
       <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4">
-        <div className="w-full max-w-md space-y-8">
+        <div className="w-full max-w-sm space-y-8">
           {/* Music Loader - Prominent */}
           <div className="flex justify-center">
-            <div className="w-40 h-40">
+            <div className="w-32 h-32">
               <Lottie animationData={loadMusicAnimation} loop={true} />
             </div>
           </div>
 
-          {/* Current Status - Large and Clear */}
-          <div className="text-center space-y-2">
-            <h2 className="text-2xl font-medium text-white">
-              {steps[currentStep].label}
-              <span className="inline-flex ml-1">
-                <span className="animate-pulse">.</span>
-                <span className="animate-pulse" style={{ animationDelay: "0.2s" }}>.</span>
-                <span className="animate-pulse" style={{ animationDelay: "0.4s" }}>.</span>
-              </span>
-            </h2>
+          {/* Current Status */}
+          <div className="text-center space-y-1">
             <p className="text-sm text-muted-foreground">{steps[currentStep].sublabel}</p>
           </div>
 
-          {/* Progress Bar */}
-          <div className="space-y-3">
-            <div className="h-1 bg-[#262626] overflow-hidden relative">
+          {/* Progress Bar - Rounded */}
+          <div className="space-y-4">
+            <div className="h-1.5 bg-muted rounded-full overflow-hidden relative">
               <motion.div
-                className="h-full bg-primary"
+                className="h-full bg-primary rounded-full"
                 initial={{ width: 0 }}
                 animate={{ width: `${((currentStep + 1) / steps.length) * 100}%` }}
                 transition={{ duration: 0.8, ease: "easeOut" }}
               />
-              {/* Animated shimmer effect */}
-              <motion.div
-                className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent"
-                initial={{ x: "-100%" }}
-                animate={{ x: "200%" }}
-                transition={{
-                  repeat: Infinity,
-                  duration: 1.5,
-                  ease: "linear",
-                }}
-                style={{ width: `${((currentStep + 1) / steps.length) * 100}%` }}
-              />
             </div>
 
-            {/* Step Indicators */}
-            <div className="flex justify-between">
+            {/* Step Pills */}
+            <div className="flex items-center justify-center gap-2">
               {steps.map((step, i) => (
-                <div key={i} className="flex items-center gap-2">
-                  <div className={cn(
-                    "w-5 h-5 flex items-center justify-center text-xs font-medium transition-all",
+                <div
+                  key={i}
+                  className={cn(
+                    "flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs transition-all",
                     i < currentStep
-                      ? "bg-primary text-primary-foreground"
+                      ? "bg-primary/20 text-primary"
                       : i === currentStep
-                        ? "border border-primary text-primary"
-                        : "border border-border text-muted-foreground/60"
-                  )}>
-                    {i < currentStep ? (
-                      <CheckCircle2 className="w-3 h-3" />
-                    ) : (
-                      i + 1
-                    )}
-                  </div>
-                  <span className={cn(
-                    "text-xs hidden sm:inline transition-colors",
-                    i <= currentStep ? "text-muted-foreground" : "text-muted-foreground/60"
-                  )}>
-                    {step.label}
-                  </span>
+                        ? "bg-muted text-foreground"
+                        : "text-muted-foreground/40"
+                  )}
+                >
+                  {i < currentStep ? (
+                    <CheckCircle2 className="w-3 h-3" />
+                  ) : i === currentStep ? (
+                    <Loader2 className="w-3 h-3 animate-spin" />
+                  ) : (
+                    <span className="w-3 h-3 flex items-center justify-center text-[10px]">{i + 1}</span>
+                  )}
+                  <span className="hidden sm:inline">{step.label}</span>
                 </div>
               ))}
             </div>
           </div>
 
-          {/* File Card */}
-          <div className="border border-border p-4 flex items-center gap-4">
-            <div className="w-12 h-12 border border-border flex items-center justify-center shrink-0">
-              <FileText className="w-5 h-5 text-primary" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-white truncate">{fileName}</p>
-              <p className="text-xs text-muted-foreground/60 mt-0.5">
-                {status === "uploading" ? "Uploading..." : "Processing with AI..."}
-              </p>
-            </div>
-            <div className="w-8 h-8 flex items-center justify-center">
-              <Loader2 className="w-4 h-4 text-primary animate-spin" />
+          {/* File Pill */}
+          <div className="flex justify-center">
+            <div className="inline-flex items-center gap-3 px-4 py-2.5 bg-muted/50 rounded-full">
+              <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center">
+                <FileText className="w-4 h-4 text-primary" />
+              </div>
+              <div className="text-left">
+                <p className="text-xs font-medium text-foreground truncate max-w-[180px]">{fileName}</p>
+                <p className="text-[10px] text-muted-foreground">
+                  {status === "uploading" ? "Uploading..." : "Analyzing..."}
+                </p>
+              </div>
             </div>
           </div>
 
-          {/* Fun Fact / Tip */}
+          {/* Tip */}
           <div className="flex justify-center">
-            <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-primary/10 border border-primary/30">
-              <HugeiconsIcon icon={AiIdeaIcon} size={14} className="text-primary" />
-              <span className="text-xs text-primary">Our AI checks for 50+ common contract pitfalls</span>
-            </div>
+            <p className="text-xs text-muted-foreground/60 text-center">
+              Checking for 50+ common contract pitfalls
+            </p>
           </div>
         </div>
       </div>

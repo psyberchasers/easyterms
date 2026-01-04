@@ -1,70 +1,94 @@
 "use client";
 
-import { ReactNode } from "react";
+import { ReactNode, useState, useEffect } from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/components/providers/AuthProvider";
 import {
   SidebarProvider,
   Sidebar,
-  SidebarHeader,
   SidebarContent,
   SidebarFooter,
-  SidebarGroup,
-  SidebarGroupLabel,
-  SidebarGroupContent,
+  SidebarInset,
   SidebarMenu,
   SidebarMenuItem,
   SidebarMenuButton,
-  SidebarInset,
-  SidebarTrigger,
-  SidebarSeparator,
+  SidebarGroup,
+  SidebarGroupLabel,
+  SidebarGroupContent,
+  useSidebar,
 } from "@/components/ui/sidebar";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
-  FileText,
-  Upload,
-  LayoutDashboard,
-  Calendar,
-  Settings,
   LogOut,
-  ChevronUp,
-  Search,
-  BarChart3,
-  LucideIcon,
-  DollarSign,
-  Sun,
-  Moon,
+  MoreHorizontal,
+  User,
+  Settings,
 } from "lucide-react";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { RepeatOffIcon } from "@hugeicons-pro/core-solid-rounded";
+import {
+  Home01Icon,
+  Notification02Icon,
+  InboxIcon,
+  Task01Icon,
+  ChartHistogramIcon,
+  Folder01Icon,
+  File01Icon,
+  UserGroupIcon,
+  Settings02Icon,
+  GridViewIcon,
+  PanelRightIcon,
+  ContractsIcon,
+  AiSearch02Icon,
+  Settings03Icon,
+  FileUploadIcon,
+  Moon02Icon,
+  Sun01Icon,
+  AiBrain02Icon,
+} from "@hugeicons-pro/core-stroke-rounded";
 import { cn } from "@/lib/utils";
 import { MusicLoader } from "@/components/MusicLoader";
 import { useTheme } from "@/components/providers/ThemeProvider";
-
-type NavItem = {
-  title: string;
-  href: string;
-  isActive: boolean;
-} & (
-  | { icon: LucideIcon; isHugeicon?: false }
-  | { icon: typeof RepeatOffIcon; isHugeicon: true }
-);
+import { CommandMenu } from "@/components/CommandMenu";
 
 interface DashboardLayoutProps {
   children: ReactNode;
+}
+
+function SidebarToggleButton() {
+  const { toggleSidebar } = useSidebar();
+  return (
+    <button
+      onClick={toggleSidebar}
+      className="h-8 w-8 flex items-center justify-center border border-border hover:bg-muted transition-colors rounded-md"
+    >
+      <HugeiconsIcon icon={PanelRightIcon} size={14} style={{ color: '#565c65' }} />
+    </button>
+  );
 }
 
 export default function DashboardLayout({ children }: DashboardLayoutProps) {
   const pathname = usePathname();
   const { user, profile, loading: authLoading, signOut } = useAuth();
   const { theme, toggleTheme } = useTheme();
+    const [commandMenuOpen, setCommandMenuOpen] = useState(false);
+
+  // ⌘K keyboard shortcut
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === "k") {
+        e.preventDefault();
+        setCommandMenuOpen(true);
+      }
+    };
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, []);
 
   if (authLoading) {
     return (
@@ -74,172 +98,233 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
     );
   }
 
-  const navigation: { title: string; items: NavItem[] }[] = [
-    {
-      title: "Overview",
-      items: [
-        {
-          title: "Dashboard",
-          icon: LayoutDashboard,
-          href: "/dashboard",
-          isActive: pathname === "/dashboard",
-        },
-        {
-          title: "Contracts",
-          icon: FileText,
-          href: "/dashboard",
-          isActive: pathname === "/dashboard" || pathname?.startsWith("/dashboard/contracts"),
-        },
-      ],
-    },
-    {
-      title: "Actions",
-      items: [
-        {
-          title: "New Analysis",
-          icon: Upload,
-          href: "/analyze",
-          isActive: pathname === "/analyze",
-        },
-        {
-          title: "Compare",
-          icon: RepeatOffIcon,
-          href: "/compare",
-          isActive: pathname === "/compare",
-          isHugeicon: true,
-        },
-        {
-          title: "Finances",
-          icon: DollarSign,
-          href: "/dashboard/finances",
-          isActive: pathname === "/dashboard/finances",
-        },
-        {
-          title: "Calendar",
-          icon: Calendar,
-          href: "/calendar",
-          isActive: pathname === "/calendar",
-        },
-      ],
-    },
+  const mainNav = [
+    { title: "Home", icon: Home01Icon, href: "/dashboard", badge: null },
+    { title: "Updates", icon: Notification02Icon, href: "/dashboard/updates", badge: "3" },
+    { title: "Inbox", icon: InboxIcon, href: "/dashboard/inbox", badge: "12" },
+    { title: "My Tasks", icon: Task01Icon, href: "/dashboard/tasks", badge: null, hasAdd: true },
   ];
+
+  const workspaceItems = [
+    { title: "Contracts", icon: ContractsIcon, href: "/dashboard/contracts" },
+    { title: "Analyze Demo", icon: AiBrain02Icon, href: "/dashboard/analyze-demo" },
+    { title: "Projects", icon: Folder01Icon, href: "/dashboard/projects", hasDropdown: true },
+    { title: "Templates", icon: GridViewIcon, href: "/dashboard/templates", hasDropdown: true },
+    { title: "Documents", icon: File01Icon, href: "/dashboard/documents", hasAdd: true },
+    { title: "Teams", icon: UserGroupIcon, href: "/dashboard/teams", badge: "5" },
+  ];
+
+  // Get current page title
+  const getPageTitle = () => {
+    const allItems = [...mainNav, ...workspaceItems];
+    const currentItem = allItems.find(item => item.href === pathname);
+    if (currentItem) return currentItem.title;
+    if (pathname === "/dashboard") return "Dashboard";
+    if (pathname.startsWith("/dashboard/contracts")) return "Contracts";
+    if (pathname.startsWith("/dashboard/upload")) return "Upload";
+    if (pathname.startsWith("/dashboard/analyze-demo")) return "Analyze Demo";
+    return "Dashboard";
+  };
+
+  const pageTitle = getPageTitle();
+  const isContractsPage = pathname.startsWith("/dashboard/contracts");
+  const isUploadPage = pathname.startsWith("/dashboard/upload");
+  const isAnalyzeDemoPage = pathname.startsWith("/dashboard/analyze-demo");
 
   return (
     <SidebarProvider defaultOpen={true}>
-      <Sidebar className="border-r border-border">
+      <Sidebar collapsible="icon" className="border-r" style={{ backgroundColor: '#f9fbfc', borderColor: '#e5e6e7' }}>
         {/* Header */}
-        <SidebarHeader className="border-b border-border">
-          <div className="flex items-center gap-3 px-2 py-3">
-            <div className="w-8 h-8 bg-primary flex items-center justify-center">
-              <span className="text-black font-bold text-sm">E</span>
-            </div>
-            <div className="flex flex-col">
-              <span className="text-sm font-medium text-foreground">EasyTerms</span>
-              <span className="text-[10px] text-muted-foreground">Contract Analysis</span>
-            </div>
+        <div
+          className="flex items-center px-3 border-b group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-2"
+          style={{ height: '48px', borderColor: '#e5e6e7' }}
+        >
+          <div className="flex items-center gap-2">
+            <div
+              className="w-5 h-5 rounded-full shrink-0"
+              style={{ background: 'linear-gradient(135deg, #FFEF00 0%, #f59e0b 100%)' }}
+            />
+            <span className="text-[13px] font-semibold text-foreground group-data-[collapsible=icon]:hidden">EasyTerms</span>
           </div>
-        </SidebarHeader>
+        </div>
 
         {/* Search */}
-        <div className="px-4 py-3">
-          <button className="w-full flex items-center gap-2 px-3 py-2 text-xs text-muted-foreground bg-muted/30 border border-border hover:border-muted-foreground/30 transition-colors">
-            <Search className="w-3.5 h-3.5" />
-            <span>Search contracts...</span>
-            <kbd className="ml-auto text-[10px] text-muted-foreground/50 border border-border px-1.5 py-0.5">
-              /
-            </kbd>
+        <div className="px-3 py-3 group-data-[collapsible=icon]:px-2 group-data-[collapsible=icon]:py-2">
+          <button className="w-full flex items-center gap-2 px-2.5 py-1.5 text-[13px] hover:bg-white/50 transition-colors rounded-lg group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0 group-data-[collapsible=icon]:border-0" style={{ color: '#565c65', border: '1px solid #e5e6e7' }}>
+            <HugeiconsIcon icon={AiSearch02Icon} size={14} className="shrink-0" />
+            <span className="group-data-[collapsible=icon]:hidden">Search</span>
+            <kbd className="ml-auto text-[11px] opacity-50 group-data-[collapsible=icon]:hidden">⌘K</kbd>
           </button>
         </div>
 
-        <SidebarContent>
-          {navigation.map((group) => (
-            <SidebarGroup key={group.title}>
-              <SidebarGroupLabel className="text-[10px] uppercase tracking-wider text-muted-foreground/60 px-4">
-                {group.title}
-              </SidebarGroupLabel>
-              <SidebarGroupContent>
-                <SidebarMenu>
-                  {group.items.map((item) => {
-                    const LucideIconComponent = item.icon as LucideIcon;
-                    return (
-                      <SidebarMenuItem key={item.title}>
-                        <SidebarMenuButton
-                          asChild
-                          isActive={item.isActive}
-                          className={cn(
-                            "mx-2 rounded-none",
-                            item.isActive && "bg-muted border-l-2 border-l-primary"
-                          )}
-                        >
-                          <Link href={item.href}>
-                            {item.isHugeicon ? (
-                              <HugeiconsIcon icon={item.icon as typeof RepeatOffIcon} size={16} />
-                            ) : (
-                              <LucideIconComponent className="w-4 h-4" />
-                            )}
-                            <span>{item.title}</span>
-                          </Link>
-                        </SidebarMenuButton>
-                      </SidebarMenuItem>
-                    );
-                  })}
-                </SidebarMenu>
-              </SidebarGroupContent>
-            </SidebarGroup>
-          ))}
+        <SidebarContent className="px-2">
+          {/* Main Navigation */}
+          <SidebarGroup className="p-0 pb-4">
+            <SidebarMenu className="gap-0.5">
+              {mainNav.map((item) => {
+                const isActive = pathname === item.href;
+                return (
+                  <SidebarMenuItem key={item.title}>
+                    <SidebarMenuButton
+                      asChild
+                      isActive={isActive}
+                      tooltip={item.title}
+                      className={cn(
+                        "h-auto py-1.5 px-3 text-[13px] font-medium",
+                        isActive ? "bg-white" : "hover:bg-white/50"
+                      )}
+                      style={{ color: '#565c65' }}
+                    >
+                      <Link href={item.href}>
+                        <HugeiconsIcon icon={item.icon} size={16} />
+                        <span>{item.title}</span>
+                        {item.badge && (
+                          <span className="ml-auto text-xs opacity-60 group-data-[collapsible=icon]:hidden">{item.badge}</span>
+                        )}
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                );
+              })}
+            </SidebarMenu>
+          </SidebarGroup>
 
-          <SidebarSeparator />
+          {/* Divider */}
+          <div className="h-px mb-4 -mx-2 group-data-[collapsible=icon]:hidden" style={{ backgroundColor: '#e5e6e7' }} />
 
-          {/* Recent Contracts - placeholder */}
-          <SidebarGroup>
-            <SidebarGroupLabel className="text-[10px] uppercase tracking-wider text-muted-foreground/60 px-4">
-              Recent
+          {/* Workspace Section */}
+          <SidebarGroup className="p-0 pb-4">
+            <SidebarGroupLabel
+              className="h-auto py-1.5 px-3 text-[11px] font-medium uppercase tracking-wider"
+              style={{ color: '#565c65' }}
+            >
+              Workspace
             </SidebarGroupLabel>
             <SidebarGroupContent>
-              <div className="px-4 py-2">
-                <p className="text-[10px] text-muted-foreground">
-                  Your recent contracts will appear here
-                </p>
-              </div>
+              <SidebarMenu className="gap-0.5 mt-1">
+                {workspaceItems.map((item) => {
+                  const isActive = pathname === item.href;
+                  return (
+                    <SidebarMenuItem key={item.title}>
+                      <SidebarMenuButton
+                        asChild
+                        isActive={isActive}
+                        tooltip={item.title}
+                        className={cn(
+                          "h-auto py-1.5 px-3 text-[13px] font-medium",
+                          isActive ? "bg-white" : "hover:bg-white/50"
+                        )}
+                        style={{ color: '#565c65' }}
+                      >
+                        <Link href={item.href}>
+                          <HugeiconsIcon icon={item.icon} size={16} />
+                          <span>{item.title}</span>
+                          {item.badge && (
+                            <span className="ml-auto text-xs opacity-60 group-data-[collapsible=icon]:hidden">{item.badge}</span>
+                          )}
+                        </Link>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  );
+                })}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+
+          {/* Divider */}
+          <div className="h-px mb-4 -mx-2 group-data-[collapsible=icon]:hidden" style={{ backgroundColor: '#e5e6e7' }} />
+
+          {/* Contracts Section */}
+          <SidebarGroup className="p-0 pb-4">
+            <SidebarGroupLabel
+              className="h-auto py-1.5 px-3 text-[11px] font-medium uppercase tracking-wider"
+              style={{ color: '#565c65' }}
+            >
+              Contracts
+            </SidebarGroupLabel>
+            <SidebarGroupContent>
+              <p className="px-3 py-2 text-[11px] group-data-[collapsible=icon]:hidden" style={{ color: '#565c65', opacity: 0.6 }}>
+                Your contracts will appear here
+              </p>
             </SidebarGroupContent>
           </SidebarGroup>
         </SidebarContent>
 
-        <SidebarFooter className="border-t border-border">
-          <SidebarMenu>
+        {/* Footer */}
+        <SidebarFooter className="p-2 mb-24" style={{ borderTop: '1px solid #e5e6e7' }}>
+          <SidebarMenu className="gap-0.5">
+            <SidebarMenuItem>
+              <SidebarMenuButton
+                tooltip="Appearance"
+                onClick={toggleTheme}
+                className="h-auto py-1.5 px-3 text-[13px] font-medium hover:bg-white/50"
+                style={{ color: '#565c65' }}
+              >
+                {theme === "dark" ? (
+                  <HugeiconsIcon icon={Sun01Icon} size={16} />
+                ) : (
+                  <HugeiconsIcon icon={Moon02Icon} size={16} />
+                )}
+                <span>Appearance</span>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
+              <SidebarMenuButton
+                asChild
+                tooltip="Settings"
+                className="h-auto py-1.5 px-3 text-[13px] font-medium hover:bg-white/50"
+                style={{ color: '#565c65' }}
+              >
+                <Link href="/settings">
+                  <HugeiconsIcon icon={Settings02Icon} size={16} />
+                  <span>Settings</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
+              <SidebarMenuButton
+                asChild
+                tooltip="Profile"
+                className="h-auto py-1.5 px-3 text-[13px] font-medium hover:bg-white/50"
+                style={{ color: '#565c65' }}
+              >
+                <Link href="/profile">
+                  <User className="w-4 h-4" />
+                  <span>Profile</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+
+            {/* User */}
             <SidebarMenuItem>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <SidebarMenuButton className="mx-2 rounded-none">
-                    <div className="w-6 h-6 bg-muted flex items-center justify-center text-xs font-medium text-foreground">
+                  <SidebarMenuButton
+                    tooltip={profile?.full_name || "User"}
+                    className="h-auto py-1.5 px-3 text-[13px] font-medium hover:bg-white/50"
+                  >
+                    <div
+                      className="w-5 h-5 rounded-md flex items-center justify-center text-[10px] font-medium text-white shrink-0"
+                      style={{ background: 'linear-gradient(135deg, #f97316 0%, #ec4899 100%)' }}
+                    >
                       {profile?.full_name?.charAt(0) || user?.email?.charAt(0) || "U"}
                     </div>
-                    <div className="flex flex-col items-start">
-                      <span className="text-xs font-medium truncate max-w-[120px]">
-                        {profile?.full_name || "User"}
-                      </span>
-                      <span className="text-[10px] text-muted-foreground truncate max-w-[120px]">
-                        {user?.email}
-                      </span>
-                    </div>
-                    <ChevronUp className="ml-auto w-4 h-4 text-muted-foreground" />
+                    <span className="flex-1 text-left font-medium truncate" style={{ color: '#565c65' }}>
+                      {profile?.full_name || "User"}
+                    </span>
+                    <MoreHorizontal className="w-3.5 h-3.5 group-data-[collapsible=icon]:hidden" style={{ color: '#565c65' }} />
                   </SidebarMenuButton>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent
-                  side="top"
-                  align="start"
-                  className="w-56 rounded-none"
-                >
+                <DropdownMenuContent side="top" align="start" className="w-56 rounded-lg">
                   <DropdownMenuItem asChild>
                     <Link href="/settings" className="cursor-pointer">
                       <Settings className="w-4 h-4 mr-2" />
                       Settings
                     </Link>
                   </DropdownMenuItem>
-                  <DropdownMenuSeparator />
                   <DropdownMenuItem
                     onClick={() => signOut()}
-                    className="text-red-400 cursor-pointer"
+                    className="text-red-500 cursor-pointer"
                   >
                     <LogOut className="w-4 h-4 mr-2" />
                     Sign out
@@ -251,54 +336,64 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
         </SidebarFooter>
       </Sidebar>
 
-      <SidebarInset className="bg-background overflow-auto">
-        {/* Top bar - Clean minimal style */}
-        <header className="sticky top-0 z-10 flex h-12 items-center gap-3 border-b border-border bg-background px-4">
-          <SidebarTrigger className="h-8 w-8 border border-border hover:bg-muted" />
-
-          {/* Page Title */}
-          <div className="flex items-center gap-2">
-            <LayoutDashboard className="w-4 h-4 text-muted-foreground" />
-            <span className="text-sm font-medium text-foreground">Dashboard</span>
-          </div>
-
+      <SidebarInset className="flex flex-col min-h-screen" style={{ backgroundColor: '#ffffff' }}>
+        {/* Top bar - FIXED */}
+        <header className="fixed top-0 right-0 z-50 flex h-12 items-center gap-2 border-b bg-background px-4" style={{ borderColor: '#e5e6e7', left: 'var(--sidebar-width)' }}>
+          {isContractsPage && (
+            <HugeiconsIcon icon={ContractsIcon} size={16} style={{ color: '#565c65' }} />
+          )}
+          {isUploadPage && (
+            <HugeiconsIcon icon={FileUploadIcon} size={16} style={{ color: '#565c65' }} />
+          )}
+          {isAnalyzeDemoPage && (
+            <HugeiconsIcon icon={AiBrain02Icon} size={16} style={{ color: '#565c65' }} />
+          )}
+          <span className="text-sm font-medium" style={{ color: '#565c65' }}>{pageTitle}</span>
           <div className="flex-1" />
 
-          {/* Search */}
-          <div className="relative">
-            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
-            <input
-              type="text"
-              placeholder="Search..."
-              className="h-8 w-48 pl-8 pr-3 text-sm bg-muted/30 border border-border placeholder:text-muted-foreground/50 focus:outline-none focus:border-muted-foreground/30"
-            />
-          </div>
-
           {/* Actions */}
-          <Link href="/analyze">
-            <button className="h-8 w-8 flex items-center justify-center border border-border hover:bg-muted transition-colors">
-              <Upload className="w-3.5 h-3.5 text-muted-foreground" />
+          <SidebarToggleButton />
+          <button
+            onClick={() => setCommandMenuOpen(true)}
+            className="h-8 px-3 flex items-center gap-2 border border-border hover:bg-muted transition-colors rounded-md text-[13px] font-medium"
+            style={{ color: '#565c65' }}
+          >
+            <HugeiconsIcon icon={AiSearch02Icon} size={14} />
+            <span>Search</span>
+          </button>
+          <Link href="/settings">
+            <button className="h-8 px-3 flex items-center gap-2 border border-border hover:bg-muted transition-colors rounded-md text-[13px] font-medium" style={{ color: '#565c65' }}>
+              <HugeiconsIcon icon={Settings03Icon} size={14} />
+              <span>Settings</span>
             </button>
           </Link>
-
+          <Link href="/dashboard/upload">
+            <button className="h-8 px-3 flex items-center gap-2 border border-border hover:bg-muted transition-colors rounded-md text-[13px] font-medium" style={{ color: '#565c65' }}>
+              <HugeiconsIcon icon={FileUploadIcon} size={14} />
+              <span>Upload</span>
+            </button>
+          </Link>
           <button
             onClick={toggleTheme}
-            className="h-8 w-8 flex items-center justify-center border border-border hover:bg-muted transition-colors"
+            className="h-8 w-8 flex items-center justify-center border border-border hover:bg-muted transition-colors rounded-md"
             title={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
           >
             {theme === "dark" ? (
-              <Sun className="w-3.5 h-3.5 text-muted-foreground" />
+              <HugeiconsIcon icon={Sun01Icon} size={14} style={{ color: '#565c65' }} />
             ) : (
-              <Moon className="w-3.5 h-3.5 text-muted-foreground" />
+              <HugeiconsIcon icon={Moon02Icon} size={14} style={{ color: '#565c65' }} />
             )}
           </button>
         </header>
 
-        {/* Main content */}
-        <main className="flex-1">
+        {/* Main content - offset for fixed header */}
+        <main className="flex-1 overflow-auto pt-12">
           {children}
         </main>
       </SidebarInset>
+
+      {/* Command Menu */}
+      <CommandMenu open={commandMenuOpen} onOpenChange={setCommandMenuOpen} />
     </SidebarProvider>
   );
 }

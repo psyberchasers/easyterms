@@ -92,7 +92,10 @@ Respond ONLY with valid JSON matching this structure:
     "timeline": "Timeline for deliverables"
   },
   "potentialConcerns": [
-    "Description of a potentially problematic clause"
+    "Short title of a potentially problematic clause"
+  ],
+  "concernExplanations": [
+    "Plain English explanation of why this concern matters and what it means for you - one sentence, easy to understand"
   ],
   "concernSnippets": [
     "EXACT quote from the contract for each concern - must be verbatim text that can be found and highlighted"
@@ -431,38 +434,47 @@ function getSmartMockAnalysis(fileName: string, contractText: string, industry: 
 
   // Generate concerns based on detected content
   const concerns: string[] = [];
+  const concernExplanations: string[] = [];
   const concernSnippets: string[] = [];
-  
+
   if (lowerText.includes("100%") && lowerText.includes("publishing")) {
-    concerns.push("Giving up 100% of publishing administration - consider negotiating for a co-pub deal (50/50) instead");
+    concerns.push("100% publishing administration");
+    concernExplanations.push("You're giving up all control over how your songs are licensed and collected - a co-pub deal (50/50) is more standard.");
     concernSnippets.push(findSnippet(["100%"]) || "");
   }
   if (lowerText.includes("automatically extend")) {
-    concerns.push("Auto-renewal clause means you must actively terminate - set calendar reminders for the notice deadline");
+    concerns.push("Auto-renewal clause");
+    concernExplanations.push("The contract keeps going unless you actively cancel - set a reminder before the notice deadline.");
     concernSnippets.push(findSnippet(["automatically extend"]) || "");
   }
   if (lowerText.includes("post-term") || lowerText.includes("2 years post")) {
-    concerns.push("Post-term collection rights extend publisher's control beyond the contract end date");
+    concerns.push("Post-term collection rights");
+    concernExplanations.push("They can keep collecting money on your behalf even after the contract ends.");
     concernSnippets.push(findSnippet(["post-term", "post term"]) || "");
   }
   if (lowerText.includes("net sums") || lowerText.includes("net receipts")) {
-    concerns.push("Payment based on 'net' not 'gross' - ask for a cap on deductible expenses or itemized accounting");
+    concerns.push("Payment based on 'net' not 'gross'");
+    concernExplanations.push("They deduct expenses before paying you - ask what exactly gets deducted and set a cap.");
     concernSnippets.push(findSnippet(["net sums", "net receipts"]) || "");
   }
   if (lowerText.includes("indemnif")) {
-    concerns.push("Indemnification clause puts legal liability on you - ensure you have E&O insurance or limit the scope");
+    concerns.push("Indemnification clause");
+    concernExplanations.push("You could be legally responsible if something goes wrong - consider getting insurance or limiting the scope.");
     concernSnippets.push(findSnippet(["indemnify"]) || "");
   }
   if (!lowerText.includes("audit")) {
-    concerns.push("No clear audit rights mentioned - essential protection you should request");
+    concerns.push("No audit rights mentioned");
+    concernExplanations.push("You should be able to check their books to make sure you're being paid correctly.");
   }
   if (lowerText.includes("assign")) {
-    concerns.push("Publisher can assign the contract - consider requesting approval rights over any assignment");
+    concerns.push("Contract assignment allowed");
+    concernExplanations.push("They can transfer this contract to another company without asking you first.");
     concernSnippets.push(findSnippet(["assign"]) || "");
   }
 
   if (concerns.length === 0) {
     concerns.push("⚠️ DEMO MODE: Add your OpenAI API key for real contract analysis");
+    concernExplanations.push("This is demo mode - add your API key for full analysis.");
   }
 
   // Generate paragraph breakdown
@@ -578,6 +590,7 @@ function getSmartMockAnalysis(fileName: string, contractText: string, industry: 
       timeline: "Prompt delivery after each Session",
     },
     potentialConcerns: concerns,
+    concernExplanations,
     concernSnippets: concernSnippets.filter(s => s.length > 0),
     recommendations,
     overallRiskAssessment: overallRisk,

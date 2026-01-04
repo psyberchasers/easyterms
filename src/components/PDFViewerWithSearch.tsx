@@ -2,7 +2,9 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import { Document, Page, pdfjs } from "react-pdf";
-import { Loader2, ZoomIn, ZoomOut, ChevronLeft, ChevronRight, Search, AlertCircle } from "lucide-react";
+import { Loader2, ChevronLeft, ChevronRight, Search, AlertCircle } from "lucide-react";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { SearchMinusIcon, SearchAddIcon } from "@hugeicons-pro/core-stroke-rounded";
 import { MusicLoader } from "@/components/MusicLoader";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -114,14 +116,17 @@ export function PDFViewerWithSearch({
   }, [fileUrl]);
 
   const onDocumentLoadSuccess = useCallback((pdf: any) => {
+    if (!isMountedRef.current) return;
     pdfDocRef.current = pdf;
     setNumPages(pdf.numPages);
     setLoading(false);
     setError(null);
     // Small delay to ensure document is fully ready
     setTimeout(() => {
-      setDocumentReady(true);
-    }, 100);
+      if (isMountedRef.current && pdfDocRef.current === pdf) {
+        setDocumentReady(true);
+      }
+    }, 150);
   }, []);
 
   const onDocumentLoadError = useCallback(() => {
@@ -136,6 +141,14 @@ export function PDFViewerWithSearch({
 
   const onPageLoadSuccess = useCallback(() => {
     setPageError(false);
+  }, []);
+
+  // Suppress AbortException warnings for text layer cancellation
+  const onRenderError = useCallback((error: Error) => {
+    if (error.name === 'AbortException' || error.message?.includes('cancelled')) {
+      return; // Silently ignore cancellation errors
+    }
+    console.error('PDF render error:', error);
   }, []);
 
   // Search for text across all pages
@@ -168,9 +181,14 @@ export function PDFViewerWithSearch({
       let bestMatch: TextMatch | null = null;
 
       for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
+        // Check if component is still mounted and pdf is still valid
+        if (!isMountedRef.current || pdfDocRef.current !== pdf) {
+          setSearching(false);
+          return;
+        }
         try {
           const page = await pdf.getPage(pageNum);
-          if (!page) continue;
+          if (!page || !isMountedRef.current) continue;
           const textContent = await page.getTextContent();
           const viewport = page.getViewport({ scale: 1 });
           
@@ -263,37 +281,37 @@ export function PDFViewerWithSearch({
       {/* Controls - Always visible with skeletons while loading */}
       <div className="flex items-center justify-between px-4 py-2 bg-background border-b border-border shrink-0 gap-2 flex-wrap">
         <div className="flex items-center gap-2">
-          <Button 
-            variant="outline" 
-            size="icon" 
-            className="h-8 w-8 border-border bg-background hover:bg-muted" 
+          <Button
+            variant="outline"
+            size="icon"
+            className="h-8 w-8 border-border bg-background hover:bg-muted shadow-none"
             onClick={() => setScale(s => Math.max(0.5, s - 0.1))}
             disabled={loading}
           >
-            <ZoomOut className="h-4 w-4" />
+            <HugeiconsIcon icon={SearchMinusIcon} size={16} />
           </Button>
           {loading ? (
             <div className="w-14 h-4 bg-muted animate-pulse rounded" />
           ) : (
             <span className="text-sm text-muted-foreground w-14 text-center">{Math.round(scale * 100)}%</span>
           )}
-          <Button 
-            variant="outline" 
-            size="icon" 
-            className="h-8 w-8 border-border bg-background hover:bg-muted" 
+          <Button
+            variant="outline"
+            size="icon"
+            className="h-8 w-8 border-border bg-background hover:bg-muted shadow-none"
             onClick={() => setScale(s => Math.min(2, s + 0.1))}
             disabled={loading}
           >
-            <ZoomIn className="h-4 w-4" />
+            <HugeiconsIcon icon={SearchAddIcon} size={16} />
           </Button>
         </div>
 
         <div className="flex items-center gap-2">
-          <Button 
-            variant="outline" 
-            size="icon" 
-            className="h-8 w-8 border-border bg-background hover:bg-muted" 
-            onClick={() => setCurrentPage(p => Math.max(1, p - 1))} 
+          <Button
+            variant="outline"
+            size="icon"
+            className="h-8 w-8 border-border bg-background hover:bg-muted shadow-none"
+            onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
             disabled={loading || currentPage <= 1}
           >
             <ChevronLeft className="h-4 w-4" />
@@ -303,11 +321,11 @@ export function PDFViewerWithSearch({
           ) : (
             <span className="text-sm text-muted-foreground w-16 text-center">{currentPage}/{numPages}</span>
           )}
-          <Button 
-            variant="outline" 
-            size="icon" 
-            className="h-8 w-8 border-border bg-background hover:bg-muted" 
-            onClick={() => setCurrentPage(p => Math.min(numPages, p + 1))} 
+          <Button
+            variant="outline"
+            size="icon"
+            className="h-8 w-8 border-border bg-background hover:bg-muted shadow-none"
+            onClick={() => setCurrentPage(p => Math.min(numPages, p + 1))}
             disabled={loading || currentPage >= numPages}
           >
             <ChevronRight className="h-4 w-4" />
@@ -361,7 +379,7 @@ export function PDFViewerWithSearch({
           onLoadError={onDocumentLoadError}
           loading={null}
         >
-          {documentReady && numPages > 0 && !pageError && (
+          {documentReady && numPages > 0 && !pageError && pdfDocRef.current && (
             <div ref={pageContainerRef} className="relative inline-block">
               <Page
                 key={`${fileUrl}-${currentPage}`}

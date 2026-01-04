@@ -20,6 +20,8 @@ import {
   CommandList,
   CommandShortcut,
 } from "@/components/ui/command";
+import { FileText, X } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
   DashboardSquare01Icon,
@@ -47,6 +49,7 @@ interface Contract {
   title: string;
   contract_type: string | null;
   overall_risk: string | null;
+  created_at: string;
 }
 
 export function Navbar({ showNewAnalysis = true, showBorder = false }: NavbarProps) {
@@ -54,6 +57,8 @@ export function Navbar({ showNewAnalysis = true, showBorder = false }: NavbarPro
   const router = useRouter();
   const [commandOpen, setCommandOpen] = useState(false);
   const [contracts, setContracts] = useState<Contract[]>([]);
+  const [commandTab, setCommandTab] = useState<"all" | "contracts" | "actions" | "navigation">("all");
+  const [searchValue, setSearchValue] = useState("");
   const supabase = createClient();
 
   // Fetch contracts when command menu opens
@@ -61,7 +66,7 @@ export function Navbar({ showNewAnalysis = true, showBorder = false }: NavbarPro
     if (!user) return;
     const { data } = await supabase
       .from("contracts")
-      .select("id, title, contract_type, overall_risk")
+      .select("id, title, contract_type, overall_risk, created_at")
       .order("created_at", { ascending: false })
       .limit(10);
     if (data) setContracts(data);
@@ -198,72 +203,178 @@ export function Navbar({ showNewAnalysis = true, showBorder = false }: NavbarPro
 
       {/* Command Menu Dialog */}
       <CommandDialog open={commandOpen} onOpenChange={setCommandOpen} showCloseButton={false}>
-        <CommandInput placeholder="Run a command or search..." showShortcut={false} />
-        <CommandList>
-          <CommandEmpty>No results found</CommandEmpty>
-          <CommandGroup heading="ACTIONS">
-            <CommandItem onSelect={() => runCommand(() => router.push("/analyze"))}>
-              <HugeiconsIcon icon={AiSheetsIcon} size={16} className="mr-3 text-muted-foreground/60" />
-              New Analysis
-            </CommandItem>
-            <CommandItem onSelect={() => runCommand(() => router.push("/compare"))}>
-              <HugeiconsIcon icon={RepeatOffIcon} size={16} className="mr-3 text-muted-foreground/60" />
-              Compare Contracts
-            </CommandItem>
-            <CommandItem onSelect={() => runCommand(() => router.push("/pricing"))}>
-              <HugeiconsIcon icon={SparklesIcon} size={16} className="mr-3 text-muted-foreground/60" />
-              Upgrade Plan
-            </CommandItem>
-          </CommandGroup>
-          {contracts.length > 0 && (
-            <CommandGroup heading="CONTRACTS">
-              {contracts.map((contract) => (
-                <CommandItem
-                  key={contract.id}
-                  onSelect={() => runCommand(() => router.push(`/contract/${contract.id}`))}
+        {/* Custom Search Header */}
+        <div className="flex items-center gap-3 px-4 py-3 border-b border-border">
+          <HugeiconsIcon icon={AiSearch02Icon} size={18} className="text-muted-foreground shrink-0" />
+          <input
+            type="text"
+            placeholder="Search contracts, actions..."
+            value={searchValue}
+            onChange={(e) => setSearchValue(e.target.value)}
+            className="flex-1 bg-transparent text-foreground placeholder:text-muted-foreground outline-none text-sm"
+            autoFocus
+          />
+          <button
+            onClick={() => setCommandOpen(false)}
+            className="w-6 h-6 flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+
+        {/* Tabs */}
+        <div className="flex items-center gap-1 px-4 py-2 border-b border-border">
+          {[
+            { id: "all", label: "All" },
+            { id: "contracts", label: "Contracts", icon: FileAttachmentIcon },
+            { id: "actions", label: "Actions", icon: AiSheetsIcon },
+            { id: "navigation", label: "Navigation", icon: DashboardSquare01Icon },
+          ].map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setCommandTab(tab.id as typeof commandTab)}
+              className={cn(
+                "flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium transition-colors rounded-md",
+                commandTab === tab.id
+                  ? "text-foreground bg-muted"
+                  : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              {tab.icon && <HugeiconsIcon icon={tab.icon} size={14} />}
+              {tab.label}
+            </button>
+          ))}
+        </div>
+
+        {/* Results */}
+        <div className="max-h-[400px] overflow-y-auto">
+          {/* Contracts Section */}
+          {(commandTab === "all" || commandTab === "contracts") && contracts.length > 0 && (
+            <div className="p-2">
+              <p className="text-xs font-medium text-muted-foreground px-2 py-2">Contracts</p>
+              <div className="space-y-1">
+                {contracts
+                  .filter((c) => !searchValue || c.title.toLowerCase().includes(searchValue.toLowerCase()))
+                  .map((contract) => (
+                    <button
+                      key={contract.id}
+                      onClick={() => runCommand(() => router.push(`/contract/${contract.id}`))}
+                      className="w-full flex items-center gap-3 px-2 py-3 rounded-lg hover:bg-muted transition-colors text-left"
+                    >
+                      {/* PDF Icon */}
+                      <div className="w-10 h-12 rounded-lg border-2 border-dashed border-muted-foreground/30 flex items-center justify-center shrink-0">
+                        <FileText className="w-5 h-5 text-muted-foreground/50" />
+                      </div>
+                      {/* Content */}
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium text-foreground truncate">{contract.title}</p>
+                        <p className="text-sm text-muted-foreground">
+                          {contract.contract_type || "Contract"} | {new Date(contract.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                        </p>
+                      </div>
+                    </button>
+                  ))}
+              </div>
+            </div>
+          )}
+
+          {/* Actions Section */}
+          {(commandTab === "all" || commandTab === "actions") && (
+            <div className="p-2">
+              <p className="text-xs font-medium text-muted-foreground px-2 py-2">Actions</p>
+              <div className="space-y-1">
+                <button
+                  onClick={() => runCommand(() => router.push("/analyze"))}
+                  className="w-full flex items-center gap-3 px-2 py-2.5 rounded-lg hover:bg-muted transition-colors text-left"
                 >
-                  <HugeiconsIcon icon={FileAttachmentIcon} size={16} className="mr-3 text-muted-foreground/60" />
-                  <span className="flex-1 truncate">{contract.title}</span>
-                  {contract.overall_risk && (
-                    <span className={`text-[10px] px-1.5 py-0.5 ${
-                      contract.overall_risk === 'high' ? 'text-red-400 bg-red-400/10' :
-                      contract.overall_risk === 'medium' ? 'text-amber-400 bg-amber-400/10' :
-                      'text-green-400 bg-green-400/10'
-                    }`}>
-                      {contract.overall_risk}
-                    </span>
-                  )}
-                </CommandItem>
-              ))}
-            </CommandGroup>
+                  <div className="w-8 h-8 rounded-lg bg-muted flex items-center justify-center">
+                    <HugeiconsIcon icon={AiSheetsIcon} size={16} className="text-muted-foreground" />
+                  </div>
+                  <div>
+                    <p className="font-medium text-foreground">New Analysis</p>
+                    <p className="text-xs text-muted-foreground">Upload and analyze a contract</p>
+                  </div>
+                </button>
+                <button
+                  onClick={() => runCommand(() => router.push("/compare"))}
+                  className="w-full flex items-center gap-3 px-2 py-2.5 rounded-lg hover:bg-muted transition-colors text-left"
+                >
+                  <div className="w-8 h-8 rounded-lg bg-muted flex items-center justify-center">
+                    <HugeiconsIcon icon={RepeatOffIcon} size={16} className="text-muted-foreground" />
+                  </div>
+                  <div>
+                    <p className="font-medium text-foreground">Compare Contracts</p>
+                    <p className="text-xs text-muted-foreground">Side by side comparison</p>
+                  </div>
+                </button>
+                <button
+                  onClick={() => runCommand(() => router.push("/pricing"))}
+                  className="w-full flex items-center gap-3 px-2 py-2.5 rounded-lg hover:bg-muted transition-colors text-left"
+                >
+                  <div className="w-8 h-8 rounded-lg bg-muted flex items-center justify-center">
+                    <HugeiconsIcon icon={SparklesIcon} size={16} className="text-muted-foreground" />
+                  </div>
+                  <div>
+                    <p className="font-medium text-foreground">Upgrade Plan</p>
+                    <p className="text-xs text-muted-foreground">Get more features</p>
+                  </div>
+                </button>
+              </div>
+            </div>
           )}
-          <CommandGroup heading="NAVIGATION">
-            <CommandItem onSelect={() => runCommand(() => router.push("/"))}>
-              <HugeiconsIcon icon={Home11Icon} size={16} className="mr-3 text-muted-foreground/60" />
-              Home
-            </CommandItem>
-            <CommandItem onSelect={() => runCommand(() => router.push("/dashboard"))}>
-              <HugeiconsIcon icon={DashboardSquare01Icon} size={16} className="mr-3 text-muted-foreground/60" />
-              Dashboard
-            </CommandItem>
-            <CommandItem onSelect={() => runCommand(() => router.push("/calendar"))}>
-              <HugeiconsIcon icon={Calendar03Icon} size={16} className="mr-3 text-muted-foreground/60" />
-              Calendar
-            </CommandItem>
-            <CommandItem onSelect={() => runCommand(() => router.push("/settings"))}>
-              <HugeiconsIcon icon={Settings02Icon} size={16} className="mr-3 text-muted-foreground/60" />
-              Settings
-            </CommandItem>
-          </CommandGroup>
-          {user && (
-            <CommandGroup heading="ACCOUNT">
-              <CommandItem onSelect={() => runCommand(() => signOut())}>
-                <HugeiconsIcon icon={Logout01Icon} size={16} className="mr-3 text-muted-foreground/60" />
-                Sign Out
-              </CommandItem>
-            </CommandGroup>
+
+          {/* Navigation Section */}
+          {(commandTab === "all" || commandTab === "navigation") && (
+            <div className="p-2">
+              <p className="text-xs font-medium text-muted-foreground px-2 py-2">Navigation</p>
+              <div className="space-y-1">
+                <button
+                  onClick={() => runCommand(() => router.push("/"))}
+                  className="w-full flex items-center gap-3 px-2 py-2.5 rounded-lg hover:bg-muted transition-colors text-left"
+                >
+                  <div className="w-8 h-8 rounded-lg bg-muted flex items-center justify-center">
+                    <HugeiconsIcon icon={Home11Icon} size={16} className="text-muted-foreground" />
+                  </div>
+                  <p className="font-medium text-foreground">Home</p>
+                </button>
+                <button
+                  onClick={() => runCommand(() => router.push("/dashboard"))}
+                  className="w-full flex items-center gap-3 px-2 py-2.5 rounded-lg hover:bg-muted transition-colors text-left"
+                >
+                  <div className="w-8 h-8 rounded-lg bg-muted flex items-center justify-center">
+                    <HugeiconsIcon icon={DashboardSquare01Icon} size={16} className="text-muted-foreground" />
+                  </div>
+                  <p className="font-medium text-foreground">Dashboard</p>
+                </button>
+                <button
+                  onClick={() => runCommand(() => router.push("/calendar"))}
+                  className="w-full flex items-center gap-3 px-2 py-2.5 rounded-lg hover:bg-muted transition-colors text-left"
+                >
+                  <div className="w-8 h-8 rounded-lg bg-muted flex items-center justify-center">
+                    <HugeiconsIcon icon={Calendar03Icon} size={16} className="text-muted-foreground" />
+                  </div>
+                  <p className="font-medium text-foreground">Calendar</p>
+                </button>
+                <button
+                  onClick={() => runCommand(() => router.push("/settings"))}
+                  className="w-full flex items-center gap-3 px-2 py-2.5 rounded-lg hover:bg-muted transition-colors text-left"
+                >
+                  <div className="w-8 h-8 rounded-lg bg-muted flex items-center justify-center">
+                    <HugeiconsIcon icon={Settings02Icon} size={16} className="text-muted-foreground" />
+                  </div>
+                  <p className="font-medium text-foreground">Settings</p>
+                </button>
+              </div>
+            </div>
           )}
-        </CommandList>
+
+          {/* Empty State */}
+          {searchValue && contracts.filter((c) => c.title.toLowerCase().includes(searchValue.toLowerCase())).length === 0 && (
+            <div className="py-8 text-center text-sm text-muted-foreground">
+              No results found for "{searchValue}"
+            </div>
+          )}
+        </div>
       </CommandDialog>
     </>
   );

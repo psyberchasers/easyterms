@@ -9,10 +9,16 @@ import { createClient } from "@/lib/supabase/client";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { Contract } from "@/types/database";
 import { ContractAnalysis } from "@/types/contract";
-import { Navbar } from "@/components/Navbar";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Dialog,
   DialogContent,
@@ -21,46 +27,37 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import {
   FileText,
   Loader2,
   AlertTriangle,
-  CheckCircle2,
   Star,
-  StarOff,
   Trash2,
   ArrowLeft,
   Upload,
   History,
+  X,
+  Download,
   Calendar,
   Plus,
-  ArrowUpRight,
-  ArrowDownRight,
-  X,
   Eye,
-  Download,
+  CheckCircle2,
   TrendingUp,
   DollarSign,
-  Clock,
+  ArrowUpRight,
+  ArrowDownRight,
+  ChevronDown,
+  ChevronRight,
 } from "lucide-react";
 import { HugeiconsIcon } from "@hugeicons/react";
-import {
-  HelpSquareIcon,
-  Alert02Icon,
-} from "@hugeicons-pro/core-duotone-rounded";
-import { Calendar03Icon, Invoice03Icon, Delete03Icon } from "@hugeicons-pro/core-solid-rounded";
-import { FinancialCalculator } from "@/components/FinancialCalculator";
+import { HelpSquareIcon, Alert02Icon } from "@hugeicons-pro/core-duotone-rounded";
+import { Calendar03Icon, Delete03Icon } from "@hugeicons-pro/core-solid-rounded";
 import { MusicLoader } from "@/components/MusicLoader";
 import { DeleteConfirmModal } from "@/components/DeleteConfirmModal";
 import { NotificationModal } from "@/components/NotificationModal";
+import { FinancialCalculator } from "@/components/FinancialCalculator";
+import NewsCard from "@/components/NewsCard";
 
 interface ContractVersion {
   id: string;
@@ -111,12 +108,9 @@ export default function ContractDetailPage() {
   const [downloading, setDownloading] = useState(false);
   const [activeTab, setActiveTab] = useState("overview");
 
-  // Version tracking
-  const [versions, setVersions] = useState<ContractVersion[]>([]);
-  const [loadingVersions, setLoadingVersions] = useState(false);
-  const [uploadingVersion, setUploadingVersion] = useState(false);
-  const [selectedVersionId, setSelectedVersionId] = useState<string | null>(null);
-  const versionInputRef = useRef<HTMLInputElement>(null);
+  // Expandable items
+  const [expandedAdvice, setExpandedAdvice] = useState<number | null>(null);
+  const [expandedTerm, setExpandedTerm] = useState<number | null>(null);
 
   // Key dates
   const [dates, setDates] = useState<ContractDate[]>([]);
@@ -124,9 +118,12 @@ export default function ContractDetailPage() {
   const [showAddDate, setShowAddDate] = useState(false);
   const [newDate, setNewDate] = useState({ date_type: "", date: "", description: "" });
 
-  // Expandable items
-  const [expandedAdvice, setExpandedAdvice] = useState<number | null>(null);
-  const [expandedTerm, setExpandedTerm] = useState<number | null>(null);
+  // Version tracking
+  const [versions, setVersions] = useState<ContractVersion[]>([]);
+  const [loadingVersions, setLoadingVersions] = useState(false);
+  const [uploadingVersion, setUploadingVersion] = useState(false);
+  const [selectedVersionId, setSelectedVersionId] = useState<string | null>(null);
+  const versionInputRef = useRef<HTMLInputElement>(null);
 
   // Delete modal
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -247,21 +244,6 @@ export default function ContractDetailPage() {
     }
   };
 
-  const fetchDates = async () => {
-    setLoadingDates(true);
-    try {
-      const response = await fetch(`/api/contracts/${contractId}/dates`);
-      const data = await response.json();
-      if (response.ok && data.dates) {
-        setDates(data.dates);
-      }
-    } catch (err) {
-      console.error("Error fetching dates:", err);
-    } finally {
-      setLoadingDates(false);
-    }
-  };
-
   const uploadNewVersion = async (file: File) => {
     console.log("uploadNewVersion called with file:", file.name, file.size);
     setUploadingVersion(true);
@@ -346,6 +328,21 @@ export default function ContractDetailPage() {
     }
   };
 
+  const fetchDates = async () => {
+    setLoadingDates(true);
+    try {
+      const response = await fetch(`/api/contracts/${contractId}/dates`);
+      const data = await response.json();
+      if (response.ok && data.dates) {
+        setDates(data.dates);
+      }
+    } catch (err) {
+      console.error("Error fetching dates:", err);
+    } finally {
+      setLoadingDates(false);
+    }
+  };
+
   const addDate = async () => {
     if (!newDate.date_type || !newDate.date) return;
 
@@ -380,7 +377,7 @@ export default function ContractDetailPage() {
   // Fetch versions and dates when contract loads
   useEffect(() => {
     if (contract) {
-      fetchVersions(true); // Select latest version by default
+      fetchVersions(true);
       fetchDates();
     }
   }, [contract?.id]);
@@ -438,17 +435,6 @@ export default function ContractDetailPage() {
     return null;
   }, []);
 
-  const handleHighlight = useCallback((text: string | undefined) => {
-    if (!text) return;
-    setHighlightedText(text);
-    setTimeout(() => {
-      const highlightEl = document.getElementById("highlighted-section");
-      if (highlightEl) {
-        highlightEl.scrollIntoView({ behavior: "smooth", block: "center" });
-      }
-    }, 150);
-  }, []);
-
   const renderedContractText = useMemo(() => {
     if (!highlightedText || !contract?.extracted_text) return null;
     
@@ -462,106 +448,10 @@ export default function ContractDetailPage() {
     return { before, match: highlighted, after };
   }, [contract?.extracted_text, highlightedText, findMatchPosition]);
 
-  // Midday style - minimal color
-  const getRiskColor = (risk: string) => {
-    switch (risk) {
-      case "high":
-        return "text-red-400 border-red-400/30";
-      case "medium":
-        return "text-yellow-400 border-yellow-400/30";
-      case "low":
-        return "text-green-400 border-green-400/30";
-      default:
-        return "text-muted-foreground border-border";
-    }
-  };
-
-  // Get contextual questions based on term type
-  const getTermChecklist = (title: string): string[] => {
-    const titleLower = title.toLowerCase();
-
-    if (titleLower.includes("royalt") || titleLower.includes("share") || titleLower.includes("percent")) {
-      return [
-        "Is this percentage calculated on gross or net revenue?",
-        "What deductions are taken before my share is calculated?",
-        "Are there different rates for streaming vs physical vs sync?"
-      ];
-    }
-    if (titleLower.includes("term") || titleLower.includes("duration") || titleLower.includes("period") || titleLower.includes("year")) {
-      return [
-        "When exactly does this agreement start and end?",
-        "Does this automatically renew? How do I opt out?",
-        "Can I terminate early and what are the penalties?"
-      ];
-    }
-    if (titleLower.includes("rights") || titleLower.includes("ownership") || titleLower.includes("copyright") || titleLower.includes("publish")) {
-      return [
-        "Am I granting exclusive or non-exclusive rights?",
-        "Do my rights revert back to me when the term ends?",
-        "What territories/regions does this cover?"
-      ];
-    }
-    if (titleLower.includes("advance") || titleLower.includes("payment") || titleLower.includes("fee") || titleLower.includes("recoup")) {
-      return [
-        "When exactly will I receive this payment?",
-        "Is this recoupable? From which income sources?",
-        "What happens to unrecouped balances at term end?"
-      ];
-    }
-    if (titleLower.includes("audit")) {
-      return [
-        "How often can I audit their books?",
-        "Who pays for the audit if errors are found?",
-        "What's the time limit for disputing discrepancies?"
-      ];
-    }
-    if (titleLower.includes("terminat") || titleLower.includes("cancel") || titleLower.includes("post-term")) {
-      return [
-        "What triggers my right to terminate?",
-        "How much notice do I need to give?",
-        "What happens to my work after termination?"
-      ];
-    }
-    if (titleLower.includes("exclusiv")) {
-      return [
-        "What exactly am I restricted from doing?",
-        "Does this apply worldwide or specific territories?",
-        "Are there any exceptions or carve-outs?"
-      ];
-    }
-    if (titleLower.includes("renewal") || titleLower.includes("option")) {
-      return [
-        "Is renewal automatic or do both parties need to agree?",
-        "Do the terms change upon renewal?",
-        "How do I prevent automatic renewal if I want out?"
-      ];
-    }
-    if (titleLower.includes("financ") || titleLower.includes("money") || titleLower.includes("income")) {
-      return [
-        "How and when will I receive statements?",
-        "What's the accounting period for payments?",
-        "Can I audit if I suspect discrepancies?"
-      ];
-    }
-    if (titleLower.includes("perform")) {
-      return [
-        "What performance obligations do I have?",
-        "What happens if I can't meet these obligations?",
-        "Are there minimum delivery requirements?"
-      ];
-    }
-    // Default questions
-    return [
-      "How does this compare to industry standard terms?",
-      "Could this clause limit my future opportunities?",
-      "What's the worst case scenario with this term?"
-    ];
-  };
-
   // Download report handler
   const handleDownloadReport = async () => {
     if (!analysis) return;
-    
+
     setDownloading(true);
     try {
       const response = await fetch("/api/export", {
@@ -597,13 +487,40 @@ export default function ContractDetailPage() {
     }
   };
 
-  // Default missing clauses
-  const DEFAULT_MISSING_CLAUSES = [
-    { clause: "Audit Rights", severity: "critical" as const, description: "No provision allowing you to audit financial records" },
-    { clause: "Reversion Clause", severity: "high" as const, description: "No automatic rights reversion if works are unexploited" },
-    { clause: "Creative Control", severity: "medium" as const, description: "No approval rights over how your work is used" },
-    { clause: "Termination for Cause", severity: "medium" as const, description: "Limited grounds specified for early termination" },
-  ];
+  // Risk color helper
+  const getRiskColor = (risk: string) => {
+    switch (risk) {
+      case "high":
+        return "text-red-400 border-red-400/30";
+      case "medium":
+        return "text-amber-400 border-amber-400/30";
+      case "low":
+        return "text-green-400 border-green-400/30";
+      default:
+        return "text-muted-foreground border-border";
+    }
+  };
+
+  // Get contextual questions based on term type
+  const getTermChecklist = (title: string): string[] => {
+    const titleLower = title.toLowerCase();
+    if (titleLower.includes("royalt") || titleLower.includes("share") || titleLower.includes("percent")) {
+      return ["Is this on gross or net?", "What deductions apply?", "Different rates for streaming vs sync?"];
+    }
+    if (titleLower.includes("term") || titleLower.includes("duration") || titleLower.includes("period")) {
+      return ["When does this start/end?", "Does it auto-renew?", "Can I terminate early?"];
+    }
+    if (titleLower.includes("rights") || titleLower.includes("ownership") || titleLower.includes("copyright")) {
+      return ["Exclusive or non-exclusive?", "Do rights revert?", "What territories?"];
+    }
+    if (titleLower.includes("advance") || titleLower.includes("payment") || titleLower.includes("recoup")) {
+      return ["When do I receive this?", "Is this recoupable?", "From which sources?"];
+    }
+    return ["How does this compare to standard?", "Could this limit opportunities?", "Worst case scenario?"];
+  };
+
+  // Check if version has full analysis
+  const versionHasFullAnalysis = selectedVersion?.analysis?.keyTerms && selectedVersion.analysis.keyTerms.length > 0;
 
   if (authLoading || loading) {
     return (
@@ -630,166 +547,125 @@ export default function ContractDetailPage() {
     );
   }
 
-  // Check if version has full analysis data
-  const versionHasFullAnalysis = selectedVersion?.analysis?.keyTerms && 
-    selectedVersion.analysis.keyTerms.length > 0;
-
   return (
-    <div className="flex flex-col h-[calc(100vh-56px)] bg-background overflow-hidden pt-[57px]">
-      <Navbar showBorder />
+    <div className="flex flex-col h-screen bg-background overflow-hidden">
+      {/* Clean Header - Fixed */}
+      <header className="shrink-0 h-14 px-4 border-b border-border bg-background flex items-center justify-between sticky top-0 z-20">
+        <div className="flex items-center gap-3">
+          <Link href="/dashboard" className="flex items-center justify-center w-8 h-8 rounded-lg border border-border hover:bg-muted transition-colors">
+            <ArrowLeft className="w-4 h-4 text-muted-foreground" />
+          </Link>
+          <div className="flex items-center gap-2 text-sm">
+            <Link href="/dashboard" className="text-muted-foreground hover:text-foreground transition-colors">
+              Dashboard
+            </Link>
+            <span className="text-muted-foreground/40">/</span>
+            <span className="text-foreground font-medium truncate max-w-[300px]">
+              {contract.title || analysis?.contractType || "Contract"}
+            </span>
+          </div>
+          {analysis?.overallRiskAssessment && (
+            <span className={cn(
+              "text-xs px-2 py-1 rounded-md font-medium",
+              analysis.overallRiskAssessment === "low" ? "bg-green-500/10 text-green-500" :
+              analysis.overallRiskAssessment === "medium" ? "bg-amber-500/10 text-amber-500" :
+              "bg-red-500/10 text-red-500"
+            )}>
+              {analysis.overallRiskAssessment.charAt(0).toUpperCase() + analysis.overallRiskAssessment.slice(1)} Risk
+            </span>
+          )}
+        </div>
+        <div className="flex items-center gap-2">
+          <input
+            ref={versionInputRef}
+            type="file"
+            accept=".pdf,.doc,.docx,.txt"
+            className="hidden"
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file) uploadNewVersion(file);
+            }}
+          />
+          <button
+            onClick={() => versionInputRef.current?.click()}
+            disabled={uploadingVersion}
+            className="h-8 px-3 text-xs text-muted-foreground hover:text-foreground rounded-lg border border-border hover:bg-muted flex items-center gap-2 transition-colors disabled:opacity-50"
+          >
+            {uploadingVersion ? (
+              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+            ) : (
+              <Upload className="w-3.5 h-3.5" />
+            )}
+            Upload Version
+          </button>
+          <button
+            onClick={handleDownloadReport}
+            disabled={downloading}
+            className="h-8 px-3 text-xs text-muted-foreground hover:text-foreground rounded-lg border border-border hover:bg-muted flex items-center gap-2 transition-colors disabled:opacity-50"
+          >
+            {downloading ? (
+              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+            ) : (
+              <Download className="w-3.5 h-3.5" />
+            )}
+            Export
+          </button>
+          <button
+            onClick={toggleStar}
+            className="h-8 w-8 flex items-center justify-center rounded-lg border border-border hover:bg-muted transition-colors"
+          >
+            {contract.is_starred ? (
+              <Star className="w-4 h-4 text-primary fill-primary" />
+            ) : (
+              <Star className="w-4 h-4 text-muted-foreground" />
+            )}
+          </button>
+          <button
+            onClick={() => setShowDeleteModal(true)}
+            className="h-8 w-8 flex items-center justify-center rounded-lg border border-border hover:bg-muted hover:border-red-500/30 transition-colors group"
+          >
+            <Trash2 className="w-4 h-4 text-muted-foreground group-hover:text-red-500" />
+          </button>
+        </div>
+      </header>
 
-      {/* Main Content Area */}
-      <div className="flex flex-1 overflow-hidden overflow-x-hidden">
-        {/* Document Side Panel - Midday style */}
+      {/* Main Content Area - 2 columns */}
+      <div className="flex flex-1 overflow-hidden">
+        {/* Left: Document Panel */}
         <div
           className={cn(
-            "h-full flex flex-col bg-background transition-all duration-300 ease-in-out overflow-hidden",
-            showDocument ? "w-1/2 max-w-2xl border-r border-border" : "w-0"
+            "h-full flex flex-col bg-card border-r border-border transition-all duration-300 ease-in-out overflow-hidden",
+            showDocument ? "w-2/5 min-w-[400px]" : "w-0"
           )}
         >
           {showDocument && (
             <>
-              {/* Panel Header */}
-              <div className="shrink-0 h-12 px-4 border-b border-border bg-background flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <FileText className="w-4 h-4 text-muted-foreground" />
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm text-foreground">{contract.title}</span>
-                    <span className="w-1 h-1 rounded-full bg-muted-foreground/40" />
-                    {/* Version Selector */}
-                    {versions.length > 0 ? (
-                      <Select
-                        value={selectedVersionId || "original"}
-                        onValueChange={(val) => handleVersionSelect(val === "original" ? null : val)}
-                      >
-                        <SelectTrigger className="h-6 min-w-[70px] gap-1 border-border bg-transparent text-xs text-muted-foreground hover:text-foreground focus:ring-0 focus:ring-offset-0 focus-visible:border-border">
-                          <SelectValue>
-                            v{currentVersionNumber} of {totalVersions}
-                          </SelectValue>
-                        </SelectTrigger>
-                        <SelectContent className="bg-card border-border" position="popper" side="bottom" align="start">
-                          <SelectItem value="original" className="text-xs">
-                            <div className="flex items-center gap-2">
-                              <span>v1 (Original)</span>
-                              <span className="text-muted-foreground/60">
-                                {new Date(contract.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                              </span>
-                            </div>
-                          </SelectItem>
-                          {versions.map((v) => (
-                            <SelectItem key={v.id} value={v.id} className="text-xs">
-                              <div className="flex items-center gap-2">
-                                <span>v{v.version_number + 1}</span>
-                                <span className="text-muted-foreground/60">
-                                  {new Date(v.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                                </span>
-                                {v.analysis?.overallRiskAssessment && (
-                                  <span className={cn(
-                                    "text-[10px] px-1 border",
-                                    v.analysis.overallRiskAssessment === "low" ? "text-green-400 border-green-400/30" :
-                                    v.analysis.overallRiskAssessment === "medium" ? "text-amber-400 border-amber-400/30" :
-                                    "text-red-400 border-red-400/30"
-                                  )}>
-                                    {v.analysis.overallRiskAssessment}
-                                  </span>
-                                )}
-                              </div>
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    ) : (
-                      <span className="text-xs text-muted-foreground/60">
-                        {new Date(contract.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
-                      </span>
-                    )}
-                  </div>
-                  {highlightedText && (
-                    <span className="text-xs text-muted-foreground/60 px-2 py-0.5 border border-border">Highlighting</span>
-                  )}
-                </div>
+              <div className="shrink-0 h-10 px-3 border-b border-border bg-card flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  {highlightedText && (
-                    <button 
-                      onClick={() => setHighlightedText("")}
-                      className="text-xs text-muted-foreground hover:text-foreground transition-colors"
-                    >
-                      Clear
-                    </button>
+                  <FileText className="w-3.5 h-3.5 text-muted-foreground" />
+                  <span className="text-xs text-muted-foreground truncate max-w-[200px]">{contract.title}</span>
+                  {versions.length > 0 && (
+                    <Select value={selectedVersionId || "original"} onValueChange={(val) => handleVersionSelect(val === "original" ? null : val)}>
+                      <SelectTrigger className="h-5 min-w-[60px] gap-1 border-0 bg-muted/50 text-[10px] text-muted-foreground hover:text-foreground focus:ring-0 px-1.5">
+                        <SelectValue>v{currentVersionNumber}</SelectValue>
+                      </SelectTrigger>
+                      <SelectContent className="bg-card border-border" position="popper" side="bottom" align="start">
+                        <SelectItem value="original" className="text-xs">v1 (Original)</SelectItem>
+                        {versions.map((v) => (
+                          <SelectItem key={v.id} value={v.id} className="text-xs">v{v.version_number + 1}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   )}
-                  <button 
-                    onClick={() => { setShowDocument(false); setHighlightedText(""); }}
-                    className="w-7 h-7 flex items-center justify-center hover:bg-muted transition-colors"
-                  >
-                    <X className="w-4 h-4 text-muted-foreground" />
-                  </button>
                 </div>
               </div>
-              {/* Version Info Banner */}
-              {selectedVersion && (
-                <div className="shrink-0 px-4 py-3 bg-card border-b border-border">
-                  <div className="flex items-start gap-3">
-                    <div className="w-5 h-5 border border-border flex items-center justify-center shrink-0 mt-0.5">
-                      <History className="w-3 h-3 text-muted-foreground" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-xs text-foreground mb-1">Version {selectedVersion.version_number + 1} Changes</p>
-                      <p className="text-[10px] text-muted-foreground mb-2">{selectedVersion.changes_summary}</p>
-                      {selectedVersion.analysis?.improvements && selectedVersion.analysis.improvements.length > 0 && (
-                        <div className="mb-3">
-                          <p className="text-xs text-green-400 mb-1.5">✓ Improvements</p>
-                          <ul className="text-xs text-muted-foreground/80 space-y-1 ml-3">
-                            {selectedVersion.analysis.improvements.slice(0, 3).map((imp, i) => (
-                              <li key={i}>• {imp}</li>
-                            ))}
-                          </ul>
-                        </div>
-                      )}
-                      {selectedVersion.analysis?.regressions && selectedVersion.analysis.regressions.length > 0 && (
-                        <div>
-                          <p className="text-xs text-red-400 mb-1.5">⚠ Regressions</p>
-                          <ul className="text-xs text-muted-foreground/80 space-y-1 ml-3">
-                            {selectedVersion.analysis.regressions.slice(0, 3).map((reg, i) => (
-                              <li key={i}>• {reg}</li>
-                            ))}
-                          </ul>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              )}
-              {/* PDF Content */}
-              <div className="flex-1 overflow-hidden bg-card">
+              <div className="flex-1 overflow-hidden">
                 {pdfUrl && contract.file_type === "application/pdf" ? (
-                  loadingPdf ? (
-                    <div className="flex items-center justify-center h-full">
-                      <MusicLoader />
-                    </div>
-                  ) : (
-                    <PDFViewerWithSearch 
-                      fileUrl={pdfUrl} 
-                      searchText={highlightedText}
-                      className="h-full"
-                    />
-                  )
+                  loadingPdf ? <div className="flex items-center justify-center h-full"><MusicLoader /></div> : <PDFViewerWithSearch fileUrl={pdfUrl} searchText={highlightedText} className="h-full" />
                 ) : (
                   <ScrollArea className="h-full">
-                    <div className="p-6 text-sm whitespace-pre-wrap font-mono leading-relaxed text-muted-foreground">
-                      {renderedContractText ? (
-                        <>
-                          {renderedContractText.before}
-                          <span 
-                            id="highlighted-section"
-                            className="bg-white/10 text-foreground px-1 border-l-2 border-white"
-                          >
-                            {renderedContractText.match}
-                          </span>
-                          {renderedContractText.after}
-                        </>
-                      ) : (
-                        contract.extracted_text || "No text available"
-                      )}
+                    <div className="p-4 text-xs whitespace-pre-wrap font-mono leading-relaxed text-muted-foreground">
+                      {renderedContractText ? (<>{renderedContractText.before}<span id="highlighted-section" className="bg-primary/20 text-foreground px-1 border-l-2 border-primary">{renderedContractText.match}</span>{renderedContractText.after}</>) : (contract.extracted_text || "No text available")}
                     </div>
                   </ScrollArea>
                 )}
@@ -798,679 +674,354 @@ export default function ContractDetailPage() {
           )}
         </div>
 
-        {/* Main Content */}
-        <div className="flex-1 overflow-auto">
+        {/* Right: Main Analysis Content with Tabs */}
+        <div className="flex-1 overflow-hidden flex flex-col" style={{ backgroundColor: '#fcfcfc' }}>
           {analysis ? (
-            <main className={cn(
-              "px-6 py-6 pb-24 transition-all duration-300",
-              showDocument ? "w-full" : "max-w-4xl mx-auto"
-            )}>
-              {/* Breadcrumbs */}
-              <div className="flex items-center gap-2 mb-6">
-                <Link href="/dashboard" className="flex items-center justify-center w-7 h-7 border border-border hover:border-muted-foreground/30 transition-colors">
-                  <ArrowLeft className="w-3.5 h-3.5 text-muted-foreground" />
-                </Link>
-                <nav className="flex items-center gap-2 text-sm">
-                  <Link href="/dashboard" className="text-muted-foreground hover:text-foreground transition-colors">
-                    Dashboard
-                  </Link>
-                  <span className="text-muted-foreground/60">/</span>
-                  <span className="text-muted-foreground">{analysis.contractType || "Contract"}</span>
-                  <span className="text-muted-foreground/60">/</span>
-                  <span className="text-foreground font-medium">Analysis</span>
-                </nav>
-              </div>
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col overflow-hidden">
+              {/* Title and Tabs */}
+              <div className="shrink-0" style={{ backgroundColor: '#fcfcfc' }}>
+                {/* Title with toggle */}
+                <div className="px-8 pt-8 pb-6 flex items-start justify-between">
+                  <h1 className="text-2xl font-semibold" style={{ color: '#1d1b1a' }}>{contract.title || analysis.contractType || "Contract"}</h1>
+                  <button
+                    onClick={() => { setShowDocument(!showDocument); if (showDocument) setHighlightedText(""); }}
+                    className="text-xs px-3 py-1.5 rounded-full flex items-center gap-1.5 transition-all shrink-0"
+                    style={{ backgroundColor: '#f3f1f0', color: '#797875' }}
+                  >
+                    <FileText className="w-3.5 h-3.5" />
+                    {showDocument ? 'Hide PDF' : 'Show PDF'}
+                  </button>
+                </div>
 
-              {/* Header - Midday style */}
-              <div className="flex items-center justify-between mb-8">
-                <div>
-                  <div className="flex items-center gap-3 mb-1">
-                    <h1 className="text-xl font-medium text-foreground">{contract.title || analysis.contractType}</h1>
-                    {selectedVersion && (
-                      <span className="text-xs px-2 py-0.5 border border-blue-500/30 text-blue-400">
-                        Version {selectedVersion.version_number + 1}
-                      </span>
-                    )}
-                    <span className={cn(
-                      "text-xs px-2 py-0.5 border uppercase",
-                      analysis.overallRiskAssessment === "low" ? "border-green-500/30 text-green-400" :
-                      analysis.overallRiskAssessment === "medium" ? "border-yellow-500/30 text-yellow-400" :
-                      analysis.overallRiskAssessment === "high" ? "border-red-500/30 text-red-400" :
-                      "border-border text-muted-foreground/60"
-                    )}>
-                      {analysis.overallRiskAssessment === "low" ? "Low Risk" : 
-                       analysis.overallRiskAssessment === "medium" ? "Medium Risk" :
-                       analysis.overallRiskAssessment === "high" ? "High Risk" : "Analyzed"}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    {analysis.parties?.label && (
-                      <span className="text-muted-foreground/60 text-sm">
-                        {analysis.parties.label}
-                        {analysis.parties?.artist && ` · ${analysis.parties.artist}`}
-                      </span>
-                    )}
-                    {selectedVersion && (
+                {/* Tabs Header */}
+                <div className="px-8 pb-0 border-b" style={{ borderColor: '#e5e5e5' }}>
+                  <div className="flex gap-6">
+                    {[
+                      { id: "overview", label: "Overview" },
+                      { id: "terms", label: "Key Terms" },
+                      { id: "financial", label: "Finances" },
+                      { id: "advice", label: "Advice" },
+                      { id: "versions", label: "Versions" },
+                      { id: "dates", label: "Dates" },
+                    ].map((tab) => (
                       <button
-                        onClick={() => handleVersionSelect(null)}
-                        className="text-xs text-blue-400 hover:text-blue-300 transition-colors ml-2"
+                        key={tab.id}
+                        onClick={() => setActiveTab(tab.id)}
+                        className={cn("relative pb-3 text-sm font-medium transition-colors")}
+                        style={{ color: activeTab === tab.id ? '#1d1b1a' : '#999694' }}
                       >
-                        ← Back to original
+                        {tab.label}
+                        {activeTab === tab.id && <motion.div layoutId="tab-underline" className="absolute bottom-0 left-0 right-0 h-[2px]" style={{ backgroundColor: '#1d1b1a' }} transition={{ type: "spring", stiffness: 500, damping: 30 }} />}
                       </button>
-                    )}
+                    ))}
                   </div>
-                </div>
-
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => setShowDocument(!showDocument)}
-                    className="h-7 px-2.5 text-xs text-muted-foreground hover:text-foreground border border-border hover:border-muted-foreground/30 flex items-center gap-1.5 transition-colors"
-                  >
-                    <FileText className="w-3 h-3" />
-                    {showDocument ? "Hide" : "Show"} PDF
-                  </button>
-                  <button
-                    onClick={handleDownloadReport}
-                    disabled={downloading}
-                    className="h-7 px-2.5 text-xs text-muted-foreground hover:text-foreground border border-border hover:border-muted-foreground/30 flex items-center gap-1.5 transition-colors disabled:opacity-50"
-                  >
-                    {downloading ? (
-                      <Loader2 className="w-3 h-3 animate-spin" />
-                    ) : (
-                      <Download className="w-3 h-3" />
-                    )}
-                    Download Report
-                  </button>
-                  
-                  {/* Upload New Version */}
-                  <input
-                    ref={versionInputRef}
-                    type="file"
-                    accept=".pdf,.doc,.docx,.txt"
-                    className="hidden"
-                    onChange={(e) => {
-                      console.log("File input onChange triggered", e.target.files);
-                      const file = e.target.files?.[0];
-                      if (file) {
-                        console.log("Uploading file:", file.name);
-                        uploadNewVersion(file);
-                      }
-                    }}
-                  />
-                  <button
-                    onClick={() => {
-                      console.log("Upload button clicked, ref:", versionInputRef.current);
-                      versionInputRef.current?.click();
-                    }}
-                    disabled={uploadingVersion}
-                    className="h-7 w-7 flex items-center justify-center border border-border hover:border-muted-foreground/30 transition-colors disabled:opacity-50"
-                  >
-                    {uploadingVersion ? (
-                      <Loader2 className="w-3 h-3 text-muted-foreground/60 animate-spin" />
-                    ) : (
-                      <Upload className="w-3 h-3 text-muted-foreground" />
-                    )}
-                  </button>
-
-                  <button 
-                    onClick={toggleStar}
-                    className="h-7 w-7 flex items-center justify-center border border-border hover:border-muted-foreground/30 transition-colors"
-                  >
-                    {contract.is_starred ? (
-                      <Star className="w-3 h-3 text-yellow-400 fill-yellow-400" />
-                    ) : (
-                      <StarOff className="w-3 h-3 text-muted-foreground" />
-                    )}
-                  </button>
-                  <button
-                    onClick={() => setShowDeleteModal(true)}
-                    className="h-7 w-7 flex items-center justify-center border border-border hover:border-red-400/30 transition-colors"
-                  >
-                    <Trash2 className="w-3 h-3 text-muted-foreground hover:text-red-400" />
-                  </button>
                 </div>
               </div>
 
-              {/* Tabbed Content - Midday style */}
-              <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-                <div className="flex gap-6 border-b border-border">
-                  {[
-                    { id: "overview", label: "Overview" },
-                    { id: "terms", label: "Key Terms" },
-                    { id: "financial", label: "Finances" },
-                    { id: "advice", label: "Advice" },
-                    { id: "versions", label: "Versions" },
-                    { id: "dates", label: "Dates" },
-                  ].map((tab) => (
-                    <button
-                      key={tab.id}
-                      onClick={() => setActiveTab(tab.id)}
-                      className={cn(
-                        "relative pb-3 text-sm transition-colors",
-                        activeTab === tab.id ? "text-foreground" : "text-muted-foreground/60 hover:text-muted-foreground"
-                      )}
-                    >
-                      {tab.label}
-                      {activeTab === tab.id && (
-                        <motion.div
-                          layoutId="tab-underline"
-                          className="absolute bottom-0 left-0 right-0 h-[2px] bg-white"
-                          transition={{ type: "spring", stiffness: 500, damping: 30 }}
-                        />
-                      )}
-                    </button>
-                  ))}
-                </div>
-
-                {/* Legacy Version Warning */}
-                {selectedVersion && !versionHasFullAnalysis && (
-                  <div className="mb-4 p-3 border border-amber-500/30 bg-amber-500/5">
-                    <div className="flex items-start gap-2">
-                      <AlertTriangle className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
-                      <div>
-                        <p className="text-xs text-amber-400 font-medium">Limited Analysis Available</p>
-                        <p className="text-[10px] text-muted-foreground mt-1">
-                          This version was analyzed before full version analysis was available. 
-                          Only change tracking is shown. Upload a new version to get full analysis.
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* Overview Tab - Midday style */}
-                <TabsContent value="overview" className="space-y-6">
-                  {/* Summary */}
-                  <div className="border border-border p-4">
+              {/* Tab Content */}
+              <div className="flex-1 overflow-y-auto px-8 pt-6 pb-8">
+                {/* Overview Tab */}
+                <TabsContent value="overview" className="mt-0 space-y-4">
+                  {/* Summary Section */}
+                  <div className="rounded-2xl p-4" style={{ backgroundColor: '#f3f1f0' }}>
                     <div className="flex items-center gap-2 mb-3">
-                      <span className="text-[10px] text-muted-foreground/60 uppercase tracking-wider">Summary</span>
-                      <div className="h-px flex-1 bg-border" />
+                      <span className="w-3 h-3 rounded-sm" style={{ backgroundColor: '#797875' }} />
+                      <span className="text-xs font-semibold uppercase tracking-wide" style={{ color: '#797875' }}>Summary</span>
                     </div>
-                    <p className="text-sm text-foreground leading-relaxed">{analysis.summary}</p>
-                    
-                    {/* Quick Stats Row */}
-                    <div className="flex flex-wrap items-center gap-4 mt-4 pt-4 border-t border-border">
-                      {analysis.parties?.artist && (
-                        <div className="text-xs text-muted-foreground/60">
-                          <span className="text-muted-foreground">{analysis.parties.artist}</span>
-                        </div>
-                      )}
-                      {analysis.parties?.label && (
-                        <div className="text-xs text-muted-foreground/60">
-                          <span className="text-muted-foreground">{analysis.parties.label}</span>
-                        </div>
-                      )}
-                      {analysis.contractType && (
-                        <div className="text-xs">
-                          <span className="text-muted-foreground">{analysis.contractType}</span>
-                        </div>
-                      )}
+                    <div className="rounded-xl p-4 shadow-sm" style={{ backgroundColor: '#ffffff' }}>
+                      <p className="text-sm font-medium leading-[1.8]" style={{ color: '#9a9895' }}>
+                        This is a {analysis.contractType || "music contract"}
+                        {analysis.parties?.artist && (
+                          <>
+                            {" "}between{" "}
+                            <span className="font-semibold underline decoration-dotted underline-offset-4" style={{ color: '#1d1b1a' }}>{analysis.parties.artist}</span>
+                          </>
+                        )}
+                        {analysis.parties?.label && (
+                          <>
+                            {" "}and{" "}
+                            <span className="font-semibold underline decoration-dotted underline-offset-4" style={{ color: '#1d1b1a' }}>{analysis.parties.label}</span>
+                          </>
+                        )}
+                        . {analysis.summary}
+                        {analysis.financialTerms?.royaltyRate && (
+                          <>
+                            {" "}The royalty rate is{" "}
+                            <span className="font-semibold underline decoration-dotted underline-offset-4" style={{ color: '#1d1b1a' }}>{analysis.financialTerms.royaltyRate}</span>
+                          </>
+                        )}
+                        {analysis.termLength && (
+                          <>
+                            {" "}with a term of{" "}
+                            <span className="font-semibold underline decoration-dotted underline-offset-4" style={{ color: '#1d1b1a' }}>{analysis.termLength}</span>
+                          </>
+                        )}
+                        .
+                      </p>
                     </div>
                   </div>
-                  
-                  {/* Financial Terms - Card style like midday */}
+
+                  {/* Financials Section */}
                   {analysis.financialTerms && (
-                    <div>
-                      <div className="flex items-center gap-2 mb-4">
-                        <span className="text-[10px] text-muted-foreground/60 uppercase tracking-wider">Financial Terms</span>
-                        <div className="h-px flex-1 bg-border" />
+                    <div className="rounded-2xl p-4" style={{ backgroundColor: '#f3f1f0' }}>
+                      <div className="flex items-center gap-2 mb-3">
+                        <span className="w-3 h-3 rounded-sm" style={{ backgroundColor: '#797875' }} />
+                        <span className="text-xs font-semibold uppercase tracking-wide" style={{ color: '#797875' }}>Key Financials</span>
                       </div>
                       <div className="grid grid-cols-3 gap-3">
-                        {analysis.financialTerms.royaltyRate && (
-                          <div className="border border-border p-3">
-                            <div className="flex items-center gap-2 mb-1">
-                              <TrendingUp className="w-3 h-3 text-muted-foreground/60" />
-                              <span className="text-[10px] text-foreground">Royalty</span>
+                        {analysis.financialTerms?.royaltyRate && (
+                          <div className="rounded-xl overflow-hidden shadow-sm" style={{ backgroundColor: '#ffffff' }}>
+                            <div className="px-4 py-2" style={{ backgroundColor: '#f7f6f5', borderBottom: '1px solid #f3f1f0' }}>
+                              <p className="text-[10px] font-medium uppercase tracking-wide" style={{ color: '#9a9895' }}>Royalty</p>
                             </div>
-                            <p className="text-[10px] text-muted-foreground/60 mb-3">Your share of net sums</p>
-                            <p className="text-sm text-foreground">{analysis.financialTerms.royaltyRate}</p>
+                            <div className="px-4 py-3">
+                              <p className="text-sm font-semibold" style={{ color: '#9a9895' }}>{analysis.financialTerms.royaltyRate}</p>
+                            </div>
                           </div>
                         )}
                         {analysis.termLength && (
-                          <div className="border border-border p-3">
-                            <div className="flex items-center gap-2 mb-1">
-                              <HugeiconsIcon icon={Calendar03Icon} size={12} className="text-muted-foreground/60" />
-                              <span className="text-[10px] text-foreground">Term</span>
+                          <div className="rounded-xl overflow-hidden shadow-sm" style={{ backgroundColor: '#ffffff' }}>
+                            <div className="px-4 py-2" style={{ backgroundColor: '#f7f6f5', borderBottom: '1px solid #f3f1f0' }}>
+                              <p className="text-[10px] font-medium uppercase tracking-wide" style={{ color: '#9a9895' }}>Term</p>
                             </div>
-                            <p className="text-[10px] text-muted-foreground/60 mb-3">Contract duration</p>
-                            <p className="text-sm text-foreground">{analysis.termLength}</p>
+                            <div className="px-4 py-3">
+                              <p className="text-sm font-semibold" style={{ color: '#9a9895' }}>{analysis.termLength}</p>
+                            </div>
                           </div>
                         )}
-                        {analysis.financialTerms.advanceAmount && (
-                          <div className="border border-border p-3">
-                            <div className="flex items-center gap-2 mb-1">
-                              <DollarSign className="w-3 h-3 text-muted-foreground/60" />
-                              <span className="text-[10px] text-foreground">Advance</span>
+                        {analysis.financialTerms?.advanceAmount && (
+                          <div className="rounded-xl overflow-hidden shadow-sm" style={{ backgroundColor: '#ffffff' }}>
+                            <div className="px-4 py-2" style={{ backgroundColor: '#f7f6f5', borderBottom: '1px solid #f3f1f0' }}>
+                              <p className="text-[10px] font-medium uppercase tracking-wide" style={{ color: '#9a9895' }}>Advance</p>
                             </div>
-                            <p className="text-[10px] text-muted-foreground/60 mb-3">Upfront payment</p>
-                            <p className="text-sm text-foreground">{analysis.financialTerms.advanceAmount}</p>
-                          </div>
-                        )}
-                        {analysis.financialTerms.paymentSchedule && (
-                          <div className="border border-border p-3">
-                            <div className="flex items-center gap-2 mb-1">
-                              <HugeiconsIcon icon={Invoice03Icon} size={12} className="text-muted-foreground/60" />
-                              <span className="text-[10px] text-foreground">Payment</span>
+                            <div className="px-4 py-3">
+                              <p className="text-sm font-semibold" style={{ color: '#9a9895' }}>{analysis.financialTerms.advanceAmount}</p>
                             </div>
-                            <p className="text-[10px] text-muted-foreground/60 mb-3">Payment schedule</p>
-                            <p className="text-sm text-foreground">{analysis.financialTerms.paymentSchedule}</p>
                           </div>
                         )}
                       </div>
                     </div>
                   )}
 
-                  {/* Quick Concerns Preview */}
-                  {analysis.potentialConcerns && analysis.potentialConcerns.length > 0 && (() => {
-                    // Determine color based on overall risk assessment
-                    const riskLevel = analysis.overallRiskAssessment || 'medium';
-                    const colorScheme = {
-                      high: { border: 'border-red-500/20', bg: 'bg-red-500/5', text: 'text-red-400' },
-                      medium: { border: 'border-amber-500/20', bg: 'bg-amber-500/5', text: 'text-amber-400' },
-                      low: { border: 'border-green-500/20', bg: 'bg-green-500/5', text: 'text-green-400' },
-                    }[riskLevel] || { border: 'border-amber-500/20', bg: 'bg-amber-500/5', text: 'text-amber-400' };
-
-                    return (
-                    <div className="grid md:grid-cols-2 gap-2">
-                      <div className={`border ${colorScheme.border} ${colorScheme.bg} p-3`}>
-                        <div className="flex items-center gap-2 mb-2">
-                          <AlertTriangle className={`w-3 h-3 ${colorScheme.text}`} />
-                          <span className={`text-xs ${colorScheme.text}`}>{analysis.potentialConcerns.length} Concerns Found</span>
-                        </div>
-                        <p className="text-xs text-muted-foreground/80">{analysis.potentialConcerns[0]}</p>
+                  {/* Concerns List */}
+                  {analysis.potentialConcerns && analysis.potentialConcerns.length > 0 && (
+                    <div className="rounded-2xl overflow-hidden" style={{ backgroundColor: '#f3f1f0' }}>
+                      <div className="px-4 py-3" style={{ borderBottom: '1px solid #ffffff' }}>
+                        <p className="text-sm" style={{ color: '#797875' }}>Review these potential concerns in your contract.</p>
                       </div>
+                      {analysis.potentialConcerns.slice(0, 4).map((concern, i) => {
+                        const explanation = analysis.concernExplanations?.[i];
+                        return (
+                          <div
+                            key={i}
+                            className="flex items-center gap-4 px-4 py-4 cursor-pointer hover:bg-[#eae8e7] transition-colors"
+                            style={{ borderBottom: i < Math.min(analysis.potentialConcerns!.length, 4) - 1 ? '1px solid #ffffff' : 'none' }}
+                            onClick={() => { const snippet = analysis.concernSnippets?.[i]; if (snippet) handleClauseClick(snippet); }}
+                          >
+                            <div className="w-8 h-8 rounded-full flex items-center justify-center shrink-0" style={{ backgroundColor: '#e5e3e1' }}>
+                              <AlertTriangle className="w-4 h-4" style={{ color: '#797875' }} />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-xs mb-0.5" style={{ color: '#9a9895' }}>Concern {i + 1}</p>
+                              <p className="text-sm font-medium" style={{ color: '#1d1b1a' }}>{concern}</p>
+                              {explanation && (
+                                <p className="text-xs mt-1 line-clamp-2" style={{ color: '#9a9895' }}>{explanation}</p>
+                              )}
+                            </div>
+                            <ChevronRight className="w-4 h-4 shrink-0" style={{ color: '#9a9895' }} />
+                          </div>
+                        );
+                      })}
                     </div>
-                    );
-                  })()}
+                  )}
                 </TabsContent>
 
-                {/* Key Terms Tab - Expandable Cards */}
-                <TabsContent value="terms" className="space-y-4">
-                  {/* Concerns Section */}
-                  {analysis.potentialConcerns && analysis.potentialConcerns.length > 0 && (() => {
-                    // Determine highest risk level among matched concerns
-                    const matchedRiskLevels = analysis.potentialConcerns.map((concern) => {
-                      const matchingTerm = analysis.keyTerms?.find(term => {
-                        const concernLower = concern.toLowerCase();
-                        const titleLower = term.title.toLowerCase();
-                        const contentLower = term.content.toLowerCase();
-                        const keywords = concernLower.split(/\s+/).filter(w => w.length > 4);
-                        return keywords.some(kw => titleLower.includes(kw) || contentLower.includes(kw));
-                      });
-                      return matchingTerm?.riskLevel || 'medium';
-                    });
-
-                    const hasHigh = matchedRiskLevels.includes('high');
-                    const hasMedium = matchedRiskLevels.includes('medium');
-                    const highestRisk = hasHigh ? 'high' : hasMedium ? 'medium' : 'low';
-
-                    const colorScheme = {
-                      high: { border: 'border-red-500/30', bg: 'bg-red-500/5', text: 'text-red-400', dot: 'bg-red-400/60' },
-                      medium: { border: 'border-amber-500/30', bg: 'bg-amber-500/5', text: 'text-amber-400', dot: 'bg-amber-400/60' },
-                      low: { border: 'border-green-500/30', bg: 'bg-green-500/5', text: 'text-green-400', dot: 'bg-green-400/60' },
-                    }[highestRisk];
-
-                    return (
-                    <div className={`border ${colorScheme.border} ${colorScheme.bg} p-4`}>
-                      <div className="flex items-center gap-2 mb-3">
-                        <HugeiconsIcon icon={Alert02Icon} size={14} className={colorScheme.text} />
-                        <span className={`text-xs font-medium ${colorScheme.text} leading-none`}>{analysis.potentialConcerns.length} Concerns to Address</span>
-                      </div>
-                      <ul className="space-y-2">
-                        {analysis.potentialConcerns.map((concern, i) => {
-                          // Find matching key term by checking if concern keywords appear in term title/content
-                          const matchingTermIndex = analysis.keyTerms?.findIndex(term => {
-                            const concernLower = concern.toLowerCase();
-                            const titleLower = term.title.toLowerCase();
-                            const contentLower = term.content.toLowerCase();
-                            // Check if key words from concern appear in the term
-                            const keywords = concernLower.split(/\s+/).filter(w => w.length > 4);
-                            return keywords.some(kw => titleLower.includes(kw) || contentLower.includes(kw));
-                          });
-                          const snippet = analysis.concernSnippets?.[i];
-                          const matchingTerm = matchingTermIndex !== undefined && matchingTermIndex >= 0
-                            ? analysis.keyTerms?.[matchingTermIndex]
-                            : null;
-
-                          return (
-                            <li
-                              key={i}
-                              className="flex items-center gap-2 text-xs text-foreground/90 cursor-pointer hover:text-foreground transition-colors group"
-                              onClick={() => {
-                                // Highlight in PDF - use snippet if available, otherwise matching term's originalText
-                                const textToHighlight = snippet || matchingTerm?.originalText;
-                                if (textToHighlight) {
-                                  handleClauseClick(textToHighlight);
-                                }
-                                // Expand matching key term if found
-                                if (matchingTermIndex !== undefined && matchingTermIndex >= 0) {
-                                  setExpandedTerm(matchingTermIndex);
-                                }
-                              }}
-                            >
-                              <span className={`w-1 h-1 rounded-full ${colorScheme.dot} shrink-0 group-hover:bg-primary`} />
-                              <span className="leading-tight">{concern}</span>
-                              <Eye className="w-3 h-3 text-muted-foreground/60 group-hover:text-primary ml-auto shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" />
-                            </li>
-                          );
-                        })}
-                      </ul>
-                    </div>
-                    );
-                  })()}
-
+                {/* Key Terms Tab */}
+                <TabsContent value="terms" className="mt-0 space-y-6">
+                  {/* Terms List */}
                   {(!analysis.keyTerms || analysis.keyTerms.length === 0) && (
-                    <div className="border border-border p-8 text-center">
-                      <FileText className="w-6 h-6 text-muted-foreground/60 mx-auto mb-2" />
-                      <p className="text-xs text-muted-foreground">
-                        {selectedVersion && !versionHasFullAnalysis
-                          ? "Full key terms analysis not available for this version"
-                          : "No key terms extracted"}
-                      </p>
+                    <div className="py-12 text-center">
+                      <FileText className="w-8 h-8 mx-auto mb-3" style={{ color: '#999694' }} />
+                      <p className="text-sm font-medium" style={{ color: '#9a9895' }}>{selectedVersion && !versionHasFullAnalysis ? "Full analysis not available for this version" : "No key terms extracted"}</p>
                     </div>
                   )}
-                  {analysis.keyTerms?.map((term, i) => {
-                    const isExpanded = expandedTerm === i;
-                    return (
-                      <div 
-                        key={i}
-                        className={cn(
-                          "border border-border transition-all",
-                          isExpanded && "bg-card border-muted-foreground/30"
-                        )}
-                      >
-                        <button
-                          onClick={() => setExpandedTerm(isExpanded ? null : i)}
-                          className="w-full p-3 flex items-center gap-3 text-left hover:bg-muted transition-colors"
-                        >
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2 mb-1">
-                              <span className="text-xs text-foreground font-medium">{term.title}</span>
-                              <span className={cn("text-[10px] px-1.5 py-0.5 border capitalize", getRiskColor(term.riskLevel))}>
-                                {term.riskLevel}
-                              </span>
-                            </div>
-                            <p className="text-xs text-foreground/90 line-clamp-1">{term.content}</p>
-                          </div>
-                          <div className={cn(
-                            "text-muted-foreground/60 transition-transform shrink-0",
-                            isExpanded && "rotate-180"
-                          )}>
-                            <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                              <path d="M2.5 4.5L6 8L9.5 4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                            </svg>
-                          </div>
-                        </button>
-                        <motion.div
-                          initial={false}
-                          animate={{ height: isExpanded ? "auto" : 0, opacity: isExpanded ? 1 : 0 }}
-                          transition={{ duration: 0.2, ease: "easeOut" }}
-                          className="overflow-hidden"
-                        >
-                          <div className="border-t border-border">
-                            <div className="p-3 space-y-4">
-                              {/* Full Term Value */}
-                              <div>
-                                <p className="text-[10px] text-muted-foreground/60 uppercase tracking-wider mb-1">What This Says</p>
-                                <p className="text-xs text-foreground">{term.content}</p>
-                              </div>
 
-                              {/* Plain English Explanation */}
-                              <div>
-                                <p className="text-[10px] text-muted-foreground/60 uppercase tracking-wider mb-1">In Plain English</p>
-                                <p className="text-xs text-foreground">{term.explanation}</p>
-                              </div>
-
-                              {/* Risk Assessment */}
-                              <div>
-                                <p className="text-[10px] text-muted-foreground/60 uppercase tracking-wider mb-1">Risk Assessment</p>
-                                <div className="flex items-start gap-2">
-                                  <span className={cn("text-[10px] px-1.5 py-0.5 border capitalize shrink-0", getRiskColor(term.riskLevel))}>
-                                    {term.riskLevel}
-                                  </span>
-                                  <p className="text-xs text-foreground">
-                                    {term.riskLevel === "high" && "This term significantly favors the other party and could limit your rights or earnings."}
-                                    {term.riskLevel === "medium" && "This term has some elements that could be improved but is within industry norms."}
-                                    {term.riskLevel === "low" && "This term is favorable or standard for agreements of this type."}
-                                  </p>
-                                </div>
-                              </div>
-
-                              {/* Questions to Ask */}
-                              <div>
-                                <p className="text-[10px] text-muted-foreground/60 uppercase tracking-wider mb-1">Questions to Ask Your Lawyer</p>
-                                <ul className="text-xs text-foreground/90 space-y-2">
-                                  {(term.actionItems || getTermChecklist(term.title)).map((item, idx) => (
-                                    <li key={idx} className="flex items-center gap-2">
-                                      <HugeiconsIcon icon={HelpSquareIcon} size={12} className="text-primary shrink-0" />
-                                      <span className="leading-none">{item}</span>
-                                    </li>
-                                  ))}
-                                </ul>
-                              </div>
-                              
-                              {/* Actions */}
-                              <div className="flex items-center gap-3 pt-2 border-t border-border">
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleClauseClick(term.originalText);
-                                  }}
-                                  className="text-[10px] text-muted-foreground/60 hover:text-foreground flex items-center gap-1 transition-colors"
-                                >
-                                  <Eye className="w-2.5 h-2.5" /> View in contract
-                                </button>
-                              </div>
-                            </div>
-                          </div>
-                        </motion.div>
+                  {analysis.keyTerms && analysis.keyTerms.length > 0 && (
+                    <div className="rounded-2xl overflow-hidden" style={{ backgroundColor: '#f3f1f0' }}>
+                      <div className="px-4 py-3" style={{ borderBottom: '1px solid #ffffff' }}>
+                        <p className="text-sm" style={{ color: '#797875' }}>Review the key terms identified in your contract.</p>
                       </div>
-                    );
-                  })}
-                </TabsContent>
-
-                {/* Financial Calculator Tab */}
-                <TabsContent value="financial">
-                  <FinancialCalculator 
-                    contractData={{
-                      royaltyRate: analysis.financialTerms?.royaltyRate,
-                      advanceAmount: analysis.financialTerms?.advanceAmount,
-                      termLength: analysis.termLength,
-                    }}
-                  />
-                </TabsContent>
-
-                {/* Advice Tab - Midday style */}
-                <TabsContent value="advice" className="space-y-4">
-                  {/* Recommendations Section */}
-                  {analysis.recommendations && analysis.recommendations.length > 0 && (
-                    <div>
-                      <p className="text-[10px] text-muted-foreground/60 uppercase tracking-wider mb-2 px-1">Recommendations</p>
-                    </div>
-                  )}
-                  {(!analysis.recommendations || analysis.recommendations.length === 0) && (
-                    <div className="border border-border p-8 text-center">
-                      <CheckCircle2 className="w-6 h-6 text-muted-foreground/60 mx-auto mb-2" />
-                      <p className="text-xs text-muted-foreground">
-                        {selectedVersion && !versionHasFullAnalysis
-                          ? "Full recommendations not available for this version"
-                          : "No recommendations available"}
-                      </p>
-                    </div>
-                  )}
-                  {analysis.recommendations?.map((rec, i) => {
-                    const isExpanded = expandedAdvice === i;
-                    // Handle both legacy string format and new object format
-                    const isStructured = typeof rec === 'object' && rec !== null;
-                    const advice = isStructured ? rec.advice : rec;
-                    const rationale = isStructured ? rec.rationale : "Following this recommendation helps protect your rights and ensures you maintain leverage in negotiations. Industry standards support this approach.";
-                    const howToImplement = isStructured ? rec.howToImplement : "Bring this up during your next negotiation session. Frame it as a standard industry practice.";
-                    const priority = isStructured ? rec.priority : "medium";
-                    
-                    const priorityColor = priority === "high" ? "text-red-400" : priority === "medium" ? "text-amber-500" : "text-green-400";
-                    const priorityLabel = priority === "high" ? "Address immediately" : priority === "medium" ? "Address before signing" : "Nice to have";
-                    
-                    return (
-                      <div 
-                        key={i} 
-                        className={cn(
-                          "border border-border transition-all",
-                          isExpanded && "bg-card border-muted-foreground/30"
-                        )}
-                      >
-                        <button
-                          onClick={() => setExpandedAdvice(isExpanded ? null : i)}
-                          className="w-full p-3 flex items-start gap-2.5 text-left hover:bg-muted transition-colors"
-                        >
-                          <CheckCircle2 className="w-3.5 h-3.5 text-muted-foreground shrink-0 mt-0.5" />
-                          <div className="flex-1 min-w-0">
-                            <p className="text-xs text-muted-foreground/80">{advice}</p>
-                            {isStructured && (
-                              <span className={cn("text-[10px] mt-1 inline-block", priorityColor)}>
-                                {priority.charAt(0).toUpperCase() + priority.slice(1)} priority
-                              </span>
-                            )}
-                          </div>
-                          <div className={cn(
-                            "text-muted-foreground/60 transition-transform shrink-0",
-                            isExpanded && "rotate-180"
-                          )}>
-                            <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                              <path d="M2.5 4.5L6 8L9.5 4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                            </svg>
-                          </div>
-                        </button>
-                        <motion.div
-                          initial={false}
-                          animate={{ height: isExpanded ? "auto" : 0, opacity: isExpanded ? 1 : 0 }}
-                          transition={{ duration: 0.2, ease: "easeOut" }}
-                          className="overflow-hidden"
-                        >
-                          <div className="border-t border-border">
-                            <div className="p-3 space-y-3">
-                              <div>
-                                <p className="text-[10px] text-muted-foreground/60 uppercase tracking-wider mb-1">Rationale</p>
-                                <p className="text-xs text-muted-foreground">{rationale}</p>
+                      {analysis.keyTerms?.map((term, i) => {
+                        const isExpanded = expandedTerm === i;
+                        return (
+                          <div key={i}>
+                            <div
+                              className="flex items-center gap-4 px-4 py-4 cursor-pointer hover:bg-[#eae8e7] transition-colors"
+                              style={{
+                                borderBottom: i < analysis.keyTerms!.length - 1 || isExpanded ? '1px solid #ffffff' : 'none',
+                                backgroundColor: isExpanded ? '#eae8e7' : undefined
+                              }}
+                              onClick={() => setExpandedTerm(isExpanded ? null : i)}
+                            >
+                              <div className="w-8 h-8 rounded-full flex items-center justify-center shrink-0" style={{ backgroundColor: '#e5e3e1' }}>
+                                <FileText className="w-4 h-4" style={{ color: '#797875' }} />
                               </div>
-                              <div>
-                                <p className="text-[10px] text-muted-foreground/60 uppercase tracking-wider mb-1">How to Implement</p>
-                                <p className="text-xs text-muted-foreground">{howToImplement}</p>
-                              </div>
-                              <div>
-                                <p className="text-[10px] text-muted-foreground/60 uppercase tracking-wider mb-1">Priority</p>
-                                <div className="flex items-center gap-2">
-                                  <span className={cn("text-xs", priorityColor)}>{priority.charAt(0).toUpperCase() + priority.slice(1)}</span>
-                                  <span className="text-[10px] text-muted-foreground/60">{priorityLabel}</span>
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                        </motion.div>
-                      </div>
-                    );
-                  })}
-                </TabsContent>
-
-                {/* Version History Tab - Midday style */}
-                <TabsContent value="versions" className="space-y-2">
-                  <div className="flex items-center justify-between mb-3">
-                    <h4 className="text-xs font-medium text-foreground">Version History</h4>
-                    <button
-                      onClick={() => versionInputRef.current?.click()}
-                      disabled={uploadingVersion}
-                      className="h-7 px-2.5 text-xs text-muted-foreground hover:text-foreground border border-border hover:border-muted-foreground/30 flex items-center gap-1.5 transition-colors disabled:opacity-50"
-                    >
-                      {uploadingVersion ? (
-                        <Loader2 className="w-3 h-3 animate-spin" />
-                      ) : (
-                        <Upload className="w-3 h-3" />
-                      )}
-                      Upload New Version
-                    </button>
-                  </div>
-                  
-                  {loadingVersions ? (
-                    <div className="flex items-center justify-center py-8">
-                      <Loader2 className="w-4 h-4 animate-spin text-muted-foreground/60" />
-                    </div>
-                  ) : versions.length === 0 ? (
-                    <div className="text-center py-10 border border-border">
-                      <History className="w-6 h-6 mx-auto text-muted-foreground/60 mb-2" />
-                      <p className="text-xs text-muted-foreground mb-1">No version history yet</p>
-                      <p className="text-[10px] text-muted-foreground/60">Upload a new version to start tracking changes</p>
-                    </div>
-                  ) : (
-                    <div className="relative">
-                      {/* Timeline line */}
-                      <div className="absolute left-3 top-0 bottom-0 w-px bg-border" />
-                      
-                      {versions.map((version, i) => (
-                        <div key={version.id} className="relative pl-8 pb-4">
-                          {/* Timeline dot */}
-                          <div className={cn(
-                            "absolute left-1.5 w-4 h-4 flex items-center justify-center",
-                            i === 0 ? "bg-white text-black" : "bg-muted border border-border text-muted-foreground"
-                          )}>
-                            <span className="text-[8px] font-bold">{version.version_number + 1}</span>
-                          </div>
-
-                          <div className={cn(
-                            "border border-border p-3",
-                            i === 0 && "border-muted-foreground/30"
-                          )}>
-                            <div className="flex items-center justify-between mb-2">
-                              <div className="flex items-center gap-2">
-                                <span className="text-[10px] text-muted-foreground px-1.5 py-0.5 border border-border">
-                                  Version {version.version_number + 1}
-                                </span>
-                                {selectedVersionId === version.id && (
-                                  <span className="text-[10px] text-primary px-1.5 py-0.5 border border-primary/30">
-                                    Viewing
-                                  </span>
+                              <div className="flex-1 min-w-0">
+                                <p className="text-xs mb-0.5 capitalize" style={{ color: '#9a9895' }}>{term.riskLevel} Risk</p>
+                                <p className="text-sm font-medium" style={{ color: '#1d1b1a' }}>{term.title}</p>
+                                {!isExpanded && (
+                                  <p className="text-xs mt-1 line-clamp-2" style={{ color: '#9a9895' }}>{term.explanation}</p>
                                 )}
                               </div>
-                              <div className="flex items-center gap-2">
-                                <span className="text-[10px] text-muted-foreground/60">
-                                  {new Date(version.created_at).toLocaleDateString()}
-                                </span>
-                                <button
-                                  onClick={() => handleVersionSelect(version.id)}
-                                  className="text-[10px] text-muted-foreground hover:text-foreground transition-colors"
-                                >
-                                  {selectedVersionId === version.id ? "Selected" : "View"}
-                                </button>
-                                <button
-                                  onClick={() => handleVersionDeleteClick(version)}
-                                  className="text-muted-foreground/60 hover:text-red-400 transition-colors"
-                                >
-                                  <HugeiconsIcon icon={Delete03Icon} size={14} />
-                                </button>
-                              </div>
+                              <ChevronRight className={cn("w-4 h-4 shrink-0 transition-transform", isExpanded && "rotate-90")} style={{ color: '#9a9895' }} />
                             </div>
-
-                            <p className="text-xs text-muted-foreground/80 mb-2">{version.changes_summary}</p>
-                            
-                            {version.analysis?.improvements && version.analysis.improvements.length > 0 && (
-                              <div className="space-y-1.5 mb-2">
-                                {version.analysis.improvements.slice(0, 2).map((imp, j) => (
-                                  <div key={j} className="flex items-start gap-2 text-xs text-green-400">
-                                    <ArrowUpRight className="w-3 h-3 shrink-0 mt-0.5" />
-                                    <span>{imp}</span>
+                            <motion.div initial={false} animate={{ height: isExpanded ? "auto" : 0, opacity: isExpanded ? 1 : 0 }} transition={{ duration: 0.2 }} className="overflow-hidden">
+                              <div className="px-4 pt-3 pb-4 space-y-3" style={{ backgroundColor: '#f3f1f0' }}>
+                                <div>
+                                  <p className="text-[10px] font-medium uppercase tracking-wide mb-1" style={{ color: '#9a9895' }}>Summary</p>
+                                  <p className="text-sm leading-relaxed" style={{ color: '#1d1b1a' }}>{term.content}</p>
+                                </div>
+                                <div>
+                                  <p className="text-[10px] font-medium uppercase tracking-wide mb-1" style={{ color: '#9a9895' }}>In Plain English</p>
+                                  <p className="text-sm leading-relaxed" style={{ color: '#1d1b1a' }}>{term.explanation}</p>
+                                </div>
+                                <div>
+                                  <p className="text-[10px] font-medium uppercase tracking-wide mb-2" style={{ color: '#9a9895' }}>Questions to Ask</p>
+                                  <div className="space-y-1.5">
+                                    {(term.actionItems || getTermChecklist(term.title)).map((item, idx) => (
+                                      <div key={idx} className="flex items-start gap-2 text-sm" style={{ color: '#1d1b1a' }}>
+                                        <span style={{ color: '#9a9895' }} className="shrink-0">•</span>
+                                        <span className="leading-relaxed">{item}</span>
+                                      </div>
+                                    ))}
                                   </div>
-                                ))}
+                                </div>
+                                <button
+                                  onClick={(e) => { e.stopPropagation(); handleClauseClick(term.originalText); }}
+                                  className="text-xs font-medium flex items-center gap-1.5 transition-colors hover:opacity-70"
+                                  style={{ color: '#797875' }}
+                                >
+                                  <Eye className="w-3 h-3" /> View in contract
+                                </button>
                               </div>
-                            )}
+                            </motion.div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </TabsContent>
 
-                            {version.analysis?.regressions && version.analysis.regressions.length > 0 && (
-                              <div className="space-y-1.5">
-                                {version.analysis.regressions.slice(0, 2).map((reg, j) => (
-                                  <div key={j} className="flex items-start gap-2 text-xs text-red-400">
-                                    <ArrowDownRight className="w-3 h-3 shrink-0 mt-0.5" />
-                                    <span>{reg}</span>
-                                  </div>
-                                ))}
+                {/* Financial Tab */}
+                <TabsContent value="financial" className="mt-0">
+                  <FinancialCalculator contractData={{ royaltyRate: analysis.financialTerms?.royaltyRate, advanceAmount: analysis.financialTerms?.advanceAmount, termLength: analysis.termLength }} />
+                </TabsContent>
+
+                {/* Advice Tab */}
+                <TabsContent value="advice" className="mt-0 space-y-6">
+                  {(!analysis.recommendations || analysis.recommendations.length === 0) && (
+                    <div className="py-12 text-center">
+                      <CheckCircle2 className="w-8 h-8 mx-auto mb-3" style={{ color: '#999694' }} />
+                      <p className="text-sm font-medium" style={{ color: '#9a9895' }}>{selectedVersion && !versionHasFullAnalysis ? "Full recommendations not available" : "No recommendations available"}</p>
+                    </div>
+                  )}
+
+                  {analysis.recommendations && analysis.recommendations.length > 0 && (
+                    <div className="space-y-3">
+                      {analysis.recommendations?.map((rec, i) => {
+                        const isExpanded = expandedAdvice === i;
+                        const isStructured = typeof rec === 'object' && rec !== null;
+                        const advice = isStructured ? rec.advice : rec;
+                        const rationale = isStructured ? rec.rationale : "Following this protects your rights and ensures leverage in negotiations.";
+                        const howToImplement = isStructured ? rec.howToImplement : "Bring this up during negotiation. Frame it as standard industry practice.";
+                        const priority = isStructured ? rec.priority : "medium";
+                        const priorityColor = priority === "high" ? "bg-red-500" : priority === "low" ? "bg-green-500" : "bg-amber-500";
+                        const priorityTextColor = priority === "high" ? "text-red-500" : priority === "low" ? "text-green-500" : "text-amber-500";
+                        return (
+                          <div key={i} className="rounded-2xl overflow-hidden" style={{ backgroundColor: '#f3f1f0' }}>
+                            <div
+                              onClick={() => setExpandedAdvice(isExpanded ? null : i)}
+                              className="flex items-center gap-3 px-4 py-3 cursor-pointer hover:bg-[#eae8e7] transition-colors"
+                              style={{ backgroundColor: isExpanded ? '#eae8e7' : undefined }}
+                            >
+                              <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center shrink-0", priorityColor)}>
+                                <CheckCircle2 className="w-4 h-4 text-white" />
                               </div>
-                            )}
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm font-medium" style={{ color: '#1d1b1a' }}>{advice}</p>
+                                <p className={cn("text-xs font-medium capitalize", priorityTextColor)}>{priority} priority</p>
+                              </div>
+                              <ChevronDown className={cn("w-4 h-4 transition-transform shrink-0", isExpanded && "rotate-180")} style={{ color: '#999694' }} />
+                            </div>
+                            <motion.div initial={false} animate={{ height: isExpanded ? "auto" : 0, opacity: isExpanded ? 1 : 0 }} transition={{ duration: 0.2 }} className="overflow-hidden">
+                              <div className="px-4 pt-4 pb-4 space-y-4">
+                                <div className="rounded-xl p-4" style={{ backgroundColor: '#ffffff' }}>
+                                  <p className="text-[10px] font-medium uppercase tracking-wide mb-1" style={{ color: '#9a9895' }}>Rationale</p>
+                                  <p className="text-sm leading-relaxed" style={{ color: '#1d1b1a' }}>{rationale}</p>
+                                </div>
+                                <div className="rounded-xl p-4" style={{ backgroundColor: '#ffffff' }}>
+                                  <p className="text-[10px] font-medium uppercase tracking-wide mb-1" style={{ color: '#9a9895' }}>How to Implement</p>
+                                  <p className="text-sm leading-relaxed" style={{ color: '#1d1b1a' }}>{howToImplement}</p>
+                                </div>
+                              </div>
+                            </motion.div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </TabsContent>
+
+                {/* Versions Tab */}
+                <TabsContent value="versions" className="mt-0 space-y-8">
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm font-medium" style={{ color: '#999694' }}>Version History</p>
+                    <button onClick={() => versionInputRef.current?.click()} disabled={uploadingVersion} className="text-sm font-medium flex items-center gap-1.5 transition-colors disabled:opacity-50 hover:opacity-70" style={{ color: '#999694' }}>
+                      {uploadingVersion ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Upload className="w-3.5 h-3.5" />} Upload New
+                    </button>
+                  </div>
+                  {loadingVersions ? (
+                    <div className="flex items-center justify-center py-12">
+                      <Loader2 className="w-5 h-5 animate-spin" style={{ color: '#999694' }} />
+                    </div>
+                  ) : versions.length === 0 ? (
+                    <div className="py-12 text-center">
+                      <History className="w-8 h-8 mx-auto mb-3" style={{ color: '#999694' }} />
+                      <p className="text-base font-medium" style={{ color: '#9a9895' }}>No version history yet</p>
+                      <p className="text-sm font-medium mt-1" style={{ color: '#999694' }}>Upload a new version to track changes</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-1">
+                      {versions.map((version, i) => (
+                        <div
+                          key={version.id}
+                          className={cn(
+                            "flex items-center justify-between py-3 border-l-2 pl-4 -ml-4 transition-all cursor-pointer group",
+                            selectedVersionId === version.id ? "border-primary bg-primary/5" : "border-transparent hover:bg-black/5"
+                          )}
+                          style={{ borderColor: selectedVersionId === version.id ? undefined : 'transparent' }}
+                          onClick={() => handleVersionSelect(version.id)}
+                        >
+                          <div className="flex items-center gap-3 flex-1 min-w-0">
+                            <span className="w-6 h-6 flex items-center justify-center text-xs font-semibold shrink-0" style={{ backgroundColor: i === 0 ? '#1d1b1a' : '#e5e5e5', color: i === 0 ? '#fcfcfc' : '#999694' }}>
+                              {version.version_number + 1}
+                            </span>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-base font-medium truncate" style={{ color: '#1d1b1a' }}>{version.changes_summary || `Version ${version.version_number + 1}`}</p>
+                              {version.analysis?.improvements?.[0] && (
+                                <p className="text-sm font-medium text-green-500 truncate mt-0.5">{version.analysis.improvements[0]}</p>
+                              )}
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-4 shrink-0">
+                            <span className="text-sm font-medium" style={{ color: '#999694' }}>{new Date(version.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric" })}</span>
+                            <button
+                              onClick={(e) => { e.stopPropagation(); handleVersionDeleteClick(version); }}
+                              className="opacity-0 group-hover:opacity-100 hover:text-red-400 transition-all"
+                              style={{ color: '#999694' }}
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
                           </div>
                         </div>
                       ))}
@@ -1478,34 +1029,26 @@ export default function ContractDetailPage() {
                   )}
                 </TabsContent>
 
-                {/* Key Dates Tab - Midday style */}
-                <TabsContent value="dates" className="space-y-2">
-                  <div className="flex items-center justify-between mb-3">
-                    <h4 className="text-xs font-medium text-foreground">Key Dates & Deadlines</h4>
+                {/* Dates Tab */}
+                <TabsContent value="dates" className="mt-0 space-y-8">
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm font-medium" style={{ color: '#999694' }}>Key Dates</p>
                     <Dialog open={showAddDate} onOpenChange={setShowAddDate}>
                       <DialogTrigger asChild>
-                        <button className="h-7 px-2.5 text-xs text-muted-foreground hover:text-foreground border border-border hover:border-muted-foreground/30 flex items-center gap-1.5 transition-colors">
-                          <Plus className="w-3 h-3" />
-                          Add Date
+                        <button className="text-sm font-medium flex items-center gap-1.5 transition-colors hover:opacity-70" style={{ color: '#999694' }}>
+                          <Plus className="w-3.5 h-3.5" /> Add Date
                         </button>
                       </DialogTrigger>
                       <DialogContent className="bg-card border-border">
                         <DialogHeader>
-                          <DialogTitle className="text-foreground text-sm">Add Key Date</DialogTitle>
-                          <DialogDescription className="text-muted-foreground text-xs">
-                            Track important deadlines for this contract
-                          </DialogDescription>
+                          <DialogTitle className="text-foreground text-base">Add Key Date</DialogTitle>
+                          <DialogDescription className="text-muted-foreground text-sm">Track important deadlines for this contract</DialogDescription>
                         </DialogHeader>
-                        <div className="space-y-3 py-3">
-                          <div className="space-y-1.5">
-                            <label className="text-xs font-medium text-muted-foreground">Type</label>
-                            <Select
-                              value={newDate.date_type}
-                              onValueChange={(v) => setNewDate({ ...newDate, date_type: v })}
-                            >
-                              <SelectTrigger className="bg-transparent border-border text-foreground text-xs h-8">
-                                <SelectValue placeholder="Select type" />
-                              </SelectTrigger>
+                        <div className="space-y-4 py-4">
+                          <div className="space-y-2">
+                            <label className="text-sm font-medium text-muted-foreground">Type</label>
+                            <Select value={newDate.date_type} onValueChange={(v) => setNewDate({ ...newDate, date_type: v })}>
+                              <SelectTrigger className="bg-transparent border-border text-foreground text-sm h-10"><SelectValue placeholder="Select type" /></SelectTrigger>
                               <SelectContent className="bg-card border-border">
                                 <SelectItem value="option_period">Option Period</SelectItem>
                                 <SelectItem value="termination_window">Termination Window</SelectItem>
@@ -1515,116 +1058,83 @@ export default function ContractDetailPage() {
                               </SelectContent>
                             </Select>
                           </div>
-                          <div className="space-y-1.5">
-                            <label className="text-xs font-medium text-muted-foreground">Date</label>
-                            <Input
-                              type="date"
-                              value={newDate.date}
-                              onChange={(e) => setNewDate({ ...newDate, date: e.target.value })}
-                              className="bg-transparent border-border text-foreground text-xs h-8"
-                            />
+                          <div className="space-y-2">
+                            <label className="text-sm font-medium text-muted-foreground">Date</label>
+                            <Input type="date" value={newDate.date} onChange={(e) => setNewDate({ ...newDate, date: e.target.value })} className="bg-transparent border-border text-foreground text-sm h-10" />
                           </div>
-                          <div className="space-y-1.5">
-                            <label className="text-xs font-medium text-muted-foreground">Description (optional)</label>
-                            <Input
-                              placeholder="e.g., Album option deadline"
-                              value={newDate.description}
-                              onChange={(e) => setNewDate({ ...newDate, description: e.target.value })}
-                              className="bg-transparent border-border text-foreground placeholder:text-muted-foreground/60 text-xs h-8"
-                            />
+                          <div className="space-y-2">
+                            <label className="text-sm font-medium text-muted-foreground">Description (optional)</label>
+                            <Input placeholder="e.g., Album option deadline" value={newDate.description} onChange={(e) => setNewDate({ ...newDate, description: e.target.value })} className="bg-transparent border-border text-foreground placeholder:text-muted-foreground/60 text-sm h-10" />
                           </div>
                         </div>
-                        <button 
-                          onClick={addDate} 
-                          className="w-full h-8 bg-white text-black hover:bg-white/90 text-xs font-medium transition-colors"
-                        >
-                          Add Date
-                        </button>
+                        <button onClick={addDate} className="w-full h-10 bg-foreground text-background hover:bg-foreground/90 text-sm font-medium transition-colors">Add Date</button>
                       </DialogContent>
                     </Dialog>
                   </div>
-
                   {loadingDates ? (
-                    <div className="flex items-center justify-center py-8">
-                      <Loader2 className="w-4 h-4 animate-spin text-muted-foreground/60" />
+                    <div className="flex items-center justify-center py-12">
+                      <Loader2 className="w-5 h-5 animate-spin" style={{ color: '#999694' }} />
                     </div>
                   ) : dates.length === 0 ? (
-                    <div className="text-center py-10 border border-border">
-                      <Calendar className="w-6 h-6 mx-auto text-muted-foreground/60 mb-2" />
-                      <p className="text-xs text-muted-foreground mb-1">No key dates tracked</p>
-                      <p className="text-[10px] text-muted-foreground/60">Add important deadlines to get reminders</p>
+                    <div className="py-12 text-center">
+                      <Calendar className="w-8 h-8 mx-auto mb-3" style={{ color: '#999694' }} />
+                      <p className="text-base font-medium" style={{ color: '#9a9895' }}>No key dates tracked</p>
+                      <p className="text-sm font-medium mt-1" style={{ color: '#999694' }}>Add important deadlines to get reminders</p>
                     </div>
                   ) : (
-                    <div className="space-y-1.5">
+                    <div className="space-y-1">
                       {dates.map((date) => {
                         const dateObj = new Date(date.date);
                         const today = new Date();
                         const daysUntil = Math.ceil((dateObj.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
                         const isPast = daysUntil < 0;
                         const isUrgent = daysUntil >= 0 && daysUntil <= 7;
-
-                        const typeLabels: Record<string, string> = {
-                          option_period: "Option Period",
-                          termination_window: "Termination",
-                          renewal: "Renewal",
-                          expiration: "Expiration",
-                          payment: "Payment",
-                        };
-
+                        const typeLabels: Record<string, string> = { option_period: "Option Period", termination_window: "Termination", renewal: "Renewal", expiration: "Expiration", payment: "Payment" };
                         return (
                           <div
                             key={date.id}
                             className={cn(
-                              "p-2.5 border border-border flex items-center gap-2.5",
-                              isPast && "border-red-400/30",
-                              isUrgent && !isPast && "border-yellow-400/30"
+                              "flex items-center justify-between py-3 border-l-2 pl-4 -ml-4 transition-all group",
+                              isPast ? "border-red-400 bg-red-500/5" :
+                              isUrgent ? "border-amber-400 bg-amber-500/5" :
+                              "border-transparent hover:bg-black/5"
                             )}
                           >
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center gap-2">
-                                <span className="text-[10px] text-muted-foreground/60">
-                                  {typeLabels[date.date_type] || date.date_type}
-                                </span>
-                                {isPast && (
-                                  <span className="text-[9px] text-red-400 px-1 py-0.5 border border-red-400/30">Overdue</span>
-                                )}
-                                {isUrgent && !isPast && (
-                                  <span className="text-[9px] text-yellow-400 px-1 py-0.5 border border-yellow-400/30">
-                                    {daysUntil === 0 ? "Today" : daysUntil === 1 ? "Tomorrow" : `${daysUntil} days`}
-                                  </span>
-                                )}
+                            <div className="flex items-center gap-3 flex-1 min-w-0">
+                              <span className={cn(
+                                "w-1.5 h-1.5 rounded-full shrink-0",
+                                isPast ? "bg-red-400" : isUrgent ? "bg-amber-400" : ""
+                              )} style={{ backgroundColor: !isPast && !isUrgent ? '#999694' : undefined }} />
+                              <div className="flex-1 min-w-0">
+                                <p className="text-base font-medium" style={{ color: '#1d1b1a' }}>{date.description || typeLabels[date.date_type] || date.date_type}</p>
+                                <p className="text-sm font-medium" style={{ color: '#999694' }}>{typeLabels[date.date_type]}</p>
                               </div>
-                              <p className="text-xs text-foreground truncate">
-                                {date.description || dateObj.toLocaleDateString("en-US", {
-                                  weekday: "short",
-                                  month: "short",
-                                  day: "numeric",
-                                  year: "numeric",
-                                })}
-                              </p>
                             </div>
-                            <button
-                              onClick={() => deleteDate(date.id)}
-                              className="shrink-0 w-6 h-6 flex items-center justify-center hover:bg-muted transition-colors"
-                            >
-                              <Trash2 className="w-2.5 h-2.5 text-muted-foreground/60 hover:text-red-400" />
-                            </button>
+                            <div className="flex items-center gap-4 shrink-0">
+                              {isPast && <span className="text-sm font-medium text-red-400">Overdue</span>}
+                              {isUrgent && !isPast && <span className="text-sm font-medium text-amber-400">{daysUntil === 0 ? "Today" : daysUntil === 1 ? "Tomorrow" : `${daysUntil} days`}</span>}
+                              <span className="text-sm font-medium" style={{ color: '#999694' }}>{dateObj.toLocaleDateString("en-US", { month: "short", day: "numeric" })}</span>
+                              <button
+                                onClick={() => deleteDate(date.id)}
+                                className="opacity-0 group-hover:opacity-100 hover:text-red-400 transition-all"
+                                style={{ color: '#999694' }}
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </div>
                           </div>
                         );
                       })}
                     </div>
                   )}
                 </TabsContent>
-              </Tabs>
-            </main>
+              </div>
+            </Tabs>
           ) : (
             <div className="flex items-center justify-center h-full">
               <div className="text-center py-20">
-                <div className="w-10 h-10 border border-border flex items-center justify-center mx-auto mb-3">
-                  <AlertTriangle className="w-4 h-4 text-muted-foreground/60" />
-                </div>
-                <h2 className="text-sm font-medium text-foreground mb-1">No Analysis Available</h2>
-                <p className="text-xs text-muted-foreground/60">This contract doesn&apos;t have analysis data yet.</p>
+                <AlertTriangle className="w-8 h-8 text-muted-foreground/40 mx-auto mb-3" />
+                <p className="text-sm text-muted-foreground">No analysis available</p>
               </div>
             </div>
           )}
