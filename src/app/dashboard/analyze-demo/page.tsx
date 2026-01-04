@@ -60,7 +60,7 @@ import {
   FileUploadIcon as FileUploadDuotoneIcon,
 } from "@hugeicons-pro/core-duotone-rounded";
 import { Calendar03Icon, Invoice03Icon } from "@hugeicons-pro/core-solid-rounded";
-import { FileUploadIcon, DocumentAttachmentIcon } from "@hugeicons-pro/core-stroke-rounded";
+import { FileUploadIcon, DocumentAttachmentIcon, PayByCheckIcon, ViewIcon } from "@hugeicons-pro/core-stroke-rounded";
 import Lottie from "lottie-react";
 import loadMusicAnimation from "@/../public/loadmusic.json";
 import Link from "next/link";
@@ -99,6 +99,35 @@ const loadingPhrases = [
   "Reviewing financial terms",
 ];
 
+// Highlight key values (numbers, percentages, dollar amounts, time periods, dates) in text
+function highlightKeyValues(text: string, isSelected?: boolean): React.ReactNode {
+  // Pattern matches: percentages, dollar amounts, numbers with units, spelled-out numbers with units, ordinals, dates with months, standalone numbers
+  const pattern = /(\d+(?:\.\d+)?%|\$[\d,]+(?:\.\d+)?(?:\s*(?:million|billion|thousand|k|m|b))?|(?:one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety|hundred)(?:-|\s)?(?:year|month|week|day|hour)s?|\d+(?:-|\s)?(?:year|month|week|day|hour)s?|(?:January|February|March|April|May|June|July|August|September|October|November|December)\s+\d+(?:st|nd|rd|th)?|\d+(?:st|nd|rd|th)?\s+(?:January|February|March|April|May|June|July|August|September|October|November|December)|\d+(?:st|nd|rd|th)|\d+(?:,\d+)*(?:\.\d+)?)/gi;
+
+  const parts = text.split(pattern);
+
+  return parts.map((part, i) => {
+    if (!part) return null;
+    // Check if this part matches the pattern (odd indices from split with capture group)
+    const isKeyValue = pattern.test(part);
+    // Reset lastIndex since we're using global flag
+    pattern.lastIndex = 0;
+
+    return (
+      <span
+        key={i}
+        style={{
+          color: isKeyValue ? (isSelected ? '#a855f7' : '#202020') : '#909090',
+          fontWeight: isKeyValue ? 500 : 400,
+          transition: 'color 0.3s ease'
+        }}
+      >
+        {part}
+      </span>
+    );
+  });
+}
+
 export default function AnalyzeDemoPage() {
   const { user } = useAuth();
 
@@ -131,6 +160,9 @@ export default function AnalyzeDemoPage() {
   const [expandedTerm, setExpandedTerm] = useState<number | null>(0);
   const [expandedConcern, setExpandedConcern] = useState<number | null>(null);
   const [expandedAdvice, setExpandedAdvice] = useState<number | null>(null);
+
+  // Selected financial item
+  const [selectedFinancial, setSelectedFinancial] = useState<string | null>(null);
 
   // Loading phrase animation
   const [phraseIndex, setPhraseIndex] = useState(0);
@@ -337,10 +369,10 @@ export default function AnalyzeDemoPage() {
   // Helper functions
   const getRiskColor = (risk: string) => {
     switch (risk) {
-      case "high": return "text-red-400 border-red-400/30";
-      case "medium": return "text-yellow-400 border-yellow-400/30";
-      case "low": return "text-green-400 border-green-400/30";
-      default: return "text-muted-foreground border-border";
+      case "high": return "text-red-600 bg-red-100";
+      case "medium": return "text-yellow-600 bg-yellow-100";
+      case "low": return "text-green-600 bg-green-100";
+      default: return "text-muted-foreground bg-muted";
     }
   };
 
@@ -495,18 +527,28 @@ export default function AnalyzeDemoPage() {
   // ============================================
   if (status === "idle") {
     return (
-      <div className="h-full flex items-center justify-center p-8 overflow-hidden" style={{
-        backgroundColor: '#fcfcfc',
-        backgroundImage: 'radial-gradient(circle, #d1d5db 1px, transparent 1px)',
-        backgroundSize: '24px 24px'
-      }}>
-        {/* Modal Card */}
+      <AnimatePresence mode="wait">
         <motion.div
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.2 }}
-          className="w-full max-w-lg bg-white rounded-2xl shadow-xl overflow-hidden"
+          key="idle-bg"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.3 }}
+          className="h-full flex items-center justify-center p-8 overflow-hidden"
+          style={{
+            backgroundColor: '#fcfcfc',
+            backgroundImage: 'radial-gradient(circle, #d1d5db 1px, transparent 1px)',
+            backgroundSize: '24px 24px'
+          }}
         >
+          {/* Modal Card */}
+          <motion.div
+            initial={{ opacity: 0, y: 0, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 40, scale: 0.95 }}
+            transition={{ duration: 0.35, ease: [0.4, 0, 0.2, 1] }}
+            className="w-full max-w-lg bg-white rounded-2xl shadow-xl overflow-hidden"
+          >
           {/* Header */}
           <div className="px-5 py-3 border-b border-border">
             <div className="flex items-center gap-2">
@@ -589,8 +631,9 @@ export default function AnalyzeDemoPage() {
               </span>
             </div>
           </div>
+          </motion.div>
         </motion.div>
-      </div>
+      </AnimatePresence>
     );
   }
 
@@ -606,7 +649,14 @@ export default function AnalyzeDemoPage() {
     ];
 
     return (
-      <div className="h-full flex flex-col items-center justify-center p-4" style={{ backgroundColor: '#fcfcfc' }}>
+      <motion.div
+        key="loading"
+        initial={{ opacity: 0, y: 40 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4, ease: [0.4, 0, 0.2, 1] }}
+        className="h-full flex flex-col items-center justify-center p-4"
+        style={{ backgroundColor: '#fcfcfc' }}
+      >
         <div className="w-full max-w-sm space-y-8">
           {/* Music Loader - Purple tinted */}
           <div className="flex justify-center">
@@ -705,7 +755,7 @@ export default function AnalyzeDemoPage() {
             </p>
           </div>
         </div>
-      </div>
+      </motion.div>
     );
   }
 
@@ -956,73 +1006,96 @@ export default function AnalyzeDemoPage() {
               {analysis.financialTerms && (
                 <div>
                   <div className="flex items-center gap-2 mb-4">
-                    <span className="text-[10px] text-muted-foreground/60 uppercase tracking-wider">Financial Terms</span>
+                    <span className="text-[10px] text-muted-foreground/60 uppercase tracking-wider">Financial Analysis</span>
                     <div className="h-px flex-1 bg-border" />
                   </div>
-                  <div className="grid grid-cols-3 gap-3">
+                  <div className="space-y-0">
                     {analysis.financialTerms.royaltyRate && (
-                      <div className="rounded-lg p-5 flex flex-col border border-border" style={{ minHeight: '220px', backgroundColor: '#fcfcfc' }}>
-                        <div className="flex items-center gap-2.5 mb-8">
-                          <div className="w-7 h-7 rounded-md flex items-center justify-center" style={{ backgroundColor: '#202020' }}>
-                            <TrendingUp className="w-3.5 h-3.5 text-white" />
+                      <div
+                        className="py-3 border-b border-dashed cursor-pointer hover:bg-muted/30 transition-colors -mx-1 px-1"
+                        style={{
+                          borderColor: selectedFinancial === 'royalty' ? '#a855f7' : undefined,
+                          transition: 'border-color 0.3s ease'
+                        }}
+                        onClick={() => {
+                          setSelectedFinancial('royalty');
+                          handleClauseClick(analysis.financialTerms.royaltyRate);
+                        }}
+                      >
+                        <div className="flex items-start justify-between gap-4">
+                          <div>
+                            <p className="text-sm mb-0.5">
+                              {highlightKeyValues(analysis.financialTerms.royaltyRate, selectedFinancial === 'royalty')}
+                            </p>
                           </div>
-                          <span className="text-xs font-semibold" style={{ color: '#202020' }}>Royalty</span>
-                        </div>
-                        <p className="text-5xl font-light mb-12" style={{ color: '#202020' }}>
-                          {analysis.financialTerms.royaltyRate?.match(/[\d.]+%/)?.[0] || analysis.financialTerms.royaltyRate}
-                        </p>
-                        <p className="text-sm leading-relaxed">
-                          <span style={{ color: '#202020' }}>Your share </span>
-                          <span style={{ color: '#909090' }}>of net sums</span>
-                        </p>
-                        <div className="flex-1" />
-                        <div className="flex items-center justify-between pt-4">
-                          <ChevronLeft className="w-4 h-4" style={{ color: '#909090' }} />
-                          <div className="flex items-center gap-1.5">
-                            <div className="w-6 h-1.5 rounded-full" style={{ backgroundColor: '#d0d0d0' }} />
-                            <div className="w-6 h-1.5 rounded-full" style={{ backgroundColor: '#22c55e' }} />
-                            <div className="w-6 h-1.5 rounded-full" style={{ backgroundColor: '#d0d0d0' }} />
-                            <div className="w-6 h-1.5 rounded-full" style={{ backgroundColor: '#d0d0d0' }} />
-                            <div className="w-6 h-1.5 rounded-full" style={{ backgroundColor: '#d0d0d0' }} />
-                          </div>
-                          <ChevronRight className="w-4 h-4" style={{ color: '#909090' }} />
+                          <p className="text-[10px] font-medium uppercase tracking-wider shrink-0" style={{ color: selectedFinancial === 'royalty' ? '#a855f7' : '#a0a0a0', transition: 'color 0.3s ease' }}>Royalty</p>
                         </div>
                       </div>
                     )}
                     {analysis.termLength && (
-                      <div className="rounded-lg p-4 border border-border" style={{ backgroundColor: '#fcfcfc' }}>
-                        <div className="flex items-center gap-2.5 mb-4">
-                          <div className="w-7 h-7 rounded-md flex items-center justify-center" style={{ backgroundColor: '#202020' }}>
-                            <HugeiconsIcon icon={Calendar03Icon} size={14} className="text-white" />
+                      <div
+                        className="py-3 border-b border-dashed cursor-pointer hover:bg-muted/30 transition-colors -mx-1 px-1"
+                        style={{
+                          borderColor: selectedFinancial === 'term' ? '#a855f7' : undefined,
+                          transition: 'border-color 0.3s ease'
+                        }}
+                        onClick={() => {
+                          setSelectedFinancial('term');
+                          handleClauseClick(analysis.termLength);
+                        }}
+                      >
+                        <div className="flex items-start justify-between gap-4">
+                          <div>
+                            <p className="text-sm mb-0.5">
+                              {highlightKeyValues(analysis.termLength, selectedFinancial === 'term')}
+                            </p>
                           </div>
-                          <span className="text-xs font-semibold" style={{ color: '#202020' }}>Term</span>
+                          <p className="text-[10px] font-medium uppercase tracking-wider shrink-0" style={{ color: selectedFinancial === 'term' ? '#a855f7' : '#a0a0a0', transition: 'color 0.3s ease' }}>Term</p>
                         </div>
-                        <p className="text-2xl font-medium mb-1" style={{ color: '#202020' }}>{analysis.termLength}</p>
-                        <p className="text-xs" style={{ color: '#909090' }}>Contract duration</p>
                       </div>
                     )}
                     {analysis.financialTerms.advanceAmount && (
-                      <div className="rounded-lg p-4 border border-border" style={{ backgroundColor: '#fcfcfc' }}>
-                        <div className="flex items-center gap-2.5 mb-4">
-                          <div className="w-7 h-7 rounded-md flex items-center justify-center" style={{ backgroundColor: '#202020' }}>
-                            <DollarSign className="w-3.5 h-3.5 text-white" />
+                      <div
+                        className="py-3 border-b border-dashed cursor-pointer hover:bg-muted/30 transition-colors -mx-1 px-1"
+                        style={{
+                          borderColor: selectedFinancial === 'advance' ? '#a855f7' : undefined,
+                          transition: 'border-color 0.3s ease'
+                        }}
+                        onClick={() => {
+                          setSelectedFinancial('advance');
+                          handleClauseClick(analysis.financialTerms.advanceAmount);
+                        }}
+                      >
+                        <div className="flex items-start justify-between gap-4">
+                          <div>
+                            <p className="text-sm mb-0.5">
+                              {highlightKeyValues(analysis.financialTerms.advanceAmount, selectedFinancial === 'advance')}
+                            </p>
                           </div>
-                          <span className="text-xs font-semibold" style={{ color: '#202020' }}>Advance</span>
+                          <p className="text-[10px] font-medium uppercase tracking-wider shrink-0" style={{ color: selectedFinancial === 'advance' ? '#a855f7' : '#a0a0a0', transition: 'color 0.3s ease' }}>Advance</p>
                         </div>
-                        <p className="text-2xl font-medium mb-1" style={{ color: '#202020' }}>{analysis.financialTerms.advanceAmount}</p>
-                        <p className="text-xs" style={{ color: '#909090' }}>Upfront payment</p>
                       </div>
                     )}
                     {analysis.financialTerms.paymentSchedule && (
-                      <div className="rounded-lg p-4 border border-border" style={{ backgroundColor: '#fcfcfc' }}>
-                        <div className="flex items-center gap-2.5 mb-4">
-                          <div className="w-7 h-7 rounded-md flex items-center justify-center" style={{ backgroundColor: '#202020' }}>
-                            <HugeiconsIcon icon={Invoice03Icon} size={14} className="text-white" />
+                      <div
+                        className="py-3 border-b border-dashed cursor-pointer hover:bg-muted/30 transition-colors -mx-1 px-1"
+                        style={{
+                          borderColor: selectedFinancial === 'payment' ? '#a855f7' : 'transparent',
+                          transition: 'border-color 0.3s ease'
+                        }}
+                        onClick={() => {
+                          setSelectedFinancial('payment');
+                          handleClauseClick(analysis.financialTerms.paymentSchedule);
+                        }}
+                      >
+                        <div className="flex items-start justify-between gap-4">
+                          <div>
+                            <p className="text-sm mb-0.5">
+                              {highlightKeyValues(analysis.financialTerms.paymentSchedule, selectedFinancial === 'payment')}
+                            </p>
                           </div>
-                          <span className="text-xs font-semibold" style={{ color: '#202020' }}>Payment</span>
+                          <p className="text-[10px] font-medium uppercase tracking-wider shrink-0" style={{ color: selectedFinancial === 'payment' ? '#a855f7' : '#a0a0a0', transition: 'color 0.3s ease' }}>Payment</p>
                         </div>
-                        <p className="text-2xl font-medium mb-1" style={{ color: '#202020' }}>{analysis.financialTerms.paymentSchedule}</p>
-                        <p className="text-xs" style={{ color: '#909090' }}>Payment schedule</p>
                       </div>
                     )}
                   </div>
@@ -1148,7 +1221,7 @@ export default function AnalyzeDemoPage() {
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-1">
                           <span className="text-xs text-foreground font-medium">{term.title}</span>
-                          <span className={cn("text-[10px] px-1.5 py-0.5 border capitalize", getRiskColor(term.riskLevel))}>
+                          <span className={cn("text-[10px] px-2.5 py-0.5 rounded-full capitalize", getRiskColor(term.riskLevel))}>
                             {term.riskLevel}
                           </span>
                         </div>
@@ -1187,7 +1260,7 @@ export default function AnalyzeDemoPage() {
                           <div>
                             <p className="text-[10px] text-muted-foreground/60 uppercase tracking-wider mb-1">Risk Assessment</p>
                             <div className="flex items-start gap-2">
-                              <span className={cn("text-[10px] px-1.5 py-0.5 border capitalize shrink-0", getRiskColor(term.riskLevel))}>
+                              <span className={cn("text-[10px] px-2.5 py-0.5 rounded-full capitalize shrink-0", getRiskColor(term.riskLevel))}>
                                 {term.riskLevel}
                               </span>
                               <p className="text-xs text-foreground">
@@ -1211,19 +1284,18 @@ export default function AnalyzeDemoPage() {
                             </ul>
                           </div>
 
-                          {/* Actions */}
-                          <div className="flex items-center gap-3 pt-2 border-t border-border">
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleClauseClick(term.originalText);
-                              }}
-                              className="text-[10px] text-muted-foreground/60 hover:text-foreground flex items-center gap-1 transition-colors"
-                            >
-                              <Eye className="w-2.5 h-2.5" /> View in contract
-                            </button>
-                          </div>
                         </div>
+                        {/* View in contract - full width at bottom */}
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleClauseClick(term.originalText);
+                          }}
+                          className="w-full px-3 py-2.5 text-xs font-semibold text-muted-foreground hover:text-foreground flex items-center justify-center gap-1.5 transition-colors"
+                          style={{ backgroundColor: '#f5f5f4' }}
+                        >
+                          <HugeiconsIcon icon={ViewIcon} size={14} /> View in contract
+                        </button>
                       </div>
                     </motion.div>
                   </div>

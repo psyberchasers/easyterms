@@ -42,7 +42,7 @@ function normalizeText(text: string): string {
 function extractKeywords(text: string): string[] {
   const normalized = normalizeText(text);
   const words = normalized.split(/\s+/);
-  
+
   // Filter out common words and keep significant ones
   const stopWords = new Set([
     "the", "a", "an", "is", "are", "was", "were", "be", "been", "being",
@@ -56,7 +56,7 @@ function extractKeywords(text: string): string[] {
     "so", "than", "too", "very", "just", "and", "but", "if", "or",
     "because", "until", "while", "this", "that", "these", "those", "any"
   ]);
-  
+
   return words.filter(w => w.length > 2 && !stopWords.has(w));
 }
 
@@ -64,19 +64,19 @@ function extractKeywords(text: string): string[] {
 function calculateMatchScore(searchKeywords: string[], pageText: string): number {
   const normalizedPage = normalizeText(pageText);
   let score = 0;
-  
+
   for (const keyword of searchKeywords) {
     if (normalizedPage.includes(keyword)) {
       score += keyword.length; // Longer keywords are more significant
     }
   }
-  
+
   return score;
 }
 
-export function PDFViewerWithSearch({ 
-  fileUrl, 
-  searchText, 
+export function PDFViewerWithSearch({
+  fileUrl,
+  searchText,
   className,
 }: PDFViewerWithSearchProps) {
   const [numPages, setNumPages] = useState<number>(0);
@@ -88,6 +88,7 @@ export function PDFViewerWithSearch({
   const [match, setMatch] = useState<TextMatch | null>(null);
   const [searching, setSearching] = useState<boolean>(false);
   const [pageError, setPageError] = useState<boolean>(false);
+  const [pageRendered, setPageRendered] = useState<boolean>(false);
   const pdfDocRef = useRef<any>(null);
   const pageContainerRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -112,6 +113,7 @@ export function PDFViewerWithSearch({
     setError(null);
     setMatch(null);
     setPageError(false);
+    setPageRendered(false);
     pdfDocRef.current = null;
   }, [fileUrl]);
 
@@ -137,10 +139,15 @@ export function PDFViewerWithSearch({
 
   const onPageLoadError = useCallback(() => {
     setPageError(true);
+    setPageRendered(false);
   }, []);
 
   const onPageLoadSuccess = useCallback(() => {
     setPageError(false);
+    // Delay to ensure text layer is rendered
+    setTimeout(() => {
+      setPageRendered(true);
+    }, 100);
   }, []);
 
   // Suppress AbortException warnings for text layer cancellation
@@ -161,15 +168,15 @@ export function PDFViewerWithSearch({
     const findTextInPDF = async () => {
       setSearching(true);
       const pdf = pdfDocRef.current;
-      
+
       // Safety check - ensure pdf has the required methods
       if (!pdf || typeof pdf.getPage !== 'function' || !pdf.numPages) {
         setSearching(false);
         return;
       }
-      
+
       const keywords = extractKeywords(searchText);
-      
+
       if (keywords.length === 0) {
         setMatch(null);
         setSearching(false);
@@ -177,7 +184,7 @@ export function PDFViewerWithSearch({
       }
 
       console.log("Searching PDF for keywords:", keywords.slice(0, 5));
-      
+
       let bestMatch: TextMatch | null = null;
 
       for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
@@ -191,11 +198,11 @@ export function PDFViewerWithSearch({
           if (!page || !isMountedRef.current) continue;
           const textContent = await page.getTextContent();
           const viewport = page.getViewport({ scale: 1 });
-          
+
           // Build full page text with position info
           const textItems: Array<{ str: string; y: number }> = [];
           let fullPageText = "";
-          
+
           for (const item of textContent.items as any[]) {
             if (item.str) {
               textItems.push({
@@ -208,12 +215,12 @@ export function PDFViewerWithSearch({
 
           // Check page match score
           const pageScore = calculateMatchScore(keywords, fullPageText);
-          
+
           if (pageScore > 0 && (!bestMatch || pageScore > bestMatch.score)) {
             // Find best matching text item position
             let bestY = viewport.height / 2;
             let bestItemScore = 0;
-            
+
             for (const item of textItems) {
               const itemScore = calculateMatchScore(keywords, item.str);
               if (itemScore > bestItemScore) {
@@ -221,7 +228,7 @@ export function PDFViewerWithSearch({
                 bestY = item.y;
               }
             }
-            
+
             // If no individual item matched well, search for keyword sequences
             if (bestItemScore < keywords.length) {
               // Look for first keyword occurrence
@@ -234,7 +241,7 @@ export function PDFViewerWithSearch({
                 }
               }
             }
-            
+
             bestMatch = {
               pageNum,
               yPosition: bestY,
@@ -255,31 +262,84 @@ export function PDFViewerWithSearch({
         console.log("No match found for:", keywords);
         setMatch(null);
       }
-      
+
       setSearching(false);
     };
 
     findTextInPDF();
   }, [searchText, numPages, documentReady]);
 
-  // Scroll to match when found and page loads
+  // Highlight text in the text layer
   useEffect(() => {
-    if (match && match.pageNum === currentPage && scrollContainerRef.current) {
-      // Small delay to ensure page is rendered
+    if (!pageRendered || !pageContainerRef.current) return;
+
+    // Clear previous highlights
+    const textLayer = pageContainerRef.current.querySelector('.react-pdf__Page__textContent');
+    if (!textLayer) return;
+
+    const spans = textLayer.querySelectorAll('span');
+    spans.forEach(span => {
+      span.classList.remove('pdf-text-highlight');
+    });
+
+    // If no search text or no match on this page, exit
+    if (!searchText || !match || match.pageNum !== currentPage) return;
+
+    const keywords = extractKeywords(searchText);
+    if (keywords.length === 0) return;
+
+    // Find and highlight matching spans
+    spans.forEach(span => {
+      const text = span.textContent || '';
+      const normalizedSpanText = normalizeText(text);
+
+      // Check if this span contains any keywords
+      const hasMatch = keywords.some(keyword => normalizedSpanText.includes(keyword));
+
+      if (hasMatch) {
+        span.classList.add('pdf-text-highlight');
+      }
+    });
+
+    // Scroll to first highlighted element
+    const firstHighlight = textLayer.querySelector('.pdf-text-highlight');
+    if (firstHighlight && scrollContainerRef.current) {
       setTimeout(() => {
-        const scrollTarget = match.yPosition * scale - 150;
+        const rect = firstHighlight.getBoundingClientRect();
+        const containerRect = scrollContainerRef.current!.getBoundingClientRect();
+        const scrollTop = scrollContainerRef.current!.scrollTop + rect.top - containerRect.top - 150;
+
         scrollContainerRef.current?.scrollTo({
-          top: Math.max(0, scrollTarget),
+          top: Math.max(0, scrollTop),
           behavior: 'smooth'
         });
-      }, 300);
+      }, 100);
     }
-  }, [match, currentPage, scale]);
+  }, [pageRendered, searchText, match, currentPage]);
+
+  // Reset pageRendered when page changes
+  useEffect(() => {
+    setPageRendered(false);
+  }, [currentPage]);
 
   return (
     <div className={cn("flex flex-col h-full bg-muted/20", className)}>
+      {/* Inline highlight styles */}
+      <style jsx global>{`
+        .pdf-text-highlight {
+          background-color: rgba(139, 92, 246, 0.15) !important;
+          border-radius: 3px;
+          padding: 2px 0;
+          box-shadow: inset 0 0 0 1px rgba(139, 92, 246, 0.3);
+          box-decoration-break: clone;
+          -webkit-box-decoration-break: clone;
+          transition: background-color 0.2s ease;
+        }
+      `}</style>
+
       {/* Controls - Always visible with skeletons while loading */}
-      <div className="flex items-center justify-between px-4 py-2 bg-background border-b border-border shrink-0 gap-2 flex-wrap">
+      <div className="flex items-center justify-between px-4 py-2 bg-background border-b border-border shrink-0">
+        {/* Left - Zoom controls */}
         <div className="flex items-center gap-2">
           <Button
             variant="outline"
@@ -306,6 +366,35 @@ export function PDFViewerWithSearch({
           </Button>
         </div>
 
+        {/* Center - Search status indicator (only when searching) */}
+        <div className="flex items-center justify-center">
+          {searchText && (
+            <div className={cn(
+              "flex items-center gap-2 px-3 py-1 text-xs",
+              searching ? "text-muted-foreground" :
+              match ? "text-foreground" : "text-muted-foreground/60"
+            )}>
+              {searching ? (
+                <>
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  <span>Searching...</span>
+                </>
+              ) : match ? (
+                <>
+                  <Search className="h-3.5 w-3.5" />
+                  <span>Page {match.pageNum}</span>
+                </>
+              ) : (
+                <>
+                  <AlertCircle className="h-3.5 w-3.5" />
+                  <span>Not found</span>
+                </>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Right - Page controls */}
         <div className="flex items-center gap-2">
           <Button
             variant="outline"
@@ -331,32 +420,6 @@ export function PDFViewerWithSearch({
             <ChevronRight className="h-4 w-4" />
           </Button>
         </div>
-
-        {/* Search status indicator */}
-        {searchText && (
-          <div className={cn(
-            "flex items-center gap-2 px-3 py-1 text-xs",
-            searching ? "text-muted-foreground" :
-            match ? "text-foreground" : "text-muted-foreground/60"
-          )}>
-            {searching ? (
-              <>
-                <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                <span>Searching...</span>
-              </>
-            ) : match ? (
-              <>
-                <Search className="h-3.5 w-3.5" />
-                <span>Page {match.pageNum}</span>
-              </>
-            ) : (
-              <>
-                <AlertCircle className="h-3.5 w-3.5" />
-                <span>Not found</span>
-              </>
-            )}
-          </div>
-        )}
       </div>
 
       {/* PDF Container */}
@@ -396,32 +459,6 @@ export function PDFViewerWithSearch({
                   </div>
                 }
               />
-              
-              {/* Highlight overlay - yellow highlight */}
-              {searchText && match && match.pageNum === currentPage && (
-                <div 
-                  className="absolute left-0 right-0 pointer-events-none animate-pulse"
-                  style={{
-                    top: `${match.yPosition * scale - 15}px`,
-                    height: '40px',
-                  }}
-                >
-                  {/* Main highlight bar - yellow */}
-                  <div 
-                    className="absolute inset-0"
-                    style={{
-                      background: 'linear-gradient(90deg, transparent 0%, rgba(250, 204, 21, 0.4) 10%, rgba(250, 204, 21, 0.4) 90%, transparent 100%)',
-                    }}
-                  />
-                  {/* Arrow indicator on the left */}
-                  <div 
-                    className="absolute -left-6 top-1/2 -translate-y-1/2 w-6 h-6 bg-yellow-400 flex items-center justify-center"
-                    style={{ animation: 'none' }}
-                  >
-                    <Search className="w-3 h-3 text-black" />
-                  </div>
-                </div>
-              )}
             </div>
           )}
           {pageError && (
@@ -429,9 +466,9 @@ export function PDFViewerWithSearch({
               <div className="text-center">
                 <AlertCircle className="w-8 h-8 mx-auto mb-2" />
                 <p>Failed to load page</p>
-                <Button 
-                  variant="outline" 
-                  size="sm" 
+                <Button
+                  variant="outline"
+                  size="sm"
                   className="mt-4 border-border"
                   onClick={() => setPageError(false)}
                 >

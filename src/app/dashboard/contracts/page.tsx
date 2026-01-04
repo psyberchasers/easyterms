@@ -22,22 +22,6 @@ import { MusicLoader } from "@/components/MusicLoader";
 import { DeleteConfirmModal } from "@/components/DeleteConfirmModal";
 import { ContractQuickView } from "@/components/ContractQuickView";
 
-// Generate consistent gradient for each contract based on id
-function getGradient(id: string) {
-  const gradients = [
-    "from-pink-400 to-orange-400",
-    "from-blue-400 to-cyan-400",
-    "from-purple-400 to-pink-400",
-    "from-orange-400 to-yellow-400",
-    "from-green-400 to-teal-400",
-    "from-indigo-400 to-purple-400",
-    "from-rose-400 to-pink-400",
-    "from-amber-400 to-orange-400",
-  ];
-  const index = id.charCodeAt(0) % gradients.length;
-  return gradients[index];
-}
-
 export default function ContractsPage() {
   const { user, loading: authLoading } = useAuth();
   const [contracts, setContracts] = useState<Contract[]>([]);
@@ -269,10 +253,6 @@ export default function ContractsPage() {
               >
                 {/* Contract Name */}
                 <div className="flex items-center gap-3 min-w-0 pr-4">
-                  <div className={cn(
-                    "w-8 h-8 rounded-xl bg-gradient-to-br shrink-0",
-                    getGradient(contract.id)
-                  )} />
                   <span className="text-[13px] font-medium truncate" style={{ color: '#1a1a1a' }}>
                     {contract.title}
                   </span>
