@@ -99,6 +99,39 @@ const loadingPhrases = [
   "Reviewing financial terms",
 ];
 
+// Highlight entities (names, companies) in text with pills
+function highlightEntities(text: string, entities: string[]): React.ReactNode {
+  if (!entities || entities.length === 0) return text;
+
+  // Create a pattern that matches any of the entities (case insensitive)
+  const escapedEntities = entities.map(e => e.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+  const pattern = new RegExp(`(${escapedEntities.join('|')})`, 'gi');
+
+  const parts = text.split(pattern);
+
+  return parts.map((part, i) => {
+    if (!part) return null;
+    const isEntity = entities.some(e => e.toLowerCase() === part.toLowerCase());
+
+    if (isEntity) {
+      return (
+        <span
+          key={i}
+          className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium mx-0.5"
+          style={{
+            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+            color: '#3b82f6',
+          }}
+        >
+          {part}
+        </span>
+      );
+    }
+
+    return <span key={i}>{part}</span>;
+  });
+}
+
 // Highlight key values (numbers, percentages, dollar amounts, time periods, dates) in text
 function highlightKeyValues(text: string, isSelected?: boolean): React.ReactNode {
   // Pattern matches: percentages, dollar amounts, numbers with units, spelled-out numbers with units, ordinals, dates with months, standalone numbers
@@ -113,15 +146,30 @@ function highlightKeyValues(text: string, isSelected?: boolean): React.ReactNode
     // Reset lastIndex since we're using global flag
     pattern.lastIndex = 0;
 
+    if (isKeyValue) {
+      // Check if the next part starts with a comma and remove it
+      const nextPart = parts[i + 1];
+      if (nextPart && nextPart.startsWith(',')) {
+        parts[i + 1] = nextPart.slice(1);
+      }
+
+      return (
+        <span
+          key={i}
+          className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium mx-0.5"
+          style={{
+            backgroundColor: isSelected ? 'rgba(168, 85, 247, 0.15)' : 'rgba(0, 0, 0, 0.06)',
+            color: isSelected ? '#a855f7' : '#202020',
+            transition: 'all 0.3s ease'
+          }}
+        >
+          {part}
+        </span>
+      );
+    }
+
     return (
-      <span
-        key={i}
-        style={{
-          color: isKeyValue ? (isSelected ? '#a855f7' : '#202020') : '#909090',
-          fontWeight: isKeyValue ? 500 : 400,
-          transition: 'color 0.3s ease'
-        }}
-      >
+      <span key={i} style={{ color: '#565c65' }}>
         {part}
       </span>
     );
@@ -163,6 +211,9 @@ export default function AnalyzeDemoPage() {
 
   // Selected financial item
   const [selectedFinancial, setSelectedFinancial] = useState<string | null>(null);
+
+  // Selected key info pill
+  const [selectedKeyInfo, setSelectedKeyInfo] = useState<string | null>(null);
 
   // Loading phrase animation
   const [phraseIndex, setPhraseIndex] = useState(0);
@@ -665,31 +716,58 @@ export default function AnalyzeDemoPage() {
             </div>
           </div>
 
-          {/* Animated Status Text with Shimmer */}
+          {/* Animated Status Text - Rolling characters */}
           <div className="text-center h-8 relative overflow-hidden">
-            <AnimatePresence mode="popLayout">
-              <motion.p
+            <AnimatePresence mode="wait">
+              <motion.div
                 key={phraseIndex}
-                initial={{ opacity: 0, y: 24, filter: "blur(4px)" }}
-                animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-                exit={{ opacity: 0, y: -24, filter: "blur(4px)" }}
-                transition={{
-                  duration: 0.5,
-                  ease: [0.32, 0.72, 0, 1]
-                }}
-                className="text-lg font-medium relative"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.2 }}
+                className="flex justify-center text-lg font-medium"
                 style={{ color: '#565c65' }}
               >
-                <span className="relative">
-                  {loadingPhrases[phraseIndex]}
-                  <motion.span
-                    className="absolute inset-0 bg-gradient-to-r from-transparent via-white/60 to-transparent"
-                    animate={{ x: ['-100%', '100%'] }}
-                    transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}
-                    style={{ mixBlendMode: 'overlay' }}
-                  />
-                </span>
-              </motion.p>
+                {loadingPhrases[phraseIndex].split('').map((letter, index) => {
+                  const centerIndex = Math.floor(loadingPhrases[phraseIndex].length / 2);
+                  const distanceFromCenter = Math.abs(index - centerIndex);
+                  const delay = distanceFromCenter * 0.03;
+                  const rollDuration = 0.15 + distanceFromCenter * 0.08;
+                  const numberOfRolls = Math.floor(1.5 / rollDuration);
+                  const totalMovement = numberOfRolls * 1.2;
+
+                  return (
+                    <div
+                      key={index}
+                      className="relative inline-block overflow-hidden"
+                      style={{ height: "1.2em" }}
+                    >
+                      <motion.span
+                        className="flex flex-col"
+                        initial={{ y: 0 }}
+                        animate={{ y: `-${totalMovement}em` }}
+                        transition={{
+                          duration: 1.5,
+                          ease: [0.15, 1, 0.1, 1],
+                          delay: delay,
+                        }}
+                      >
+                        {Array(numberOfRolls + 2)
+                          .fill(null)
+                          .map((_, copyIndex) => (
+                            <span
+                              key={copyIndex}
+                              className="flex shrink-0 items-center justify-center"
+                              style={{ height: "1.2em" }}
+                            >
+                              {letter === ' ' ? '\u00A0' : letter}
+                            </span>
+                          ))}
+                      </motion.span>
+                    </div>
+                  );
+                })}
+              </motion.div>
             </AnimatePresence>
           </div>
 
@@ -950,7 +1028,7 @@ export default function AnalyzeDemoPage() {
         )}>
           {/* Tabbed Content with animated underlines */}
           <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-            <div className="flex gap-6 border-b border-border">
+            <div className="flex gap-6 border-b border-border -mr-6">
               {tabs.map((tab) => (
                 <button
                   key={tab.id}
@@ -976,8 +1054,8 @@ export default function AnalyzeDemoPage() {
             <TabsContent value="overview" className="space-y-6">
               {/* Summary */}
               <div>
-                <div className="flex items-center gap-2 mb-3">
-                  <span className="text-[10px] text-muted-foreground/60 uppercase tracking-wider">Summary</span>
+                <div className="flex items-center gap-2 mb-3 -mr-6">
+                  <span className="text-[10px] text-muted-foreground/60 uppercase tracking-wider shrink-0">Summary</span>
                   <div className="h-px flex-1 bg-border" />
                 </div>
                 <div className="space-y-3">
@@ -993,20 +1071,13 @@ export default function AnalyzeDemoPage() {
                     ));
                   })()}
                 </div>
-
-                {/* Quick Stats Row */}
-                {(analysis.parties?.artist || analysis.parties?.label || analysis.contractType) && (
-                  <p className="text-xs text-muted-foreground/60 mt-4">
-                    {analysis.contractType}
-                  </p>
-                )}
               </div>
 
-              {/* Financial Terms - Dark card style */}
+              {/* Financial Terms */}
               {analysis.financialTerms && (
                 <div>
-                  <div className="flex items-center gap-2 mb-4">
-                    <span className="text-[10px] text-muted-foreground/60 uppercase tracking-wider">Financial Analysis</span>
+                  <div className="flex items-center gap-2 mb-4 -mr-6">
+                    <span className="text-[10px] text-muted-foreground/60 uppercase tracking-wider shrink-0">Financial Analysis</span>
                     <div className="h-px flex-1 bg-border" />
                   </div>
                   <div className="space-y-0">
@@ -1102,27 +1173,212 @@ export default function AnalyzeDemoPage() {
                 </div>
               )}
 
-              {/* Quick Concerns Preview */}
-              {analysis.potentialConcerns && analysis.potentialConcerns.length > 0 && (
-                <div className="grid md:grid-cols-2 gap-2">
-                  <div className="border border-border p-3 rounded-lg">
-                    <div className="flex items-center gap-2 mb-2">
-                      <AlertTriangle className="w-3 h-3 text-red-400" />
-                      <span className="text-xs text-red-400">{analysis.potentialConcerns.length} Concerns Found</span>
-                    </div>
-                    <p className="text-xs text-muted-foreground">{analysis.potentialConcerns[0]}</p>
+              {/* Issues Overview */}
+              {((analysis.potentialConcerns && analysis.potentialConcerns.length > 0) || (analysis.missingClauses && analysis.missingClauses.length > 0)) && (
+                <div>
+                  <div className="flex items-center gap-2 mb-4 -mr-6">
+                    <span className="text-[10px] text-muted-foreground/60 uppercase tracking-wider shrink-0">Issues to Review</span>
+                    <div className="h-px flex-1 bg-border" />
                   </div>
-                  {analysis.missingClauses && analysis.missingClauses.length > 0 && (
-                    <div className="border border-border p-3 rounded-lg">
-                      <div className="flex items-center gap-2 mb-2">
-                        <HugeiconsIcon icon={HelpSquareIcon} size={12} className="text-yellow-400" />
-                        <span className="text-xs text-yellow-400">{analysis.missingClauses.length} Missing Protections</span>
-                      </div>
-                      <p className="text-xs text-muted-foreground">{analysis.missingClauses[0].clause}: {analysis.missingClauses[0].description}</p>
-                    </div>
-                  )}
+                  <div className="flex flex-wrap gap-2">
+                    {/* Concerns as pills - colored by related term's risk level */}
+                    {analysis.potentialConcerns?.slice(0, 4).map((concern, i) => {
+                      // Find matching key term to get its risk level
+                      const matchingTerm = analysis.keyTerms?.find(term => {
+                        const concernLower = concern.toLowerCase();
+                        const titleLower = term.title.toLowerCase();
+                        const contentLower = term.content.toLowerCase();
+                        const keywords = concernLower.split(/\s+/).filter(w => w.length > 4);
+                        return keywords.some(kw => titleLower.includes(kw) || contentLower.includes(kw));
+                      });
+                      const riskLevel = matchingTerm?.riskLevel || 'medium';
+
+                      const colorStyles = {
+                        high: { bg: 'rgba(239, 68, 68, 0.1)', text: '#dc2626', dot: 'bg-red-500' },
+                        medium: { bg: 'rgba(234, 179, 8, 0.1)', text: '#ca8a04', dot: 'bg-yellow-500' },
+                        low: { bg: 'rgba(34, 197, 94, 0.1)', text: '#16a34a', dot: 'bg-green-500' },
+                      }[riskLevel];
+
+                      return (
+                        <span
+                          key={`concern-${i}`}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium cursor-pointer hover:opacity-80 transition-opacity"
+                          style={{ backgroundColor: colorStyles.bg, color: colorStyles.text }}
+                          onClick={() => setActiveTab('terms')}
+                        >
+                          <span className={`w-1.5 h-1.5 rounded-full ${colorStyles.dot}`} />
+                          {concern.length > 40 ? concern.slice(0, 40) + '...' : concern}
+                        </span>
+                      );
+                    })}
+                    {analysis.potentialConcerns && analysis.potentialConcerns.length > 4 && (
+                      <span
+                        className="inline-flex items-center px-3 py-1.5 rounded-full text-xs font-medium cursor-pointer hover:opacity-80 transition-opacity"
+                        style={{ backgroundColor: '#f0f0f0', color: '#565c65' }}
+                        onClick={() => setActiveTab('terms')}
+                      >
+                        +{analysis.potentialConcerns.length - 4} more
+                      </span>
+                    )}
+
+                    {/* Missing clauses as pills - colored by severity */}
+                    {analysis.missingClauses?.slice(0, 3).map((clause, i) => {
+                      const severityColors = {
+                        critical: { bg: 'rgba(239, 68, 68, 0.1)', text: '#dc2626', dot: 'bg-red-500' },
+                        high: { bg: 'rgba(239, 68, 68, 0.1)', text: '#dc2626', dot: 'bg-red-500' },
+                        medium: { bg: 'rgba(234, 179, 8, 0.1)', text: '#ca8a04', dot: 'bg-yellow-500' },
+                        low: { bg: 'rgba(34, 197, 94, 0.1)', text: '#16a34a', dot: 'bg-green-500' },
+                      }[clause.severity] || { bg: 'rgba(234, 179, 8, 0.1)', text: '#ca8a04', dot: 'bg-yellow-500' };
+
+                      return (
+                        <span
+                          key={`missing-${i}`}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium cursor-pointer hover:opacity-80 transition-opacity"
+                          style={{ backgroundColor: severityColors.bg, color: severityColors.text }}
+                          onClick={() => setActiveTab('terms')}
+                        >
+                          <span className={`w-1.5 h-1.5 rounded-full ${severityColors.dot}`} />
+                          {clause.clause}
+                        </span>
+                      );
+                    })}
+                    {analysis.missingClauses && analysis.missingClauses.length > 3 && (
+                      <span
+                        className="inline-flex items-center px-3 py-1.5 rounded-full text-xs font-medium cursor-pointer hover:opacity-80 transition-opacity"
+                        style={{ backgroundColor: '#f0f0f0', color: '#565c65' }}
+                        onClick={() => setActiveTab('terms')}
+                      >
+                        +{analysis.missingClauses.length - 3} more
+                      </span>
+                    )}
+                  </div>
                 </div>
               )}
+
+              {/* Key Information */}
+              <div>
+                <div className="flex items-center gap-2 mb-4 -mr-6">
+                  <span className="text-[10px] text-muted-foreground/60 uppercase tracking-wider shrink-0">Key Information</span>
+                  <div className="h-px flex-1 bg-border" />
+                </div>
+
+                {/* Backdrop */}
+                <AnimatePresence>
+                  {selectedKeyInfo && (
+                    <motion.div
+                      onClick={() => setSelectedKeyInfo(null)}
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      className="fixed inset-0 z-40 bg-black/10 backdrop-blur-[2px]"
+                    />
+                  )}
+                </AnimatePresence>
+
+                <div className="flex items-center gap-2 flex-wrap relative">
+                  {/* Build key info items */}
+                  {(() => {
+                    const keyInfoItems: { id: string; label: string; value: string; isBlue?: boolean }[] = [];
+
+                    // Parties
+                    if (analysis.parties) {
+                      const labels: Record<string, string> = {
+                        artist: 'Artist', label: 'Label', publisher: 'Publisher', manager: 'Manager',
+                        distributor: 'Distributor', brand: 'Brand', team: 'Team', client: 'Client',
+                        landlord: 'Landlord', tenant: 'Tenant', individual: 'Individual', company: 'Company',
+                      };
+                      Object.entries(analysis.parties).forEach(([key, value]) => {
+                        if (value && key !== 'other') {
+                          keyInfoItems.push({ id: `party-${key}`, label: labels[key] || key, value: value as string, isBlue: true });
+                        }
+                      });
+                    }
+
+                    // Other info
+                    if (analysis.contractType) keyInfoItems.push({ id: 'type', label: 'Contract Type', value: analysis.contractType });
+                    if (analysis.effectiveDate) keyInfoItems.push({ id: 'date', label: 'Effective Date', value: analysis.effectiveDate });
+                    if (analysis.termLength) keyInfoItems.push({ id: 'term', label: 'Term Length', value: analysis.termLength });
+                    if (analysis.rightsAndOwnership?.territorialRights) keyInfoItems.push({ id: 'territory', label: 'Territory', value: analysis.rightsAndOwnership.territorialRights });
+                    if (analysis.rightsAndOwnership?.exclusivity) keyInfoItems.push({ id: 'exclusivity', label: 'Exclusivity', value: analysis.rightsAndOwnership.exclusivity });
+
+                    return keyInfoItems.map((item) => {
+                      const isSelected = selectedKeyInfo === item.id;
+
+                      return (
+                        <motion.div
+                          key={item.id}
+                          layout
+                          style={{
+                            transformOrigin: "50% 50% 0px",
+                            borderRadius: isSelected ? "16px" : "9999px",
+                            zIndex: isSelected ? 50 : 1,
+                          }}
+                          className="relative overflow-hidden"
+                        >
+                          {/* Collapsed pill */}
+                          <motion.button
+                            onClick={() => setSelectedKeyInfo(isSelected ? null : item.id)}
+                            style={{
+                              pointerEvents: !isSelected ? "all" : "none",
+                              display: isSelected ? "none" : "flex",
+                            }}
+                            whileTap={{ scale: 0.95 }}
+                            transition={{ type: "spring", stiffness: 350, damping: 35 }}
+                            layoutId={`pill-${item.id}`}
+                            className="inline-flex items-center px-3 py-1.5 text-xs font-medium cursor-pointer"
+                            {...(item.isBlue ? {
+                              style: { backgroundColor: 'rgba(59, 130, 246, 0.1)', color: '#3b82f6', pointerEvents: !isSelected ? "all" : "none", display: isSelected ? "none" : "flex" }
+                            } : {
+                              style: { backgroundColor: '#f0f0f0', color: '#565c65', pointerEvents: !isSelected ? "all" : "none", display: isSelected ? "none" : "flex" }
+                            })}
+                          >
+                            {item.value}
+                          </motion.button>
+
+                          {/* Expanded card */}
+                          <AnimatePresence mode="popLayout">
+                            {isSelected && (
+                              <motion.div
+                                layout
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                exit={{ opacity: 0 }}
+                                transition={{
+                                  type: "spring",
+                                  stiffness: 550,
+                                  damping: 45,
+                                  mass: 0.7,
+                                }}
+                                className="bg-white border border-border rounded-2xl p-4 shadow-lg min-w-[200px]"
+                                style={{ transformOrigin: "50% 50% 0px" }}
+                              >
+                                <div className="flex items-center justify-between mb-2">
+                                  <span className="text-[10px] text-muted-foreground uppercase tracking-wider">{item.label}</span>
+                                  <button
+                                    onClick={() => setSelectedKeyInfo(null)}
+                                    className="text-muted-foreground hover:text-foreground"
+                                  >
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                      <path d="M18 6L6 18M6 6l12 12" />
+                                    </svg>
+                                  </button>
+                                </div>
+                                <motion.p
+                                  layoutId={`pill-${item.id}`}
+                                  className="text-sm font-medium"
+                                  style={{ color: item.isBlue ? '#3b82f6' : '#202020' }}
+                                >
+                                  {item.value}
+                                </motion.p>
+                              </motion.div>
+                            )}
+                          </AnimatePresence>
+                        </motion.div>
+                      );
+                    });
+                  })()}
+                </div>
+              </div>
             </TabsContent>
 
             {/* Key Terms Tab - Expandable Cards */}
@@ -1151,13 +1407,23 @@ export default function AnalyzeDemoPage() {
                   low: { border: 'border-green-500/30', bg: 'bg-green-500/5', text: 'text-green-400', dot: 'bg-green-400/60' },
                 }[highestRisk];
 
+                const headerColors = {
+                  high: { bg: 'rgba(239, 68, 68, 0.08)', line: '#ef4444' },
+                  medium: { bg: 'rgba(245, 158, 11, 0.08)', line: '#f59e0b' },
+                  low: { bg: 'rgba(34, 197, 94, 0.08)', line: '#22c55e' },
+                }[highestRisk];
+
                 return (
-                <div className={`border ${colorScheme.border} ${colorScheme.bg} p-4 rounded-lg`}>
-                  <div className="flex items-center gap-2 mb-3">
+                <div className={`border ${colorScheme.border} ${colorScheme.bg} rounded-xl overflow-hidden`}>
+                  {/* Header with colored line */}
+                  <div
+                    className="px-4 py-2.5 flex items-center gap-2 border-b"
+                    style={{ backgroundColor: headerColors.bg, borderColor: headerColors.line }}
+                  >
                     <HugeiconsIcon icon={Alert02Icon} size={14} className={colorScheme.text} />
                     <span className={`text-xs font-medium ${colorScheme.text} leading-none`}>{analysis.potentialConcerns.length} Concerns to Address</span>
                   </div>
-                  <ul className="space-y-2">
+                  <ul className="p-4 space-y-2">
                     {analysis.potentialConcerns.map((concern, i) => {
                       // Find matching key term by checking if concern keywords appear in term title/content
                       const matchingTermIndex = analysis.keyTerms?.findIndex(term => {

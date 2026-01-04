@@ -162,206 +162,210 @@ export default function ContractsPage() {
   }
 
   return (
-    <div className="h-full flex flex-col" style={{ backgroundColor: '#fcfcfc' }}>
-      {/* Main Content */}
-      <div className="flex-1 p-6">
-        <div className="bg-white rounded-xl border overflow-hidden" style={{ borderColor: '#e5e6e7' }}>
-          {/* Header */}
-          <div className="px-4 py-3 border-b" style={{ borderColor: '#e5e6e7' }}>
-            <div className="flex items-center gap-2 text-[13px]" style={{ color: '#565c65' }}>
-              <HugeiconsIcon icon={ContractsIcon} size={14} />
-              <span>Contracts</span>
-              <span>/</span>
-              <span className="font-medium">All</span>
-              <MoreHorizontal className="w-4 h-4 ml-1 opacity-50" />
-            </div>
-          </div>
-
-          {/* Filter Tabs */}
-          <div className="px-4 py-3 border-b flex items-center gap-2" style={{ borderColor: '#e5e6e7' }}>
-            <button
-              onClick={() => setFilter("all")}
-              className={cn(
-                "px-3 py-1.5 rounded-md text-[12px] font-medium transition-colors",
-                filter === "all" ? "bg-[#f0f0f0]" : "hover:bg-[#f8f8f8]"
-              )}
-              style={{ color: '#565c65' }}
-            >
-              All Contracts ({contracts.length})
-            </button>
-            <button
-              onClick={() => setFilter("high-risk")}
-              className={cn(
-                "px-3 py-1.5 rounded-md text-[12px] font-medium transition-colors",
-                filter === "high-risk" ? "bg-[#f0f0f0]" : "hover:bg-[#f8f8f8]"
-              )}
-              style={{ color: '#565c65' }}
-            >
-              High Risk
-            </button>
-            <button
-              onClick={() => setFilter("medium-risk")}
-              className={cn(
-                "px-3 py-1.5 rounded-md text-[12px] font-medium transition-colors",
-                filter === "medium-risk" ? "bg-[#f0f0f0]" : "hover:bg-[#f8f8f8]"
-              )}
-              style={{ color: '#565c65' }}
-            >
-              Medium Risk
-            </button>
-            <button
-              onClick={() => setFilter("low-risk")}
-              className={cn(
-                "px-3 py-1.5 rounded-md text-[12px] font-medium transition-colors",
-                filter === "low-risk" ? "bg-[#f0f0f0]" : "hover:bg-[#f8f8f8]"
-              )}
-              style={{ color: '#565c65' }}
-            >
-              Low Risk
-            </button>
-          </div>
-
-          {/* Table Header */}
-          <div
-            className="grid px-6 py-2.5 text-[11px] font-medium uppercase tracking-wider border-b"
-            style={{
-              color: '#565c65',
-              backgroundColor: '#fafafa',
-              borderColor: '#e5e6e7',
-              gridTemplateColumns: '1fr 320px 240px 120px 80px 40px 40px'
-            }}
+    <div className="h-full flex flex-col w-full" style={{ backgroundColor: '#ffffff' }}>
+      {/* Toolbar */}
+      <div className="flex items-center justify-between px-4 py-3 border-b border-[#e5e6e7] w-full">
+        <div className="flex items-center gap-3">
+          {/* Filter buttons */}
+          <button
+            onClick={() => setFilter("all")}
+            className={cn(
+              "px-3 py-1.5 rounded-md text-[12px] font-medium transition-colors",
+              filter === "all" ? "bg-[#f0f0f0]" : "hover:bg-[#f8f8f8]"
+            )}
+            style={{ color: '#565c65' }}
           >
-            <div>Contract ({filteredContracts.length})</div>
-            <div>Type</div>
-            <div>Party</div>
-            <div>Uploaded</div>
-            <div>Risk</div>
-            <div className="flex items-center justify-center">
-              <Star className="w-3 h-3" />
-            </div>
-            <div></div>
-          </div>
-
-          {/* Table Body */}
-          <div className="divide-y" style={{ borderColor: '#e5e6e7' }}>
-            {filteredContracts.map((contract) => (
-              <div
-                key={contract.id}
-                className="grid px-6 py-3 items-center hover:bg-[#fafafa] transition-colors cursor-pointer group"
-                style={{ gridTemplateColumns: '1fr 320px 240px 120px 80px 40px 40px' }}
-                onClick={() => setQuickView({ open: true, contract })}
-              >
-                {/* Contract Name */}
-                <div className="flex items-center gap-3 min-w-0 pr-4">
-                  <span className="text-[13px] font-medium truncate" style={{ color: '#1a1a1a' }}>
-                    {contract.title}
-                  </span>
-                  <MoreHorizontal className="w-4 h-4 opacity-0 group-hover:opacity-40 shrink-0" />
-                </div>
-
-                {/* Type */}
-                <div>
-                  <span className="text-[13px]" style={{ color: '#565c65' }}>
-                    {contract.contract_type || "—"}
-                  </span>
-                </div>
-
-                {/* Party */}
-                <div>
-                  <span className="text-[13px] text-blue-500 hover:underline">
-                    {getPartyName(contract)}
-                  </span>
-                </div>
-
-                {/* Uploaded Date */}
-                <div>
-                  <span className="text-[13px]" style={{ color: '#565c65' }}>
-                    {new Date(contract.created_at).toLocaleDateString("en-US", {
-                      month: "short",
-                      day: "numeric",
-                      year: "numeric"
-                    })}
-                  </span>
-                </div>
-
-                {/* Risk */}
-                <div>
-                  {contract.overall_risk && (
-                    <span
-                      className="text-[11px] font-medium px-2 py-1 rounded-md"
-                      style={{ backgroundColor: '#f0f0f0', color: '#565c65' }}
-                    >
-                      {contract.overall_risk === "high" ? "High" :
-                       contract.overall_risk === "medium" ? "Medium" : "Low"}
-                    </span>
-                  )}
-                </div>
-
-                {/* Starred */}
-                <div className="flex justify-center" onClick={(e) => e.stopPropagation()}>
-                  <button
-                    onClick={() => toggleStar(contract.id, contract.is_starred)}
-                    className="p-1 rounded hover:bg-white/80 transition-colors"
-                  >
-                    {contract.is_starred ? (
-                      <Star className="w-4 h-4 text-amber-500 fill-amber-500" />
-                    ) : (
-                      <Star className="w-4 h-4 text-gray-300 group-hover:text-gray-400" />
-                    )}
-                  </button>
-                </div>
-
-                {/* Actions */}
-                <div className="flex justify-end" onClick={(e) => e.stopPropagation()}>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <button className="p-1 rounded hover:bg-white/80 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <MoreHorizontal className="w-4 h-4" style={{ color: '#565c65' }} />
-                      </button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="rounded-lg w-44">
-                      <DropdownMenuItem asChild>
-                        <Link href={`/contract/${contract.id}`}>
-                          View Details
-                        </Link>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => toggleStar(contract.id, contract.is_starred)}>
-                        {contract.is_starred ? (
-                          <>
-                            <StarOff className="w-4 h-4 mr-2" />
-                            Unstar
-                          </>
-                        ) : (
-                          <>
-                            <Star className="w-4 h-4 mr-2" />
-                            Star
-                          </>
-                        )}
-                      </DropdownMenuItem>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem
-                        onClick={() => setDeleteModal({ open: true, contract })}
-                        className="text-red-500"
-                      >
-                        <Trash2 className="w-4 h-4 mr-2" />
-                        Delete
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {/* Empty filtered state */}
-          {filteredContracts.length === 0 && contracts.length > 0 && (
-            <div className="py-12 text-center">
-              <p className="text-[13px]" style={{ color: '#565c65' }}>
-                No contracts match this filter
-              </p>
-            </div>
-          )}
+            All ({contracts.length})
+          </button>
+          <button
+            onClick={() => setFilter("high-risk")}
+            className={cn(
+              "px-3 py-1.5 rounded-md text-[12px] font-medium transition-colors",
+              filter === "high-risk" ? "bg-[#f0f0f0]" : "hover:bg-[#f8f8f8]"
+            )}
+            style={{ color: '#565c65' }}
+          >
+            High Risk
+          </button>
+          <button
+            onClick={() => setFilter("medium-risk")}
+            className={cn(
+              "px-3 py-1.5 rounded-md text-[12px] font-medium transition-colors",
+              filter === "medium-risk" ? "bg-[#f0f0f0]" : "hover:bg-[#f8f8f8]"
+            )}
+            style={{ color: '#565c65' }}
+          >
+            Medium Risk
+          </button>
+          <button
+            onClick={() => setFilter("low-risk")}
+            className={cn(
+              "px-3 py-1.5 rounded-md text-[12px] font-medium transition-colors",
+              filter === "low-risk" ? "bg-[#f0f0f0]" : "hover:bg-[#f8f8f8]"
+            )}
+            style={{ color: '#565c65' }}
+          >
+            Low Risk
+          </button>
+          <span className="text-[12px] ml-2" style={{ color: '#909090' }}>{filteredContracts.length} Results</span>
         </div>
+
+        {/* Search */}
+        <div className="flex items-center gap-2">
+          <input
+            type="text"
+            placeholder="Search contracts..."
+            className="px-3 py-1.5 text-[12px] border rounded-md w-48"
+            style={{ borderColor: '#e5e6e7', color: '#565c65' }}
+          />
+        </div>
+      </div>
+
+      {/* Table */}
+      <div className="flex-1 overflow-auto w-full">
+        {/* Table Header */}
+        <div
+          className="grid px-4 py-2.5 text-[11px] font-medium uppercase tracking-wider border-b border-[#e5e6e7] sticky top-0 w-full"
+          style={{
+            color: '#909090',
+            backgroundColor: '#ffffff',
+            gridTemplateColumns: '1fr 280px 200px 120px 100px 50px 50px'
+          }}
+        >
+          <div>Contract</div>
+          <div>Type</div>
+          <div>Party</div>
+          <div>Uploaded</div>
+          <div>Risk</div>
+          <div className="text-center">
+            <Star className="w-3 h-3 inline" />
+          </div>
+          <div></div>
+        </div>
+
+        {/* Table Body */}
+        <div>
+          {filteredContracts.map((contract) => (
+            <div
+              key={contract.id}
+              className="grid px-4 py-3 items-center border-b hover:bg-[#fafafa] transition-colors cursor-pointer group"
+              style={{ borderColor: '#f0f0f0', gridTemplateColumns: '1fr 280px 200px 120px 100px 50px 50px' }}
+              onClick={() => router.push(`/dashboard/contracts/${contract.id}`)}
+            >
+              {/* Contract Name */}
+              <div className="flex items-center gap-3 min-w-0 pr-4">
+                <span className="text-[13px] font-medium truncate" style={{ color: '#1a1a1a' }}>
+                  {contract.title}
+                </span>
+              </div>
+
+              {/* Type */}
+              <div>
+                <span className="text-[13px]" style={{ color: '#565c65' }}>
+                  {contract.contract_type || "—"}
+                </span>
+              </div>
+
+              {/* Party */}
+              <div>
+                <span className="text-[13px]" style={{ color: '#565c65' }}>
+                  {getPartyName(contract)}
+                </span>
+              </div>
+
+              {/* Uploaded Date */}
+              <div>
+                <span className="text-[13px]" style={{ color: '#909090' }}>
+                  {new Date(contract.created_at).toLocaleDateString("en-US", {
+                    day: "2-digit",
+                    month: "2-digit",
+                    year: "numeric"
+                  })}
+                </span>
+              </div>
+
+              {/* Risk */}
+              <div>
+                {contract.overall_risk && (
+                  <span
+                    className="text-[11px] font-medium px-2.5 py-1 rounded-full"
+                    style={{
+                      backgroundColor: contract.overall_risk === 'high' ? 'rgba(239, 68, 68, 0.1)' :
+                                       contract.overall_risk === 'medium' ? 'rgba(245, 158, 11, 0.1)' : 'rgba(34, 197, 94, 0.1)',
+                      color: contract.overall_risk === 'high' ? '#dc2626' :
+                             contract.overall_risk === 'medium' ? '#d97706' : '#16a34a'
+                    }}
+                  >
+                    {contract.overall_risk === "high" ? "High" :
+                     contract.overall_risk === "medium" ? "Medium" : "Low"}
+                  </span>
+                )}
+              </div>
+
+              {/* Starred */}
+              <div className="flex justify-center" onClick={(e) => e.stopPropagation()}>
+                <button
+                  onClick={() => toggleStar(contract.id, contract.is_starred)}
+                  className="p-1 rounded hover:bg-white/80 transition-colors"
+                >
+                  {contract.is_starred ? (
+                    <Star className="w-4 h-4 text-amber-500 fill-amber-500" />
+                  ) : (
+                    <Star className="w-4 h-4 text-gray-200 group-hover:text-gray-400" />
+                  )}
+                </button>
+              </div>
+
+              {/* Actions */}
+              <div className="flex justify-center" onClick={(e) => e.stopPropagation()}>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <button className="p-1 rounded hover:bg-white/80 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <MoreHorizontal className="w-4 h-4" style={{ color: '#909090' }} />
+                    </button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="rounded-lg w-44">
+                    <DropdownMenuItem asChild>
+                      <Link href={`/contract/${contract.id}`}>
+                        View Details
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => toggleStar(contract.id, contract.is_starred)}>
+                      {contract.is_starred ? (
+                        <>
+                          <StarOff className="w-4 h-4 mr-2" />
+                          Unstar
+                        </>
+                      ) : (
+                        <>
+                          <Star className="w-4 h-4 mr-2" />
+                          Star
+                        </>
+                      )}
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      onClick={() => setDeleteModal({ open: true, contract })}
+                      className="text-red-500"
+                    >
+                      <Trash2 className="w-4 h-4 mr-2" />
+                      Delete
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Empty filtered state */}
+        {filteredContracts.length === 0 && contracts.length > 0 && (
+          <div className="py-12 text-center">
+            <p className="text-[13px]" style={{ color: '#565c65' }}>
+              No contracts match this filter
+            </p>
+          </div>
+        )}
       </div>
 
       {/* Delete Confirmation Modal */}

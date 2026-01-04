@@ -288,18 +288,60 @@ export function PDFViewerWithSearch({
     const keywords = extractKeywords(searchText);
     if (keywords.length === 0) return;
 
-    // Find and highlight matching spans
-    spans.forEach(span => {
-      const text = span.textContent || '';
-      const normalizedSpanText = normalizeText(text);
+    // Also extract important terms directly from search text (numbers, dates, amounts)
+    const importantTerms: string[] = [];
+    const termPatterns = [
+      /\d+%/g,                          // percentages
+      /\$[\d,]+/g,                      // dollar amounts
+      /\d+(?:st|nd|rd|th)/gi,          // ordinals
+      /(?:january|february|march|april|may|june|july|august|september|october|november|december)/gi,  // months
+      /\d+\s*(?:year|month|day|week)s?/gi,  // time periods
+      /(?:one|two|three|four|five|six|seven|eight|nine|ten)\s*(?:year|month|day|week)s?/gi,  // spelled numbers
+    ];
 
-      // Check if this span contains any keywords
-      const hasMatch = keywords.some(keyword => normalizedSpanText.includes(keyword));
-
-      if (hasMatch) {
-        span.classList.add('pdf-text-highlight');
+    termPatterns.forEach(pattern => {
+      const matches = searchText.match(pattern);
+      if (matches) {
+        matches.forEach(m => importantTerms.push(m.toLowerCase().trim()));
       }
     });
+
+    // Combine keywords and important terms
+    const allTerms = [...new Set([...keywords, ...importantTerms])];
+
+    // Find spans that match and track their indices
+    const spanArray = Array.from(spans);
+    const matchingIndices: number[] = [];
+
+    spanArray.forEach((span, index) => {
+      const text = span.textContent || '';
+      const lowerText = text.toLowerCase();
+      const normalizedSpanText = normalizeText(text);
+
+      // Check if this span contains any keywords or important terms
+      const hasKeywordMatch = allTerms.some(term => {
+        if (normalizedSpanText.includes(term.replace(/[^\w\s]/g, ''))) return true;
+        if (lowerText.includes(term)) return true;
+        if (term.includes(normalizedSpanText) && normalizedSpanText.length > 2) return true;
+        return false;
+      });
+
+      if (hasKeywordMatch) {
+        matchingIndices.push(index);
+      }
+    });
+
+    // If we have matches, highlight the entire range from first to last match
+    // This creates a continuous highlight instead of spotty highlighting
+    if (matchingIndices.length > 0) {
+      const firstIndex = Math.max(0, matchingIndices[0]);
+      const lastIndex = Math.min(spanArray.length - 1, matchingIndices[matchingIndices.length - 1]);
+
+      // Highlight all spans in the range
+      for (let i = firstIndex; i <= lastIndex; i++) {
+        spanArray[i].classList.add('pdf-text-highlight');
+      }
+    }
 
     // Scroll to first highlighted element
     const firstHighlight = textLayer.querySelector('.pdf-text-highlight');

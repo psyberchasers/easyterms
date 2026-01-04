@@ -72,6 +72,85 @@ function SidebarToggleButton() {
   );
 }
 
+interface DashboardHeaderProps {
+  pageTitle: string;
+  isContractsPage: boolean;
+  isUploadPage: boolean;
+  isAnalyzeDemoPage: boolean;
+  onSearchClick: () => void;
+  theme: string;
+  toggleTheme: () => void;
+}
+
+function DashboardHeader({
+  pageTitle,
+  isContractsPage,
+  isUploadPage,
+  isAnalyzeDemoPage,
+  onSearchClick,
+  theme,
+  toggleTheme,
+}: DashboardHeaderProps) {
+  const { state } = useSidebar();
+  const isCollapsed = state === "collapsed";
+
+  return (
+    <header
+      className="fixed top-0 right-0 z-50 flex h-12 items-center gap-2 border-b bg-background px-4 transition-[left] duration-200 ease-linear"
+      style={{
+        borderColor: '#e5e6e7',
+        left: isCollapsed ? '3rem' : '14rem'
+      }}
+    >
+      {isContractsPage && (
+        <HugeiconsIcon icon={ContractsIcon} size={16} style={{ color: '#565c65' }} />
+      )}
+      {isUploadPage && (
+        <HugeiconsIcon icon={FileUploadIcon} size={16} style={{ color: '#565c65' }} />
+      )}
+      {isAnalyzeDemoPage && (
+        <HugeiconsIcon icon={AiBrain02Icon} size={16} style={{ color: '#565c65' }} />
+      )}
+      <span className="text-sm font-medium" style={{ color: '#565c65' }}>{pageTitle}</span>
+      <div className="flex-1" />
+
+      {/* Actions */}
+      <SidebarToggleButton />
+      <button
+        onClick={onSearchClick}
+        className="h-8 px-3 flex items-center gap-2 border border-border hover:bg-muted transition-colors rounded-md text-[13px] font-medium"
+        style={{ color: '#565c65' }}
+      >
+        <HugeiconsIcon icon={AiSearch02Icon} size={14} />
+        <span>Search</span>
+      </button>
+      <Link href="/settings">
+        <button className="h-8 px-3 flex items-center gap-2 border border-border hover:bg-muted transition-colors rounded-md text-[13px] font-medium" style={{ color: '#565c65' }}>
+          <HugeiconsIcon icon={Settings03Icon} size={14} />
+          <span>Settings</span>
+        </button>
+      </Link>
+      <Link href="/dashboard/upload">
+        <button className="h-8 px-3 flex items-center gap-2 transition-colors rounded-md text-[13px] font-medium text-white" style={{ backgroundColor: '#8b5cf6' }}>
+          <HugeiconsIcon icon={FileUploadIcon} size={14} />
+          <span>Upload</span>
+        </button>
+      </Link>
+      <button
+        onClick={toggleTheme}
+        className="h-8 w-8 flex items-center justify-center border border-border hover:bg-muted transition-colors rounded-md"
+        title={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
+      >
+        {theme === "dark" ? (
+          <HugeiconsIcon icon={Sun01Icon} size={14} style={{ color: '#565c65' }} />
+        ) : (
+          <HugeiconsIcon icon={Moon02Icon} size={14} style={{ color: '#565c65' }} />
+        )}
+      </button>
+    </header>
+  );
+}
+
 export default function DashboardLayout({ children }: DashboardLayoutProps) {
   const pathname = usePathname();
   const { user, profile, loading: authLoading, signOut } = useAuth();
@@ -338,53 +417,15 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
 
       <SidebarInset className="flex flex-col min-h-screen" style={{ backgroundColor: '#ffffff' }}>
         {/* Top bar - FIXED */}
-        <header className="fixed top-0 right-0 z-50 flex h-12 items-center gap-2 border-b bg-background px-4" style={{ borderColor: '#e5e6e7', left: 'var(--sidebar-width)' }}>
-          {isContractsPage && (
-            <HugeiconsIcon icon={ContractsIcon} size={16} style={{ color: '#565c65' }} />
-          )}
-          {isUploadPage && (
-            <HugeiconsIcon icon={FileUploadIcon} size={16} style={{ color: '#565c65' }} />
-          )}
-          {isAnalyzeDemoPage && (
-            <HugeiconsIcon icon={AiBrain02Icon} size={16} style={{ color: '#565c65' }} />
-          )}
-          <span className="text-sm font-medium" style={{ color: '#565c65' }}>{pageTitle}</span>
-          <div className="flex-1" />
-
-          {/* Actions */}
-          <SidebarToggleButton />
-          <button
-            onClick={() => setCommandMenuOpen(true)}
-            className="h-8 px-3 flex items-center gap-2 border border-border hover:bg-muted transition-colors rounded-md text-[13px] font-medium"
-            style={{ color: '#565c65' }}
-          >
-            <HugeiconsIcon icon={AiSearch02Icon} size={14} />
-            <span>Search</span>
-          </button>
-          <Link href="/settings">
-            <button className="h-8 px-3 flex items-center gap-2 border border-border hover:bg-muted transition-colors rounded-md text-[13px] font-medium" style={{ color: '#565c65' }}>
-              <HugeiconsIcon icon={Settings03Icon} size={14} />
-              <span>Settings</span>
-            </button>
-          </Link>
-          <Link href="/dashboard/upload">
-            <button className="h-8 px-3 flex items-center gap-2 border border-border hover:bg-muted transition-colors rounded-md text-[13px] font-medium" style={{ color: '#565c65' }}>
-              <HugeiconsIcon icon={FileUploadIcon} size={14} />
-              <span>Upload</span>
-            </button>
-          </Link>
-          <button
-            onClick={toggleTheme}
-            className="h-8 w-8 flex items-center justify-center border border-border hover:bg-muted transition-colors rounded-md"
-            title={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
-          >
-            {theme === "dark" ? (
-              <HugeiconsIcon icon={Sun01Icon} size={14} style={{ color: '#565c65' }} />
-            ) : (
-              <HugeiconsIcon icon={Moon02Icon} size={14} style={{ color: '#565c65' }} />
-            )}
-          </button>
-        </header>
+        <DashboardHeader
+          pageTitle={pageTitle}
+          isContractsPage={isContractsPage}
+          isUploadPage={isUploadPage}
+          isAnalyzeDemoPage={isAnalyzeDemoPage}
+          onSearchClick={() => setCommandMenuOpen(true)}
+          theme={theme}
+          toggleTheme={toggleTheme}
+        />
 
         {/* Main content - offset for fixed header */}
         <main className="flex-1 overflow-auto pt-12">
