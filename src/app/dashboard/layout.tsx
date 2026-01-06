@@ -50,6 +50,7 @@ import {
   Moon02Icon,
   Sun01Icon,
   AiBrain02Icon,
+  BubbleChatIcon,
 } from "@hugeicons-pro/core-stroke-rounded";
 import { MusicLoader } from "@/components/MusicLoader";
 import { useTheme } from "@/components/providers/ThemeProvider";
@@ -89,11 +90,20 @@ function DashboardHeader({
 
   const isContractsPage = pathname.startsWith("/dashboard/contracts");
   const isUploadContractPage = pathname.startsWith("/dashboard/upload-contract");
+  const isChatPage = pathname.startsWith("/dashboard/chat");
   const isRecipientPage = pathname.includes("/recipient");
   const isSenderPage = pathname.includes("/sender");
 
   // Build page title with breadcrumb for recipient/sender
   const getHeaderContent = () => {
+    if (isChatPage) {
+      return (
+        <>
+          <HugeiconsIcon icon={BubbleChatIcon} size={16} className="text-muted-foreground" />
+          <span className="text-sm font-medium text-muted-foreground">Chat</span>
+        </>
+      );
+    }
     if (isUploadContractPage) {
       if (isRecipientPage) {
         return (
@@ -212,6 +222,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
 
   const mainNav = [
     { title: "Home", icon: Home01Icon, href: "/dashboard", disabled: false },
+    { title: "Chat", icon: BubbleChatIcon, href: "/dashboard/chat", disabled: false },
     { title: "Contracts", icon: ContractsIcon, href: "/dashboard/contracts", disabled: false },
     { title: "Upload Contract", icon: FileUploadIcon, href: "/dashboard/upload-contract", disabled: false },
     { title: "Templates", icon: GridViewIcon, href: "/dashboard/templates", disabled: false },
