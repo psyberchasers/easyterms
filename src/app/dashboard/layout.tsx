@@ -134,9 +134,9 @@ function DashboardHeader({
 
   return (
     <header
-      className="fixed top-0 right-0 z-50 flex h-12 items-center gap-2 border-b border-border bg-background px-4 transition-[left] duration-200 ease-linear"
+      className="fixed top-0 right-0 z-50 flex h-12 items-center gap-2 border-b border-border bg-background px-4 transition-[left] duration-400 ease-[cubic-bezier(0.75,0,0.25,1)]"
       style={{
-        left: isCollapsed ? '3rem' : '14rem'
+        left: isCollapsed ? 'var(--sidebar-width-icon, 3rem)' : 'var(--sidebar-width, 16rem)'
       }}
     >
       {getHeaderContent()}
@@ -223,7 +223,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
 
   return (
     <SidebarProvider defaultOpen={true}>
-      <Sidebar collapsible="icon" className="border-r border-border bg-sidebar">
+      <Sidebar collapsible="icon" className="border-border">
         {/* Header */}
         <div
           className="flex items-center px-3 border-b border-sidebar-border group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-2"
@@ -355,8 +355,8 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                 </DropdownMenuTrigger>
                 <DropdownMenuContent
                   className="w-[--radix-dropdown-menu-trigger-width] min-w-56 rounded-lg"
-                  side="bottom"
-                  align="end"
+                  side="top"
+                  align="start"
                   sideOffset={4}
                 >
                   <DropdownMenuItem className="p-0 font-normal">
