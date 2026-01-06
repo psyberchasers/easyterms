@@ -1,7 +1,7 @@
 "use client";
 
 import { ReactNode, useState, useEffect } from "react";
-import { usePathname, useSearchParams } from "next/navigation";
+import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/components/providers/AuthProvider";
 import {
@@ -85,24 +85,32 @@ function DashboardHeader({
   const { state } = useSidebar();
   const isCollapsed = state === "collapsed";
   const pathname = usePathname();
-  const searchParams = useSearchParams();
 
   const isContractsPage = pathname.startsWith("/dashboard/contracts");
-  const isUploadPage = pathname.startsWith("/dashboard/upload");
-  const isAnalyzeDemoPage = pathname.startsWith("/dashboard/analyze-demo");
+  const isUploadContractPage = pathname.startsWith("/dashboard/upload-contract");
+  const isRecipientPage = pathname.includes("/recipient");
+  const isSenderPage = pathname.includes("/sender");
 
-  const role = searchParams.get("role");
-
-  // Build page title with breadcrumb for recipient
+  // Build page title with breadcrumb for recipient/sender
   const getHeaderContent = () => {
-    if (isAnalyzeDemoPage) {
-      if (role === "recipient") {
+    if (isUploadContractPage) {
+      if (isRecipientPage) {
         return (
           <>
             <HugeiconsIcon icon={FileUploadIcon} size={16} className="text-muted-foreground" />
-            <Link href="/dashboard/analyze-demo" className="text-sm text-muted-foreground/60 hover:text-muted-foreground transition-colors">Upload Contract</Link>
+            <Link href="/dashboard/upload-contract" className="text-sm text-muted-foreground/60 hover:text-muted-foreground transition-colors">Upload Contract</Link>
             <span className="text-sm text-muted-foreground/60">/</span>
             <span className="text-sm font-medium text-muted-foreground">Recipient</span>
+          </>
+        );
+      }
+      if (isSenderPage) {
+        return (
+          <>
+            <HugeiconsIcon icon={FileUploadIcon} size={16} className="text-muted-foreground" />
+            <Link href="/dashboard/upload-contract" className="text-sm text-muted-foreground/60 hover:text-muted-foreground transition-colors">Upload Contract</Link>
+            <span className="text-sm text-muted-foreground/60">/</span>
+            <span className="text-sm font-medium text-muted-foreground">Sender</span>
           </>
         );
       }
@@ -118,14 +126,6 @@ function DashboardHeader({
         <>
           <HugeiconsIcon icon={ContractsIcon} size={16} className="text-muted-foreground" />
           <span className="text-sm font-medium text-muted-foreground">Contracts</span>
-        </>
-      );
-    }
-    if (isUploadPage) {
-      return (
-        <>
-          <HugeiconsIcon icon={FileUploadIcon} size={16} className="text-muted-foreground" />
-          <span className="text-sm font-medium text-muted-foreground">Upload</span>
         </>
       );
     }
@@ -157,7 +157,7 @@ function DashboardHeader({
           <span>Settings</span>
         </button>
       </Link>
-      <Link href="/dashboard/upload">
+      <Link href="/dashboard/upload-contract">
         <button className="h-8 px-3 flex items-center gap-2 transition-colors rounded-md text-[13px] font-medium text-white bg-purple-500 hover:bg-purple-600">
           <HugeiconsIcon icon={FileUploadIcon} size={14} />
           <span>Upload</span>
@@ -180,7 +180,6 @@ function DashboardHeader({
 
 export default function DashboardLayout({ children }: DashboardLayoutProps) {
   const pathname = usePathname();
-  const searchParams = useSearchParams();
   const { user, profile, loading: authLoading, signOut } = useAuth();
   const { theme, toggleTheme } = useTheme();
     const [commandMenuOpen, setCommandMenuOpen] = useState(false);
@@ -214,7 +213,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
 
   const workspaceItems = [
     { title: "Contracts", icon: ContractsIcon, href: "/dashboard/contracts" },
-    { title: "Upload Contract", icon: FileUploadIcon, href: "/dashboard/analyze-demo" },
+    { title: "Upload Contract", icon: FileUploadIcon, href: "/dashboard/upload-contract" },
     { title: "Projects", icon: Folder01Icon, href: "/dashboard/projects", hasDropdown: true },
     { title: "Templates", icon: GridViewIcon, href: "/dashboard/templates", hasDropdown: true },
     { title: "Documents", icon: File01Icon, href: "/dashboard/documents", hasAdd: true },

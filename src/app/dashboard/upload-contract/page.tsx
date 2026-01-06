@@ -64,7 +64,7 @@ import { FileUploadIcon, DocumentAttachmentIcon, PayByCheckIcon, ViewIcon } from
 import Lottie from "lottie-react";
 import loadMusicAnimation from "@/../public/loadmusic.json";
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import dynamic from "next/dynamic";
 import { FinancialCalculator } from "@/components/FinancialCalculator";
@@ -178,11 +178,13 @@ function highlightKeyValues(text: string, isSelected?: boolean): React.ReactNode
   });
 }
 
-export default function AnalyzeDemoPage() {
+export default function UploadContractPage() {
   const { user } = useAuth();
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const selectedRole = searchParams.get("role") as "recipient" | "sender" | null;
+  const pathname = usePathname();
+
+  // Get role from pathname: /dashboard/upload-contract/recipient or /dashboard/upload-contract/sender
+  const selectedRole = pathname.includes("/recipient") ? "recipient" : pathname.includes("/sender") ? "sender" : null;
 
   // Core state
   const [status, setStatus] = useState<AnalysisStatus>("idle");
@@ -592,7 +594,7 @@ export default function AnalyzeDemoPage() {
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.4, ease: [0.4, 0, 0.2, 1] }}
-            onClick={() => router.push("/dashboard/analyze-demo?role=recipient")}
+            onClick={() => router.push("/dashboard/upload-contract/recipient")}
             onMouseEnter={() => downloadIconRef.current?.startAnimation()}
             onMouseLeave={() => downloadIconRef.current?.stopAnimation()}
             className="flex-1 flex flex-col items-center justify-center cursor-pointer transition-all hover:bg-muted/50 border-r border-dashed border-foreground/10 group"
@@ -650,34 +652,22 @@ export default function AnalyzeDemoPage() {
 
     // Show upload zone for recipient
     return (
-      <AnimatePresence mode="wait">
-        <motion.div
-          key="idle-bg"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.3 }}
-          className="h-full flex flex-col bg-card"
-        >
-          {/* Upload Zone */}
-          <div className="flex-1 flex items-center justify-center p-8">
-            <motion.div
-              initial={{ opacity: 0, y: 0, scale: 0.95 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: 40, scale: 0.95 }}
-              transition={{ duration: 0.35, ease: [0.4, 0, 0.2, 1] }}
-              onDragOver={handleDragOver}
-              onDrop={handleDrop}
-              onClick={() => fileInputRef.current?.click()}
-              onMouseEnter={() => setIsHovering(true)}
-              onMouseLeave={() => setIsHovering(false)}
-              className="w-full max-w-4xl p-32 text-center transition-all cursor-pointer rounded-xl"
-              style={{
-                border: `1.5px dashed ${isHovering ? '#8b5cf6' : 'var(--border)'}`,
-                backgroundColor: isHovering ? 'rgba(139, 92, 246, 0.05)' : 'var(--card)',
-                transition: 'all 0.2s ease',
-              }}
-            >
+      <div className="h-full flex flex-col bg-background">
+        {/* Upload Zone */}
+        <div className="flex-1 flex items-center justify-center p-8">
+          <div
+            onDragOver={handleDragOver}
+            onDrop={handleDrop}
+            onClick={() => fileInputRef.current?.click()}
+            onMouseEnter={() => setIsHovering(true)}
+            onMouseLeave={() => setIsHovering(false)}
+            className="w-full max-w-4xl p-32 text-center transition-all cursor-pointer rounded-xl"
+            style={{
+              border: `1.5px dashed ${isHovering ? '#8b5cf6' : 'var(--border)'}`,
+              backgroundColor: isHovering ? 'rgba(139, 92, 246, 0.05)' : 'var(--background)',
+              transition: 'all 0.2s ease',
+            }}
+          >
               <input
                 ref={fileInputRef}
                 type="file"
@@ -715,10 +705,9 @@ export default function AnalyzeDemoPage() {
                   </p>
                 </div>
               </div>
-            </motion.div>
+            </div>
           </div>
-        </motion.div>
-      </AnimatePresence>
+        </div>
     );
   }
 
@@ -739,7 +728,7 @@ export default function AnalyzeDemoPage() {
         initial={{ opacity: 0, y: 40 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4, ease: [0.4, 0, 0.2, 1] }}
-        className="h-full flex flex-col items-center justify-center p-4 bg-card"
+        className="h-full flex flex-col items-center justify-center p-4 bg-background"
       >
         <div className="w-full max-w-sm space-y-8">
           {/* Music Loader - Purple tinted */}
@@ -803,24 +792,8 @@ export default function AnalyzeDemoPage() {
             </AnimatePresence>
           </div>
 
-          {/* Progress Bar - animated purple */}
+          {/* Step Pills */}
           <div className="space-y-4">
-            <div className="h-1.5 rounded-full overflow-hidden relative bg-border">
-              <motion.div
-                className="h-full rounded-full"
-                style={{ backgroundColor: '#8b5cf6' }}
-                initial={{ width: 0 }}
-                animate={{ width: `${((currentStep + 1) / steps.length) * 100}%` }}
-                transition={{ duration: 0.8, ease: "easeOut" }}
-              />
-              <motion.div
-                className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent"
-                animate={{ x: ['-100%', '200%'] }}
-                transition={{ duration: 1.5, repeat: Infinity, ease: 'linear' }}
-              />
-            </div>
-
-            {/* Step Pills */}
             <div className="flex items-center justify-center gap-2">
               {steps.map((step, i) => (
                 <div
@@ -1651,7 +1624,7 @@ export default function AnalyzeDemoPage() {
                   <button
                     onClick={() => versionInputRef.current?.click()}
                     disabled={uploadingVersion}
-                    className="h-7 px-2.5 text-xs text-muted-foreground hover:text-foreground border border-border hover:border-[#404040] flex items-center gap-1.5 transition-colors disabled:opacity-50"
+                    className="h-7 px-3 text-xs text-muted-foreground hover:text-foreground border border-border hover:border-purple-400/60 rounded-md flex items-center gap-1.5 transition-colors disabled:opacity-50"
                   >
                     {uploadingVersion ? (
                       <Loader2 className="w-3 h-3 animate-spin" />
@@ -1687,12 +1660,9 @@ export default function AnalyzeDemoPage() {
                           <span className="text-[8px] font-bold">{version.version_number + 1}</span>
                         </div>
 
-                        <div className={cn(
-                          "border border-border p-3 rounded-lg",
-                          i === 0 && "border-[#404040]"
-                        )}>
+                        <div className="p-3 rounded-lg">
                           <div className="flex items-center justify-between mb-2">
-                            <span className="text-[10px] text-muted-foreground px-1.5 py-0.5 border border-border">
+                            <span className="text-[10px] text-muted-foreground px-2 py-0.5 border border-border rounded-full">
                               Version {version.version_number + 1}
                             </span>
                             <span className="text-[10px] text-muted-foreground/60">

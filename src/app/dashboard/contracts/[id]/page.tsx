@@ -955,7 +955,7 @@ export default function ContractDetailPage() {
             <TabsContent value="versions" className="space-y-2">
               <div className="flex items-center justify-between mb-3">
                 <h4 className="text-xs font-medium text-foreground">Version History</h4>
-                <button onClick={() => versionInputRef.current?.click()} disabled={uploadingVersion} className="h-7 px-2.5 text-xs text-muted-foreground hover:text-foreground border border-border hover:border-[#404040] flex items-center gap-1.5 transition-colors disabled:opacity-50">
+                <button onClick={() => versionInputRef.current?.click()} disabled={uploadingVersion} className="h-7 px-3 text-xs text-muted-foreground hover:text-foreground border border-border hover:border-purple-400/60 rounded-md flex items-center gap-1.5 transition-colors disabled:opacity-50">
                   {uploadingVersion ? <Loader2 className="w-3 h-3 animate-spin" /> : <Upload className="w-3 h-3" />}
                   Upload New Version
                 </button>
@@ -976,9 +976,9 @@ export default function ContractDetailPage() {
                       <div className={cn("absolute left-1.5 w-4 h-4 flex items-center justify-center", i === 0 ? "bg-foreground text-background" : "bg-muted border border-border text-muted-foreground")}>
                         <span className="text-[8px] font-bold">{version.version_number + 1}</span>
                       </div>
-                      <div className={cn("border border-border p-3 rounded-lg", i === 0 && "border-[#404040]")}>
+                      <div className="p-3 rounded-lg">
                         <div className="flex items-center justify-between mb-2">
-                          <span className="text-[10px] text-muted-foreground px-1.5 py-0.5 border border-border">Version {version.version_number + 1}</span>
+                          <span className="text-[10px] text-muted-foreground px-2 py-0.5 border border-border rounded-full">Version {version.version_number + 1}</span>
                           <span className="text-[10px] text-muted-foreground/60">{new Date(version.created_at).toLocaleDateString()}</span>
                         </div>
                         <p className="text-xs text-muted-foreground mb-2">{version.changes_summary}</p>
