@@ -22,13 +22,12 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
   LogOut,
-  MoreHorizontal,
-  User,
-  Settings,
+  ChevronsUpDown,
 } from "lucide-react";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
@@ -332,80 +331,67 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
         </SidebarContent>
 
         {/* Footer */}
-        <SidebarFooter className="p-2 mb-24 border-t border-sidebar-border">
-          <SidebarMenu className="gap-0.5">
-            <SidebarMenuItem>
-              <SidebarMenuButton
-                tooltip="Appearance"
-                onClick={toggleTheme}
-                className="h-auto py-1.5 px-3 text-[13px] font-medium text-sidebar-foreground"
-              >
-                {theme === "dark" ? (
-                  <HugeiconsIcon icon={Sun01Icon} size={16} />
-                ) : (
-                  <HugeiconsIcon icon={Moon02Icon} size={16} />
-                )}
-                <span>Appearance</span>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-            <SidebarMenuItem>
-              <SidebarMenuButton
-                asChild
-                tooltip="Settings"
-                className="h-auto py-1.5 px-3 text-[13px] font-medium text-sidebar-foreground"
-              >
-                <Link href="/settings">
-                  <HugeiconsIcon icon={Settings02Icon} size={16} />
-                  <span>Settings</span>
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-            <SidebarMenuItem>
-              <SidebarMenuButton
-                asChild
-                tooltip="Profile"
-                className="h-auto py-1.5 px-3 text-[13px] font-medium text-sidebar-foreground"
-              >
-                <Link href="/profile">
-                  <User className="w-4 h-4" />
-                  <span>Profile</span>
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-
-            {/* User */}
+        <SidebarFooter>
+          <SidebarMenu>
             <SidebarMenuItem>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <SidebarMenuButton
-                    tooltip={profile?.full_name || "User"}
-                    className="h-auto py-1.5 px-3 text-[13px] font-medium text-sidebar-foreground"
+                    size="lg"
+                    className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
                   >
                     <div
-                      className="w-5 h-5 rounded-md flex items-center justify-center text-[10px] font-medium text-white shrink-0"
+                      className="h-8 w-8 rounded-lg flex items-center justify-center text-sm font-semibold text-white shrink-0"
                       style={{ background: 'linear-gradient(135deg, #f97316 0%, #ec4899 100%)' }}
                     >
-                      {profile?.full_name?.charAt(0) || user?.email?.charAt(0) || "U"}
+                      {profile?.full_name?.substring(0, 2).toUpperCase() || user?.email?.substring(0, 2).toUpperCase() || "US"}
                     </div>
-                    <span className="flex-1 text-left font-medium truncate text-sidebar-foreground">
-                      {profile?.full_name || "User"}
-                    </span>
-                    <MoreHorizontal className="w-3.5 h-3.5 text-sidebar-foreground group-data-[collapsible=icon]:hidden" />
+                    <div className="grid flex-1 text-left text-sm leading-tight">
+                      <span className="truncate font-semibold">{profile?.full_name || "User"}</span>
+                      <span className="truncate text-xs text-muted-foreground">{user?.email || "user@example.com"}</span>
+                    </div>
+                    <ChevronsUpDown className="ml-auto size-4" />
                   </SidebarMenuButton>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent side="top" align="start" className="w-56 rounded-lg">
+                <DropdownMenuContent
+                  className="w-[--radix-dropdown-menu-trigger-width] min-w-56 rounded-lg"
+                  side="bottom"
+                  align="end"
+                  sideOffset={4}
+                >
+                  <DropdownMenuItem className="p-0 font-normal">
+                    <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
+                      <div
+                        className="h-8 w-8 rounded-lg flex items-center justify-center text-sm font-semibold text-white shrink-0"
+                        style={{ background: 'linear-gradient(135deg, #f97316 0%, #ec4899 100%)' }}
+                      >
+                        {profile?.full_name?.substring(0, 2).toUpperCase() || user?.email?.substring(0, 2).toUpperCase() || "US"}
+                      </div>
+                      <div className="grid flex-1 text-left text-sm leading-tight">
+                        <span className="truncate font-semibold">{profile?.full_name || "User"}</span>
+                        <span className="truncate text-xs text-muted-foreground">{user?.email || "user@example.com"}</span>
+                      </div>
+                    </div>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={toggleTheme}>
+                    {theme === "dark" ? (
+                      <HugeiconsIcon icon={Sun01Icon} size={16} className="mr-2" />
+                    ) : (
+                      <HugeiconsIcon icon={Moon02Icon} size={16} className="mr-2" />
+                    )}
+                    Appearance
+                  </DropdownMenuItem>
                   <DropdownMenuItem asChild>
-                    <Link href="/settings" className="cursor-pointer">
-                      <Settings className="w-4 h-4 mr-2" />
+                    <Link href="/settings">
+                      <HugeiconsIcon icon={Settings02Icon} size={16} className="mr-2" />
                       Settings
                     </Link>
                   </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onClick={() => signOut()}
-                    className="text-red-500 cursor-pointer"
-                  >
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => signOut()}>
                     <LogOut className="w-4 h-4 mr-2" />
-                    Sign out
+                    Log out
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
