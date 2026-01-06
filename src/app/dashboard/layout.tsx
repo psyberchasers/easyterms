@@ -17,7 +17,7 @@ import {
   SidebarGroupLabel,
   SidebarGroupContent,
   useSidebar,
-} from "@/components/ui/sidebar";
+} from "@/components/animate-ui/components/radix/sidebar";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -68,7 +68,7 @@ function SidebarToggleButton() {
       onClick={toggleSidebar}
       className="h-8 w-8 flex items-center justify-center border border-border hover:bg-muted transition-colors rounded-md"
     >
-      <HugeiconsIcon icon={PanelRightIcon} size={14} style={{ color: '#565c65' }} />
+      <HugeiconsIcon icon={PanelRightIcon} size={14} className="text-muted-foreground" />
     </button>
   );
 }
@@ -101,37 +101,37 @@ function DashboardHeader({
       if (role === "recipient") {
         return (
           <>
-            <HugeiconsIcon icon={FileUploadIcon} size={16} style={{ color: '#565c65' }} />
-            <Link href="/dashboard/analyze-demo" className="text-sm hover:text-neutral-600 transition-colors" style={{ color: '#9ca3af' }}>Upload Contract</Link>
-            <span className="text-sm" style={{ color: '#9ca3af' }}>/</span>
-            <span className="text-sm font-medium" style={{ color: '#565c65' }}>Recipient</span>
+            <HugeiconsIcon icon={FileUploadIcon} size={16} className="text-muted-foreground" />
+            <Link href="/dashboard/analyze-demo" className="text-sm text-muted-foreground/60 hover:text-muted-foreground transition-colors">Upload Contract</Link>
+            <span className="text-sm text-muted-foreground/60">/</span>
+            <span className="text-sm font-medium text-muted-foreground">Recipient</span>
           </>
         );
       }
       return (
         <>
-          <HugeiconsIcon icon={FileUploadIcon} size={16} style={{ color: '#565c65' }} />
-          <span className="text-sm font-medium" style={{ color: '#565c65' }}>Upload Contract</span>
+          <HugeiconsIcon icon={FileUploadIcon} size={16} className="text-muted-foreground" />
+          <span className="text-sm font-medium text-muted-foreground">Upload Contract</span>
         </>
       );
     }
     if (isContractsPage) {
       return (
         <>
-          <HugeiconsIcon icon={ContractsIcon} size={16} style={{ color: '#565c65' }} />
-          <span className="text-sm font-medium" style={{ color: '#565c65' }}>Contracts</span>
+          <HugeiconsIcon icon={ContractsIcon} size={16} className="text-muted-foreground" />
+          <span className="text-sm font-medium text-muted-foreground">Contracts</span>
         </>
       );
     }
     if (isUploadPage) {
       return (
         <>
-          <HugeiconsIcon icon={FileUploadIcon} size={16} style={{ color: '#565c65' }} />
-          <span className="text-sm font-medium" style={{ color: '#565c65' }}>Upload</span>
+          <HugeiconsIcon icon={FileUploadIcon} size={16} className="text-muted-foreground" />
+          <span className="text-sm font-medium text-muted-foreground">Upload</span>
         </>
       );
     }
-    return <span className="text-sm font-medium" style={{ color: '#565c65' }}>Dashboard</span>;
+    return <span className="text-sm font-medium text-muted-foreground">Dashboard</span>;
   };
 
   return (
@@ -148,20 +148,19 @@ function DashboardHeader({
       <SidebarToggleButton />
       <button
         onClick={onSearchClick}
-        className="h-8 px-3 flex items-center gap-2 border border-border hover:bg-muted transition-colors rounded-md text-[13px] font-medium"
-        style={{ color: '#565c65' }}
+        className="h-8 px-3 flex items-center gap-2 border border-border hover:bg-muted transition-colors rounded-md text-[13px] font-medium text-muted-foreground"
       >
         <HugeiconsIcon icon={AiSearch02Icon} size={14} />
         <span>Search</span>
       </button>
       <Link href="/settings">
-        <button className="h-8 px-3 flex items-center gap-2 border border-border hover:bg-muted transition-colors rounded-md text-[13px] font-medium" style={{ color: '#565c65' }}>
+        <button className="h-8 px-3 flex items-center gap-2 border border-border hover:bg-muted transition-colors rounded-md text-[13px] font-medium text-muted-foreground">
           <HugeiconsIcon icon={Settings03Icon} size={14} />
           <span>Settings</span>
         </button>
       </Link>
       <Link href="/dashboard/upload">
-        <button className="h-8 px-3 flex items-center gap-2 transition-colors rounded-md text-[13px] font-medium text-white" style={{ backgroundColor: '#8b5cf6' }}>
+        <button className="h-8 px-3 flex items-center gap-2 transition-colors rounded-md text-[13px] font-medium text-white bg-purple-500 hover:bg-purple-600">
           <HugeiconsIcon icon={FileUploadIcon} size={14} />
           <span>Upload</span>
         </button>
@@ -172,9 +171,9 @@ function DashboardHeader({
         title={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
       >
         {theme === "dark" ? (
-          <HugeiconsIcon icon={Sun01Icon} size={14} style={{ color: '#565c65' }} />
+          <HugeiconsIcon icon={Sun01Icon} size={14} className="text-muted-foreground" />
         ) : (
-          <HugeiconsIcon icon={Moon02Icon} size={14} style={{ color: '#565c65' }} />
+          <HugeiconsIcon icon={Moon02Icon} size={14} className="text-muted-foreground" />
         )}
       </button>
     </header>
@@ -229,7 +228,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
       <Sidebar collapsible="icon" className="border-r border-border bg-sidebar">
         {/* Header */}
         <div
-          className="flex items-center px-3 border-b border-border group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-2"
+          className="flex items-center px-3 border-b border-sidebar-border group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-2"
           style={{ height: '48px' }}
         >
           <div className="flex items-center gap-2">
@@ -243,7 +242,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
 
         {/* Search */}
         <div className="px-3 py-3 group-data-[collapsible=icon]:px-2 group-data-[collapsible=icon]:py-2">
-          <button className="w-full flex items-center gap-2 px-2.5 py-1.5 text-[13px] hover:bg-muted/50 transition-colors rounded-lg border border-border group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0 group-data-[collapsible=icon]:border-0 text-muted-foreground">
+          <button className="w-full flex items-center gap-2 px-2.5 py-1.5 text-[13px] hover:bg-sidebar-accent/50 transition-colors rounded-lg border border-sidebar-border group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0 group-data-[collapsible=icon]:border-0 text-sidebar-foreground/70">
             <HugeiconsIcon icon={AiSearch02Icon} size={14} className="shrink-0" />
             <span className="group-data-[collapsible=icon]:hidden">Search</span>
             <kbd className="ml-auto text-[11px] opacity-50 group-data-[collapsible=icon]:hidden">⌘K</kbd>
@@ -263,10 +262,9 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                       isActive={isActive}
                       tooltip={item.title}
                       className={cn(
-                        "h-auto py-1.5 px-3 text-[13px] font-medium",
-                        isActive ? "bg-white" : "hover:bg-white/50"
+                        "h-auto py-1.5 px-3 text-[13px] font-medium text-sidebar-foreground",
+                        isActive ? "bg-sidebar-accent" : "hover:bg-sidebar-accent/50"
                       )}
-                      style={{ color: '#565c65' }}
                     >
                       <Link href={item.href}>
                         <HugeiconsIcon icon={item.icon} size={16} />
@@ -283,13 +281,12 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
           </SidebarGroup>
 
           {/* Divider */}
-          <div className="h-px mb-4 -mx-2 group-data-[collapsible=icon]:hidden bg-border" />
+          <div className="h-px mb-4 -mx-2 group-data-[collapsible=icon]:hidden bg-sidebar-border" />
 
           {/* Workspace Section */}
           <SidebarGroup className="p-0 pb-4">
             <SidebarGroupLabel
-              className="h-auto py-1.5 px-3 text-[11px] font-medium uppercase tracking-wider"
-              style={{ color: '#565c65' }}
+              className="h-auto py-1.5 px-3 text-[11px] font-medium uppercase tracking-wider text-sidebar-foreground/70"
             >
               Workspace
             </SidebarGroupLabel>
@@ -304,10 +301,9 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                         isActive={isActive}
                         tooltip={item.title}
                         className={cn(
-                          "h-auto py-1.5 px-3 text-[13px] font-medium",
-                          isActive ? "bg-white" : "hover:bg-white/50"
+                          "h-auto py-1.5 px-3 text-[13px] font-medium text-sidebar-foreground",
+                          isActive ? "bg-sidebar-accent" : "hover:bg-sidebar-accent/50"
                         )}
-                        style={{ color: '#565c65' }}
                       >
                         <Link href={item.href}>
                           <HugeiconsIcon icon={item.icon} size={16} />
@@ -325,18 +321,17 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
           </SidebarGroup>
 
           {/* Divider */}
-          <div className="h-px mb-4 -mx-2 group-data-[collapsible=icon]:hidden bg-border" />
+          <div className="h-px mb-4 -mx-2 group-data-[collapsible=icon]:hidden bg-sidebar-border" />
 
           {/* Contracts Section */}
           <SidebarGroup className="p-0 pb-4">
             <SidebarGroupLabel
-              className="h-auto py-1.5 px-3 text-[11px] font-medium uppercase tracking-wider"
-              style={{ color: '#565c65' }}
+              className="h-auto py-1.5 px-3 text-[11px] font-medium uppercase tracking-wider text-sidebar-foreground/70"
             >
               Contracts
             </SidebarGroupLabel>
             <SidebarGroupContent>
-              <p className="px-3 py-2 text-[11px] group-data-[collapsible=icon]:hidden" style={{ color: '#565c65', opacity: 0.6 }}>
+              <p className="px-3 py-2 text-[11px] text-sidebar-foreground/50 group-data-[collapsible=icon]:hidden">
                 Your contracts will appear here
               </p>
             </SidebarGroupContent>
@@ -344,14 +339,13 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
         </SidebarContent>
 
         {/* Footer */}
-        <SidebarFooter className="p-2 mb-24 border-t border-border">
+        <SidebarFooter className="p-2 mb-24 border-t border-sidebar-border">
           <SidebarMenu className="gap-0.5">
             <SidebarMenuItem>
               <SidebarMenuButton
                 tooltip="Appearance"
                 onClick={toggleTheme}
-                className="h-auto py-1.5 px-3 text-[13px] font-medium hover:bg-white/50"
-                style={{ color: '#565c65' }}
+                className="h-auto py-1.5 px-3 text-[13px] font-medium text-sidebar-foreground hover:bg-sidebar-accent/50"
               >
                 {theme === "dark" ? (
                   <HugeiconsIcon icon={Sun01Icon} size={16} />
@@ -365,8 +359,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
               <SidebarMenuButton
                 asChild
                 tooltip="Settings"
-                className="h-auto py-1.5 px-3 text-[13px] font-medium hover:bg-white/50"
-                style={{ color: '#565c65' }}
+                className="h-auto py-1.5 px-3 text-[13px] font-medium text-sidebar-foreground hover:bg-sidebar-accent/50"
               >
                 <Link href="/settings">
                   <HugeiconsIcon icon={Settings02Icon} size={16} />
@@ -378,8 +371,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
               <SidebarMenuButton
                 asChild
                 tooltip="Profile"
-                className="h-auto py-1.5 px-3 text-[13px] font-medium hover:bg-white/50"
-                style={{ color: '#565c65' }}
+                className="h-auto py-1.5 px-3 text-[13px] font-medium text-sidebar-foreground hover:bg-sidebar-accent/50"
               >
                 <Link href="/profile">
                   <User className="w-4 h-4" />
@@ -394,7 +386,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                 <DropdownMenuTrigger asChild>
                   <SidebarMenuButton
                     tooltip={profile?.full_name || "User"}
-                    className="h-auto py-1.5 px-3 text-[13px] font-medium hover:bg-white/50"
+                    className="h-auto py-1.5 px-3 text-[13px] font-medium text-sidebar-foreground hover:bg-sidebar-accent/50"
                   >
                     <div
                       className="w-5 h-5 rounded-md flex items-center justify-center text-[10px] font-medium text-white shrink-0"
@@ -402,10 +394,10 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                     >
                       {profile?.full_name?.charAt(0) || user?.email?.charAt(0) || "U"}
                     </div>
-                    <span className="flex-1 text-left font-medium truncate" style={{ color: '#565c65' }}>
+                    <span className="flex-1 text-left font-medium truncate text-sidebar-foreground">
                       {profile?.full_name || "User"}
                     </span>
-                    <MoreHorizontal className="w-3.5 h-3.5 group-data-[collapsible=icon]:hidden" style={{ color: '#565c65' }} />
+                    <MoreHorizontal className="w-3.5 h-3.5 text-sidebar-foreground group-data-[collapsible=icon]:hidden" />
                   </SidebarMenuButton>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent side="top" align="start" className="w-56 rounded-lg">
@@ -429,7 +421,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
         </SidebarFooter>
       </Sidebar>
 
-      <SidebarInset className="flex flex-col min-h-screen" style={{ backgroundColor: '#ffffff' }}>
+      <SidebarInset className="flex flex-col min-h-screen bg-background">
         {/* Top bar - FIXED */}
         <DashboardHeader
           onSearchClick={() => setCommandMenuOpen(true)}
