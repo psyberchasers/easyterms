@@ -52,7 +52,6 @@ import {
   Sun01Icon,
   AiBrain02Icon,
 } from "@hugeicons-pro/core-stroke-rounded";
-import { cn } from "@/lib/utils";
 import { MusicLoader } from "@/components/MusicLoader";
 import { useTheme } from "@/components/providers/ThemeProvider";
 import { CommandMenu } from "@/components/CommandMenu";
@@ -261,10 +260,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                       asChild
                       isActive={isActive}
                       tooltip={item.title}
-                      className={cn(
-                        "h-auto py-1.5 px-3 text-[13px] font-medium text-sidebar-foreground",
-                        isActive ? "bg-sidebar-accent" : "hover:bg-sidebar-accent/50"
-                      )}
+                      className="h-auto py-1.5 px-3 text-[13px] font-medium text-sidebar-foreground"
                     >
                       <Link href={item.href}>
                         <HugeiconsIcon icon={item.icon} size={16} />
@@ -300,10 +296,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                         asChild
                         isActive={isActive}
                         tooltip={item.title}
-                        className={cn(
-                          "h-auto py-1.5 px-3 text-[13px] font-medium text-sidebar-foreground",
-                          isActive ? "bg-sidebar-accent" : "hover:bg-sidebar-accent/50"
-                        )}
+                        className="h-auto py-1.5 px-3 text-[13px] font-medium text-sidebar-foreground"
                       >
                         <Link href={item.href}>
                           <HugeiconsIcon icon={item.icon} size={16} />
@@ -345,7 +338,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
               <SidebarMenuButton
                 tooltip="Appearance"
                 onClick={toggleTheme}
-                className="h-auto py-1.5 px-3 text-[13px] font-medium text-sidebar-foreground hover:bg-sidebar-accent/50"
+                className="h-auto py-1.5 px-3 text-[13px] font-medium text-sidebar-foreground"
               >
                 {theme === "dark" ? (
                   <HugeiconsIcon icon={Sun01Icon} size={16} />
@@ -359,7 +352,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
               <SidebarMenuButton
                 asChild
                 tooltip="Settings"
-                className="h-auto py-1.5 px-3 text-[13px] font-medium text-sidebar-foreground hover:bg-sidebar-accent/50"
+                className="h-auto py-1.5 px-3 text-[13px] font-medium text-sidebar-foreground"
               >
                 <Link href="/settings">
                   <HugeiconsIcon icon={Settings02Icon} size={16} />
@@ -371,7 +364,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
               <SidebarMenuButton
                 asChild
                 tooltip="Profile"
-                className="h-auto py-1.5 px-3 text-[13px] font-medium text-sidebar-foreground hover:bg-sidebar-accent/50"
+                className="h-auto py-1.5 px-3 text-[13px] font-medium text-sidebar-foreground"
               >
                 <Link href="/profile">
                   <User className="w-4 h-4" />
@@ -386,7 +379,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                 <DropdownMenuTrigger asChild>
                   <SidebarMenuButton
                     tooltip={profile?.full_name || "User"}
-                    className="h-auto py-1.5 px-3 text-[13px] font-medium text-sidebar-foreground hover:bg-sidebar-accent/50"
+                    className="h-auto py-1.5 px-3 text-[13px] font-medium text-sidebar-foreground"
                   >
                     <div
                       className="w-5 h-5 rounded-md flex items-center justify-center text-[10px] font-medium text-white shrink-0"
