@@ -294,7 +294,10 @@ export const getOutputSchema = (industry: IndustryType): string => {
       "advice": "Specific actionable recommendation",
       "rationale": "Why this matters for this contract, citing industry standards",
       "priority": "high|medium|low",
-      "howToImplement": "Concrete steps to take"
+      "howToImplement": "Concrete steps to take",
+      "sampleLanguage": "Suggested contract language to propose as alternative wording",
+      "riskIfIgnored": "What negative outcome could happen if this is not addressed",
+      "negotiationQuestions": ["Question to ask the other party", "Another question to raise in negotiation"]
     }
   ],
   "overallRiskAssessment": "high|medium|low",

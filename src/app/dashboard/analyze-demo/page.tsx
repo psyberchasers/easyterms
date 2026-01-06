@@ -64,10 +64,13 @@ import { FileUploadIcon, DocumentAttachmentIcon, PayByCheckIcon, ViewIcon } from
 import Lottie from "lottie-react";
 import loadMusicAnimation from "@/../public/loadmusic.json";
 import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
 import { cn } from "@/lib/utils";
 import dynamic from "next/dynamic";
 import { FinancialCalculator } from "@/components/FinancialCalculator";
 import { MusicLoader } from "@/components/MusicLoader";
+import { DownloadIcon as AnimatedDownloadIcon, DownloadHandle } from "@/components/DownloadIcon";
+import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "@/components/animate-ui/components/animate/tooltip";
 
 // Dynamically import components
 const PDFViewerWithSearch = dynamic(() => import("@/components/PDFViewerWithSearch").then((mod) => mod.PDFViewerWithSearch), {
@@ -156,11 +159,10 @@ function highlightKeyValues(text: string, isSelected?: boolean): React.ReactNode
       return (
         <span
           key={i}
-          className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium mx-0.5"
+          className="font-medium uppercase"
           style={{
-            backgroundColor: isSelected ? 'rgba(168, 85, 247, 0.15)' : 'rgba(0, 0, 0, 0.06)',
-            color: isSelected ? '#a855f7' : '#202020',
-            transition: 'all 0.3s ease'
+            color: isSelected ? '#a855f7' : 'var(--foreground)',
+            transition: 'color 0.3s ease'
           }}
         >
           {part}
@@ -169,7 +171,7 @@ function highlightKeyValues(text: string, isSelected?: boolean): React.ReactNode
     }
 
     return (
-      <span key={i} style={{ color: '#565c65' }}>
+      <span key={i} style={{ color: 'var(--muted-foreground)' }}>
         {part}
       </span>
     );
@@ -178,6 +180,9 @@ function highlightKeyValues(text: string, isSelected?: boolean): React.ReactNode
 
 export default function AnalyzeDemoPage() {
   const { user } = useAuth();
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const selectedRole = searchParams.get("role") as "recipient" | "sender" | null;
 
   // Core state
   const [status, setStatus] = useState<AnalysisStatus>("idle");
@@ -257,6 +262,7 @@ export default function AnalyzeDemoPage() {
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const versionInputRef = useRef<HTMLInputElement>(null);
+  const downloadIconRef = useRef<DownloadHandle>(null);
 
   // Handle file selection
   const handleFileSelect = useCallback(async (file: File) => {
@@ -574,9 +580,75 @@ export default function AnalyzeDemoPage() {
   );
 
   // ============================================
-  // IDLE STATE - Upload Modal (Centered card design)
+  // IDLE STATE - Role Selection or Upload
   // ============================================
   if (status === "idle") {
+    // Show role selection if no role selected yet
+    if (!selectedRole) {
+      return (
+        <div className="h-full flex bg-card">
+          {/* Recipient Side */}
+          <motion.div
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.4, ease: [0.4, 0, 0.2, 1] }}
+            onClick={() => router.push("/dashboard/analyze-demo?role=recipient")}
+            onMouseEnter={() => downloadIconRef.current?.startAnimation()}
+            onMouseLeave={() => downloadIconRef.current?.stopAnimation()}
+            className="flex-1 flex flex-col items-center justify-center cursor-pointer transition-all hover:bg-muted/50 border-r border-dashed border-foreground/10 group"
+          >
+            <div className="flex flex-col items-center gap-6 max-w-sm text-center">
+              <div className="w-20 h-20 rounded-2xl bg-purple-500/10 flex items-center justify-center group-hover:bg-purple-500/20 transition-colors">
+                <AnimatedDownloadIcon ref={downloadIconRef} size={40} className="text-purple-500" />
+              </div>
+              <div className="space-y-2">
+                <h2 className="text-xl font-semibold text-foreground">I received a contract</h2>
+                <p className="text-sm text-muted-foreground">
+                  Upload a contract you&apos;ve received to analyze terms, identify risks, and get recommendations
+                </p>
+              </div>
+              <div className="flex items-center gap-2 text-purple-500 font-medium text-sm group-hover:gap-3 transition-all">
+                <span>Get started</span>
+                <ChevronRight className="w-4 h-4" />
+              </div>
+            </div>
+          </motion.div>
+
+          {/* Sender Side */}
+          <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.4, ease: [0.4, 0, 0.2, 1], delay: 0.1 }}
+            className="flex-1 flex flex-col items-center justify-center bg-muted/30 cursor-not-allowed relative overflow-hidden"
+          >
+            {/* Coming Soon Overlay */}
+            <div className="absolute inset-0 bg-card/60 backdrop-blur-[1px] z-10 flex items-center justify-center">
+              <span className="px-3 py-1.5 bg-foreground text-background text-xs font-medium rounded-full">
+                Coming Soon
+              </span>
+            </div>
+
+            <div className="flex flex-col items-center gap-6 max-w-sm text-center opacity-50">
+              <div className="w-20 h-20 rounded-2xl bg-muted flex items-center justify-center">
+                <Upload className="w-10 h-10 text-muted-foreground" />
+              </div>
+              <div className="space-y-2">
+                <h2 className="text-xl font-semibold text-foreground">I&apos;m sending a contract</h2>
+                <p className="text-sm text-muted-foreground">
+                  Create and send contracts with built-in tracking, e-signatures, and analytics
+                </p>
+              </div>
+              <div className="flex items-center gap-2 text-muted-foreground font-medium text-sm">
+                <span>Get started</span>
+                <ChevronRight className="w-4 h-4" />
+              </div>
+            </div>
+          </motion.div>
+        </div>
+      );
+    }
+
+    // Show upload zone for recipient
     return (
       <AnimatePresence mode="wait">
         <motion.div
@@ -585,42 +657,24 @@ export default function AnalyzeDemoPage() {
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.3 }}
-          className="h-full flex items-center justify-center p-8 overflow-hidden"
-          style={{
-            backgroundColor: '#fcfcfc',
-            backgroundImage: 'radial-gradient(circle, #d1d5db 1px, transparent 1px)',
-            backgroundSize: '24px 24px'
-          }}
+          className="h-full flex flex-col bg-card"
         >
-          {/* Modal Card */}
-          <motion.div
-            initial={{ opacity: 0, y: 0, scale: 0.95 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 40, scale: 0.95 }}
-            transition={{ duration: 0.35, ease: [0.4, 0, 0.2, 1] }}
-            className="w-full max-w-lg bg-white rounded-2xl shadow-xl overflow-hidden"
-          >
-          {/* Header */}
-          <div className="px-5 py-3 border-b border-border">
-            <div className="flex items-center gap-2">
-              <HugeiconsIcon icon={FileUploadDuotoneIcon} size={16} className="text-muted-foreground" />
-              <h2 className="text-sm font-medium text-foreground">Upload Contract</h2>
-            </div>
-            <p className="text-xs text-muted-foreground mt-0.5">Analyze your music contract with AI</p>
-          </div>
-
           {/* Upload Zone */}
-          <div className="p-6">
-            <div
+          <div className="flex-1 flex items-center justify-center p-8">
+            <motion.div
+              initial={{ opacity: 0, y: 0, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 40, scale: 0.95 }}
+              transition={{ duration: 0.35, ease: [0.4, 0, 0.2, 1] }}
               onDragOver={handleDragOver}
               onDrop={handleDrop}
               onClick={() => fileInputRef.current?.click()}
               onMouseEnter={() => setIsHovering(true)}
               onMouseLeave={() => setIsHovering(false)}
-              className="relative rounded-xl p-10 text-center transition-all cursor-pointer"
+              className="w-full max-w-4xl p-32 text-center transition-all cursor-pointer rounded-xl"
               style={{
-                border: `2px dashed ${isHovering ? '#8b5cf6' : '#d1d5db'}`,
-                backgroundColor: isHovering ? '#faf5ff' : '#fafafa',
+                border: `1.5px dashed ${isHovering ? '#8b5cf6' : 'var(--border)'}`,
+                backgroundColor: isHovering ? 'rgba(139, 92, 246, 0.05)' : 'var(--card)',
                 transition: 'all 0.2s ease',
               }}
             >
@@ -635,14 +689,14 @@ export default function AnalyzeDemoPage() {
                 <div
                   className="w-14 h-14 rounded-full flex items-center justify-center transition-all"
                   style={{
-                    backgroundColor: isHovering ? '#ede9fe' : '#f3f4f6',
+                    backgroundColor: isHovering ? 'rgba(139, 92, 246, 0.15)' : 'var(--muted)',
                   }}
                 >
                   <HugeiconsIcon
                     icon={FileUploadIcon}
                     size={28}
                     style={{
-                      color: isHovering ? '#8b5cf6' : '#9ca3af',
+                      color: isHovering ? '#8b5cf6' : 'var(--muted-foreground)',
                       transition: 'color 0.2s ease'
                     }}
                   />
@@ -661,28 +715,8 @@ export default function AnalyzeDemoPage() {
                   </p>
                 </div>
               </div>
-            </div>
+            </motion.div>
           </div>
-
-          {/* Footer */}
-          <div className="px-6 py-4 bg-[#fafafa] border-t border-border">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-1.5">
-                {["PDF", "DOC", "DOCX", "TXT"].map((format) => (
-                  <span
-                    key={format}
-                    className="px-2 py-1 text-[10px] font-medium rounded-md bg-white border border-border text-muted-foreground"
-                  >
-                    {format}
-                  </span>
-                ))}
-              </div>
-              <span className="text-xs text-muted-foreground">
-                Max 200 MB
-              </span>
-            </div>
-          </div>
-          </motion.div>
         </motion.div>
       </AnimatePresence>
     );
@@ -705,8 +739,7 @@ export default function AnalyzeDemoPage() {
         initial={{ opacity: 0, y: 40 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4, ease: [0.4, 0, 0.2, 1] }}
-        className="h-full flex flex-col items-center justify-center p-4"
-        style={{ backgroundColor: '#fcfcfc' }}
+        className="h-full flex flex-col items-center justify-center p-4 bg-card"
       >
         <div className="w-full max-w-sm space-y-8">
           {/* Music Loader - Purple tinted */}
@@ -725,8 +758,7 @@ export default function AnalyzeDemoPage() {
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
                 transition={{ duration: 0.2 }}
-                className="flex justify-center text-lg font-medium"
-                style={{ color: '#565c65' }}
+                className="flex justify-center text-lg font-medium text-muted-foreground"
               >
                 {loadingPhrases[phraseIndex].split('').map((letter, index) => {
                   const centerIndex = Math.floor(loadingPhrases[phraseIndex].length / 2);
@@ -773,7 +805,7 @@ export default function AnalyzeDemoPage() {
 
           {/* Progress Bar - animated purple */}
           <div className="space-y-4">
-            <div className="h-1.5 rounded-full overflow-hidden relative" style={{ backgroundColor: '#e5e6e7' }}>
+            <div className="h-1.5 rounded-full overflow-hidden relative bg-border">
               <motion.div
                 className="h-full rounded-full"
                 style={{ backgroundColor: '#8b5cf6' }}
@@ -801,7 +833,7 @@ export default function AnalyzeDemoPage() {
                         ? "text-foreground"
                         : "text-muted-foreground/40"
                   )}
-                  style={i < currentStep ? { backgroundColor: '#ede9fe' } : i === currentStep ? { backgroundColor: '#f3f4f6' } : {}}
+                  style={i < currentStep ? { backgroundColor: 'rgba(139, 92, 246, 0.15)' } : i === currentStep ? { backgroundColor: 'var(--muted)' } : {}}
                 >
                   {i < currentStep ? (
                     <CheckCircle2 className="w-3 h-3" />
@@ -818,8 +850,8 @@ export default function AnalyzeDemoPage() {
 
           {/* File Pill */}
           <div className="flex justify-center">
-            <div className="inline-flex items-center gap-3 px-4 py-2.5 rounded-lg" style={{ backgroundColor: '#f3f4f6' }}>
-              <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: '#ede9fe' }}>
+            <div className="inline-flex items-center gap-3 px-4 py-2.5 rounded-lg bg-muted">
+              <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: 'rgba(139, 92, 246, 0.15)' }}>
                 <HugeiconsIcon icon={DocumentAttachmentIcon} size={16} style={{ color: '#8b5cf6' }} />
               </div>
               <p className="text-xs font-medium text-foreground truncate max-w-[200px]">{fileName}</p>
@@ -842,7 +874,7 @@ export default function AnalyzeDemoPage() {
   // ============================================
   if (status === "error") {
     return (
-      <div className="h-full flex items-center justify-center" style={{ backgroundColor: '#fcfcfc' }}>
+      <div className="h-full flex items-center justify-center bg-card">
         <div className="text-center space-y-4 max-w-md p-6 border border-border rounded-lg">
           <div className="w-12 h-12 rounded-lg border border-red-400/30 flex items-center justify-center mx-auto">
             <AlertTriangle className="w-5 h-5 text-red-400" />
@@ -880,7 +912,7 @@ export default function AnalyzeDemoPage() {
   ];
 
   return (
-    <div className="flex h-full" style={{ backgroundColor: '#fcfcfc' }}>
+    <div className="flex h-full bg-card">
       {/* Document Side Panel */}
       <div
         className={cn(
@@ -893,8 +925,7 @@ export default function AnalyzeDemoPage() {
             {/* Panel Header */}
             <div className="shrink-0 h-12 px-4 border-b border-border bg-background flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <FileText className="w-4 h-4 text-muted-foreground" />
-                <span className="text-sm text-foreground">{fileName}</span>
+                <span className="text-sm font-medium text-foreground">{fileName}</span>
                 {highlightedClause && (
                   <span className="text-xs text-muted-foreground/60 px-2 py-0.5 border border-border">Highlighting</span>
                 )}
@@ -929,32 +960,32 @@ export default function AnalyzeDemoPage() {
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 overflow-auto">
-        {/* Sticky Header */}
-        <div className={cn(
-          "sticky top-0 z-20 bg-background border-b border-border px-4 h-12 flex items-center",
-          showDocument ? "w-full" : ""
-        )}>
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 overflow-auto flex flex-col bg-card">
+        {/* Sticky Header - Row 1: Title */}
+        <div className="sticky top-0 z-20 bg-card shrink-0">
           <div className={cn(
-            "flex items-center justify-between w-full",
+            "px-6 h-12 flex items-center justify-between border-b border-border",
             !showDocument && "max-w-4xl mx-auto"
           )}>
-            <div className="flex items-center gap-3">
+            {/* Left: Title + Risk Assessment */}
+            <div className="flex items-center gap-2 shrink-0">
               <h1 className="text-sm font-medium text-foreground">{analysis.contractType || fileName}</h1>
+              <span className="text-[10px] text-muted-foreground/40">•</span>
               <span className={cn(
-                "h-5 px-2 text-[10px] uppercase font-medium rounded-md flex items-center",
-                analysis.overallRiskAssessment === "low" ? "bg-green-500/10 text-green-600" :
-                analysis.overallRiskAssessment === "medium" ? "bg-yellow-500/10 text-yellow-600" :
-                analysis.overallRiskAssessment === "high" ? "bg-red-500/10 text-red-600" :
-                "bg-muted text-muted-foreground"
+                "text-[10px] uppercase font-medium",
+                analysis.overallRiskAssessment === "low" ? "text-green-600" :
+                analysis.overallRiskAssessment === "medium" ? "text-yellow-600" :
+                analysis.overallRiskAssessment === "high" ? "text-red-600" :
+                "text-muted-foreground"
               )}>
-                {analysis.overallRiskAssessment === "low" ? "Low Risk" :
-                 analysis.overallRiskAssessment === "medium" ? "Medium Risk" :
-                 analysis.overallRiskAssessment === "high" ? "High Risk" : "Analyzed"}
+                {analysis.overallRiskAssessment === "low" ? "LOW RISK" :
+                 analysis.overallRiskAssessment === "medium" ? "MEDIUM RISK" :
+                 analysis.overallRiskAssessment === "high" ? "HIGH RISK" : "ANALYZED"}
               </span>
             </div>
 
-            <div className="flex items-center gap-1.5">
+            {/* Right: Actions */}
+            <div className="flex items-center gap-1.5 shrink-0">
               <button
                 onClick={() => setShowDocument(!showDocument)}
                 className="h-7 px-2 text-[11px] text-muted-foreground hover:text-foreground border border-border hover:bg-muted flex items-center gap-1.5 transition-colors rounded-md"
@@ -1020,21 +1051,19 @@ export default function AnalyzeDemoPage() {
               ) : null}
             </div>
           </div>
-        </div>
 
-        <main className={cn(
-          "px-6 py-6 pb-24 transition-all duration-300",
-          showDocument ? "w-full" : "max-w-4xl mx-auto"
-        )}>
-          {/* Tabbed Content with animated underlines */}
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-            <div className="flex gap-6 border-b border-border -mr-6">
+          {/* Row 2: Tabs */}
+          <div className={cn(
+            "px-6 flex items-center border-b border-border h-[49px]",
+            !showDocument && "max-w-4xl mx-auto"
+          )}>
+            <div className="flex gap-6 h-full">
               {tabs.map((tab) => (
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
                   className={cn(
-                    "relative pb-3 text-sm transition-colors",
+                    "relative h-full flex items-center text-xs font-medium transition-colors",
                     activeTab === tab.id ? "text-foreground" : "text-muted-foreground/60 hover:text-muted-foreground"
                   )}
                 >
@@ -1049,12 +1078,18 @@ export default function AnalyzeDemoPage() {
                 </button>
               ))}
             </div>
+          </div>
+        </div>
 
+        <main className={cn(
+          "px-6 py-6 pb-24 transition-all duration-300 flex-1 overflow-auto",
+          showDocument ? "w-full" : "max-w-4xl mx-auto"
+        )}>
             {/* Overview Tab */}
             <TabsContent value="overview" className="space-y-6">
               {/* Summary */}
               <div>
-                <div className="flex items-center gap-2 mb-3 -mr-6">
+                <div className="flex items-center gap-2 mb-4 -mr-6">
                   <span className="text-[10px] text-muted-foreground/60 uppercase tracking-wider shrink-0">Summary</span>
                   <div className="h-px flex-1 bg-border" />
                 </div>
@@ -1080,92 +1115,72 @@ export default function AnalyzeDemoPage() {
                     <span className="text-[10px] text-muted-foreground/60 uppercase tracking-wider shrink-0">Financial Analysis</span>
                     <div className="h-px flex-1 bg-border" />
                   </div>
-                  <div className="space-y-0">
+                  <div className="space-y-0 -mt-1">
                     {analysis.financialTerms.royaltyRate && (
                       <div
-                        className="py-3 border-b border-dashed cursor-pointer hover:bg-muted/30 transition-colors -mx-1 px-1"
-                        style={{
-                          borderColor: selectedFinancial === 'royalty' ? '#a855f7' : undefined,
-                          transition: 'border-color 0.3s ease'
-                        }}
+                        className="py-3 cursor-pointer hover:bg-muted/30 transition-colors -mx-1 px-1"
                         onClick={() => {
                           setSelectedFinancial('royalty');
                           handleClauseClick(analysis.financialTerms.royaltyRate);
                         }}
                       >
-                        <div className="flex items-start justify-between gap-4">
-                          <div>
-                            <p className="text-sm mb-0.5">
-                              {highlightKeyValues(analysis.financialTerms.royaltyRate, selectedFinancial === 'royalty')}
-                            </p>
-                          </div>
-                          <p className="text-[10px] font-medium uppercase tracking-wider shrink-0" style={{ color: selectedFinancial === 'royalty' ? '#a855f7' : '#a0a0a0', transition: 'color 0.3s ease' }}>Royalty</p>
+                        <div className="flex items-center">
+                          <p className="text-[10px] font-medium uppercase tracking-wider shrink-0 transition-colors duration-300" style={{ color: selectedFinancial === 'royalty' ? '#a855f7' : 'var(--foreground)' }}>Royalty</p>
+                          <span className="mx-2 text-[10px] transition-colors duration-300" style={{ color: selectedFinancial === 'royalty' ? '#a855f7' : 'var(--muted-foreground)' }}>·</span>
+                          <p className="text-[10px] tracking-wider uppercase shrink-0 transition-colors duration-300" style={{ color: selectedFinancial === 'royalty' ? '#a855f7' : 'var(--foreground)' }}>
+                            {analysis.financialTerms.royaltyRate}
+                          </p>
                         </div>
                       </div>
                     )}
                     {analysis.termLength && (
                       <div
-                        className="py-3 border-b border-dashed cursor-pointer hover:bg-muted/30 transition-colors -mx-1 px-1"
-                        style={{
-                          borderColor: selectedFinancial === 'term' ? '#a855f7' : undefined,
-                          transition: 'border-color 0.3s ease'
-                        }}
+                        className="py-3 cursor-pointer hover:bg-muted/30 transition-colors -mx-1 px-1"
                         onClick={() => {
                           setSelectedFinancial('term');
                           handleClauseClick(analysis.termLength);
                         }}
                       >
-                        <div className="flex items-start justify-between gap-4">
-                          <div>
-                            <p className="text-sm mb-0.5">
-                              {highlightKeyValues(analysis.termLength, selectedFinancial === 'term')}
-                            </p>
-                          </div>
-                          <p className="text-[10px] font-medium uppercase tracking-wider shrink-0" style={{ color: selectedFinancial === 'term' ? '#a855f7' : '#a0a0a0', transition: 'color 0.3s ease' }}>Term</p>
+                        <div className="flex items-center">
+                          <p className="text-[10px] font-medium uppercase tracking-wider shrink-0 transition-colors duration-300" style={{ color: selectedFinancial === 'term' ? '#a855f7' : 'var(--foreground)' }}>Term</p>
+                          <span className="mx-2 text-[10px] transition-colors duration-300" style={{ color: selectedFinancial === 'term' ? '#a855f7' : 'var(--muted-foreground)' }}>·</span>
+                          <p className="text-[10px] tracking-wider uppercase shrink-0 transition-colors duration-300" style={{ color: selectedFinancial === 'term' ? '#a855f7' : 'var(--foreground)' }}>
+                            {analysis.termLength}
+                          </p>
                         </div>
                       </div>
                     )}
                     {analysis.financialTerms.advanceAmount && (
                       <div
-                        className="py-3 border-b border-dashed cursor-pointer hover:bg-muted/30 transition-colors -mx-1 px-1"
-                        style={{
-                          borderColor: selectedFinancial === 'advance' ? '#a855f7' : undefined,
-                          transition: 'border-color 0.3s ease'
-                        }}
+                        className="py-3 cursor-pointer hover:bg-muted/30 transition-colors -mx-1 px-1"
                         onClick={() => {
                           setSelectedFinancial('advance');
                           handleClauseClick(analysis.financialTerms.advanceAmount);
                         }}
                       >
-                        <div className="flex items-start justify-between gap-4">
-                          <div>
-                            <p className="text-sm mb-0.5">
-                              {highlightKeyValues(analysis.financialTerms.advanceAmount, selectedFinancial === 'advance')}
-                            </p>
-                          </div>
-                          <p className="text-[10px] font-medium uppercase tracking-wider shrink-0" style={{ color: selectedFinancial === 'advance' ? '#a855f7' : '#a0a0a0', transition: 'color 0.3s ease' }}>Advance</p>
+                        <div className="flex items-center">
+                          <p className="text-[10px] font-medium uppercase tracking-wider shrink-0 transition-colors duration-300" style={{ color: selectedFinancial === 'advance' ? '#a855f7' : 'var(--foreground)' }}>Advance</p>
+                          <span className="mx-2 text-[10px] transition-colors duration-300" style={{ color: selectedFinancial === 'advance' ? '#a855f7' : 'var(--muted-foreground)' }}>·</span>
+                          <p className="text-[10px] tracking-wider uppercase shrink-0 transition-colors duration-300" style={{ color: selectedFinancial === 'advance' ? '#a855f7' : 'var(--foreground)' }}>
+                            {analysis.financialTerms.advanceAmount}
+                          </p>
                         </div>
                       </div>
                     )}
                     {analysis.financialTerms.paymentSchedule && (
                       <div
-                        className="py-3 border-b border-dashed cursor-pointer hover:bg-muted/30 transition-colors -mx-1 px-1"
-                        style={{
-                          borderColor: selectedFinancial === 'payment' ? '#a855f7' : 'transparent',
-                          transition: 'border-color 0.3s ease'
-                        }}
+                        className="py-3 cursor-pointer hover:bg-muted/30 transition-colors -mx-1 px-1"
                         onClick={() => {
                           setSelectedFinancial('payment');
                           handleClauseClick(analysis.financialTerms.paymentSchedule);
                         }}
                       >
-                        <div className="flex items-start justify-between gap-4">
-                          <div>
-                            <p className="text-sm mb-0.5">
-                              {highlightKeyValues(analysis.financialTerms.paymentSchedule, selectedFinancial === 'payment')}
-                            </p>
-                          </div>
-                          <p className="text-[10px] font-medium uppercase tracking-wider shrink-0" style={{ color: selectedFinancial === 'payment' ? '#a855f7' : '#a0a0a0', transition: 'color 0.3s ease' }}>Payment</p>
+                        <div className="flex items-center">
+                          <p className="text-[10px] font-medium uppercase tracking-wider shrink-0 transition-colors duration-300" style={{ color: selectedFinancial === 'payment' ? '#a855f7' : 'var(--foreground)' }}>Payment</p>
+                          <span className="mx-2 text-[10px] transition-colors duration-300" style={{ color: selectedFinancial === 'payment' ? '#a855f7' : 'var(--muted-foreground)' }}>·</span>
+                          <p className="text-[10px] tracking-wider uppercase shrink-0 transition-colors duration-300" style={{ color: selectedFinancial === 'payment' ? '#a855f7' : 'var(--foreground)' }}>
+                            {analysis.financialTerms.paymentSchedule}
+                          </p>
                         </div>
                       </div>
                     )}
@@ -1214,7 +1229,7 @@ export default function AnalyzeDemoPage() {
                     {analysis.potentialConcerns && analysis.potentialConcerns.length > 4 && (
                       <span
                         className="inline-flex items-center px-3 py-1.5 rounded-full text-xs font-medium cursor-pointer hover:opacity-80 transition-opacity"
-                        style={{ backgroundColor: '#f0f0f0', color: '#565c65' }}
+                        style={{ backgroundColor: 'var(--muted)', color: 'var(--muted-foreground)' }}
                         onClick={() => setActiveTab('terms')}
                       >
                         +{analysis.potentialConcerns.length - 4} more
@@ -1245,7 +1260,7 @@ export default function AnalyzeDemoPage() {
                     {analysis.missingClauses && analysis.missingClauses.length > 3 && (
                       <span
                         className="inline-flex items-center px-3 py-1.5 rounded-full text-xs font-medium cursor-pointer hover:opacity-80 transition-opacity"
-                        style={{ backgroundColor: '#f0f0f0', color: '#565c65' }}
+                        style={{ backgroundColor: 'var(--muted)', color: 'var(--muted-foreground)' }}
                         onClick={() => setActiveTab('terms')}
                       >
                         +{analysis.missingClauses.length - 3} more
@@ -1301,88 +1316,36 @@ export default function AnalyzeDemoPage() {
                     if (analysis.rightsAndOwnership?.territorialRights) keyInfoItems.push({ id: 'territory', label: 'Territory', value: analysis.rightsAndOwnership.territorialRights });
                     if (analysis.rightsAndOwnership?.exclusivity) keyInfoItems.push({ id: 'exclusivity', label: 'Exclusivity', value: analysis.rightsAndOwnership.exclusivity });
 
-                    return keyInfoItems.map((item) => {
-                      const isSelected = selectedKeyInfo === item.id;
-
-                      return (
-                        <motion.div
-                          key={item.id}
-                          layout
-                          style={{
-                            transformOrigin: "50% 50% 0px",
-                            borderRadius: isSelected ? "16px" : "9999px",
-                            zIndex: isSelected ? 50 : 1,
-                          }}
-                          className="relative overflow-hidden"
-                        >
-                          {/* Collapsed pill */}
-                          <motion.button
-                            onClick={() => setSelectedKeyInfo(isSelected ? null : item.id)}
-                            style={{
-                              pointerEvents: !isSelected ? "all" : "none",
-                              display: isSelected ? "none" : "flex",
-                            }}
-                            whileTap={{ scale: 0.95 }}
-                            transition={{ type: "spring", stiffness: 350, damping: 35 }}
-                            layoutId={`pill-${item.id}`}
-                            className="inline-flex items-center px-3 py-1.5 text-xs font-medium cursor-pointer"
-                            {...(item.isBlue ? {
-                              style: { backgroundColor: 'rgba(59, 130, 246, 0.1)', color: '#3b82f6', pointerEvents: !isSelected ? "all" : "none", display: isSelected ? "none" : "flex" }
-                            } : {
-                              style: { backgroundColor: '#f0f0f0', color: '#565c65', pointerEvents: !isSelected ? "all" : "none", display: isSelected ? "none" : "flex" }
-                            })}
-                          >
-                            {item.value}
-                          </motion.button>
-
-                          {/* Expanded card */}
-                          <AnimatePresence mode="popLayout">
-                            {isSelected && (
-                              <motion.div
-                                layout
-                                initial={{ opacity: 0 }}
-                                animate={{ opacity: 1 }}
-                                exit={{ opacity: 0 }}
-                                transition={{
-                                  type: "spring",
-                                  stiffness: 550,
-                                  damping: 45,
-                                  mass: 0.7,
+                    return (
+                      <TooltipProvider key="tooltip-provider">
+                        {keyInfoItems.map((item) => (
+                          <Tooltip key={item.id}>
+                            <TooltipTrigger asChild>
+                              <span
+                                className="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-full cursor-default"
+                                style={item.isBlue ? {
+                                  backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                                  color: '#3b82f6'
+                                } : {
+                                  backgroundColor: 'var(--muted)',
+                                  color: 'var(--foreground)'
                                 }}
-                                className="bg-white border border-border rounded-2xl p-4 shadow-lg min-w-[200px]"
-                                style={{ transformOrigin: "50% 50% 0px" }}
                               >
-                                <div className="flex items-center justify-between mb-2">
-                                  <span className="text-[10px] text-muted-foreground uppercase tracking-wider">{item.label}</span>
-                                  <button
-                                    onClick={() => setSelectedKeyInfo(null)}
-                                    className="text-muted-foreground hover:text-foreground"
-                                  >
-                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                      <path d="M18 6L6 18M6 6l12 12" />
-                                    </svg>
-                                  </button>
-                                </div>
-                                <motion.p
-                                  layoutId={`pill-${item.id}`}
-                                  className="text-sm font-medium"
-                                  style={{ color: item.isBlue ? '#3b82f6' : '#202020' }}
-                                >
-                                  {item.value}
-                                </motion.p>
-                              </motion.div>
-                            )}
-                          </AnimatePresence>
-                        </motion.div>
-                      );
-                    });
+                                {item.value}
+                              </span>
+                            </TooltipTrigger>
+                            <TooltipContent>{item.label}</TooltipContent>
+                          </Tooltip>
+                        ))}
+                      </TooltipProvider>
+                    );
                   })()}
                 </div>
               </div>
             </TabsContent>
 
             {/* Key Terms Tab - Expandable Cards */}
-            <TabsContent value="terms" className="space-y-4">
+            <TabsContent value="terms" className="space-y-0 -mx-6 -mt-6 min-w-[calc(100%+48px)] block">
               {/* Concerns Section */}
               {analysis.potentialConcerns && analysis.potentialConcerns.length > 0 && (() => {
                 // Determine highest risk level among matched concerns
@@ -1414,16 +1377,15 @@ export default function AnalyzeDemoPage() {
                 }[highestRisk];
 
                 return (
-                <div className={`border ${colorScheme.border} ${colorScheme.bg} rounded-xl overflow-hidden`}>
-                  {/* Header with colored line */}
+                <div className={`${colorScheme.bg} overflow-hidden`}>
+                  {/* Header */}
                   <div
-                    className="px-4 py-2.5 flex items-center gap-2 border-b"
-                    style={{ backgroundColor: headerColors.bg, borderColor: headerColors.line }}
+                    className="px-6 py-2.5 flex items-center gap-2"
+                    style={{ backgroundColor: headerColors.bg }}
                   >
-                    <HugeiconsIcon icon={Alert02Icon} size={14} className={colorScheme.text} />
                     <span className={`text-xs font-medium ${colorScheme.text} leading-none`}>{analysis.potentialConcerns.length} Concerns to Address</span>
                   </div>
-                  <ul className="p-4 space-y-2">
+                  <ul className="px-6 py-4 space-y-2">
                     {analysis.potentialConcerns.map((concern, i) => {
                       // Find matching key term by checking if concern keywords appear in term title/content
                       const matchingTermIndex = analysis.keyTerms?.findIndex(term => {
@@ -1464,7 +1426,7 @@ export default function AnalyzeDemoPage() {
               })()}
 
               {(!analysis.keyTerms || analysis.keyTerms.length === 0) && (
-                <div className="border border-border p-8 text-center rounded-lg">
+                <div className="border-y border-border p-8 text-center">
                   <FileText className="w-6 h-6 text-muted-foreground/60 mx-auto mb-2" />
                   <p className="text-xs text-muted-foreground">No key terms extracted</p>
                 </div>
@@ -1475,20 +1437,22 @@ export default function AnalyzeDemoPage() {
                   <div
                     key={i}
                     className={cn(
-                      "border border-border transition-all rounded-lg overflow-hidden",
-                      isExpanded && "border-[#d1d5db]"
+                      "border-b border-dashed border-border transition-all overflow-hidden",
+                      i === 0 && "border-t border-dashed",
+                      isExpanded && "border-b-0"
                     )}
                   >
                     <button
                       onClick={() => setExpandedTerm(isExpanded ? null : i)}
-                      className="w-full p-3 flex items-center gap-3 text-left transition-colors rounded-t-lg"
-                      style={{ backgroundColor: '#f5f5f4' }}
+                      className="w-full px-6 py-3 flex items-center gap-3 text-left transition-colors"
+                      style={{ backgroundColor: 'var(--muted)' }}
                     >
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-1">
                           <span className="text-xs text-foreground font-medium">{term.title}</span>
-                          <span className={cn("text-[10px] px-2.5 py-0.5 rounded-full capitalize", getRiskColor(term.riskLevel))}>
-                            {term.riskLevel}
+                          <span className="text-[10px] text-muted-foreground/40">•</span>
+                          <span className={cn("text-[10px] uppercase font-medium", getRiskColor(term.riskLevel).replace(/bg-\S+\s?/g, ''))}>
+                            {term.riskLevel.toUpperCase()}
                           </span>
                         </div>
                         <p className="text-xs text-muted-foreground line-clamp-1">{term.content}</p>
@@ -1502,68 +1466,80 @@ export default function AnalyzeDemoPage() {
                         </svg>
                       </div>
                     </button>
-                    <motion.div
-                      initial={false}
-                      animate={{ height: isExpanded ? "auto" : 0, opacity: isExpanded ? 1 : 0 }}
-                      transition={{ duration: 0.2, ease: "easeOut" }}
-                      className="overflow-hidden bg-white"
-                    >
-                      <div className="border-t border-border">
-                        <div className="p-3 space-y-4">
-                          {/* Full Term Value */}
-                          <div>
-                            <p className="text-[10px] text-muted-foreground/60 uppercase tracking-wider mb-1">What This Says</p>
-                            <p className="text-xs text-foreground">{term.content}</p>
-                          </div>
-
-                          {/* Plain English Explanation */}
-                          <div>
-                            <p className="text-[10px] text-muted-foreground/60 uppercase tracking-wider mb-1">In Plain English</p>
-                            <p className="text-xs text-foreground">{term.explanation}</p>
-                          </div>
-
-                          {/* Risk Assessment */}
-                          <div>
-                            <p className="text-[10px] text-muted-foreground/60 uppercase tracking-wider mb-1">Risk Assessment</p>
-                            <div className="flex items-start gap-2">
-                              <span className={cn("text-[10px] px-2.5 py-0.5 rounded-full capitalize shrink-0", getRiskColor(term.riskLevel))}>
-                                {term.riskLevel}
-                              </span>
-                              <p className="text-xs text-foreground">
-                                {term.riskLevel === "high" && "This term significantly favors the other party and could limit your rights or earnings."}
-                                {term.riskLevel === "medium" && "This term has some elements that could be improved but is within industry norms."}
-                                {term.riskLevel === "low" && "This term is favorable or standard for agreements of this type."}
-                              </p>
-                            </div>
-                          </div>
-
-                          {/* Questions to Ask Your Lawyer */}
-                          <div>
-                            <p className="text-[10px] text-muted-foreground/60 uppercase tracking-wider mb-1">Questions to Ask Your Lawyer</p>
-                            <ul className="text-xs text-muted-foreground space-y-2">
-                              {(term.actionItems || getTermChecklist(term.title)).map((item, idx) => (
-                                <li key={idx} className="flex items-center gap-2">
-                                  <HugeiconsIcon icon={HelpSquareIcon} size={12} className="text-primary shrink-0" />
-                                  <span className="leading-none">{item}</span>
-                                </li>
-                              ))}
-                            </ul>
-                          </div>
-
-                        </div>
-                        {/* View in contract - full width at bottom */}
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleClauseClick(term.originalText);
+                    <AnimatePresence>
+                      {isExpanded && (
+                        <motion.div
+                          key="term-content"
+                          initial={{ height: 0, opacity: 0, '--mask-stop': '0%', y: 20 } as any}
+                          animate={{ height: 'auto', opacity: 1, '--mask-stop': '100%', y: 0 } as any}
+                          exit={{ height: 0, opacity: 0, '--mask-stop': '0%', y: 20 } as any}
+                          transition={{ duration: 0.35, ease: 'easeInOut' }}
+                          style={{
+                            maskImage: 'linear-gradient(black var(--mask-stop), transparent var(--mask-stop))',
+                            WebkitMaskImage: 'linear-gradient(black var(--mask-stop), transparent var(--mask-stop))',
+                            overflow: 'hidden',
                           }}
-                          className="w-full px-3 py-2.5 text-xs font-semibold text-muted-foreground hover:text-foreground flex items-center justify-center gap-1.5 transition-colors"
-                          style={{ backgroundColor: '#f5f5f4' }}
+                          className="bg-card"
                         >
-                          <HugeiconsIcon icon={ViewIcon} size={14} /> View in contract
-                        </button>
-                      </div>
-                    </motion.div>
+                          <div className="border-t border-dashed border-border">
+                            <div className="px-6 py-3 space-y-4">
+                              {/* Full Term Value */}
+                              <div>
+                                <p className="text-[10px] text-muted-foreground/60 uppercase tracking-wider mb-1">What This Says</p>
+                                <p className="text-xs text-foreground">{term.content}</p>
+                              </div>
+
+                              {/* Plain English Explanation */}
+                              <div>
+                                <p className="text-[10px] text-muted-foreground/60 uppercase tracking-wider mb-1">In Plain English</p>
+                                <p className="text-xs text-foreground">{term.explanation}</p>
+                              </div>
+
+                              {/* Risk Assessment */}
+                              <div>
+                                <div className="flex items-center gap-2 mb-1">
+                                  <p className="text-[10px] text-muted-foreground/60 uppercase tracking-wider">Risk Assessment</p>
+                                  <span className="text-[10px] text-muted-foreground/40">•</span>
+                                  <span className={cn("text-[10px] uppercase font-medium", getRiskColor(term.riskLevel).replace(/bg-\S+\s?/g, ''))}>
+                                    {term.riskLevel.toUpperCase()}
+                                  </span>
+                                </div>
+                                <p className="text-xs text-muted-foreground">
+                                  {term.riskLevel === "high" && "This term significantly favors the other party and could limit your rights or earnings."}
+                                  {term.riskLevel === "medium" && "This term has some elements that could be improved but is within industry norms."}
+                                  {term.riskLevel === "low" && "This term is favorable or standard for agreements of this type."}
+                                </p>
+                              </div>
+
+                              {/* Questions to Ask Your Lawyer */}
+                              <div>
+                                <p className="text-[10px] text-muted-foreground/60 uppercase tracking-wider mb-1">Questions to Ask Your Lawyer</p>
+                                <ul className="text-xs text-muted-foreground space-y-2">
+                                  {(term.actionItems || getTermChecklist(term.title)).map((item, idx) => (
+                                    <li key={idx} className="flex items-center gap-2">
+                                      <span className="w-1 h-1 rounded-full bg-muted-foreground/40 shrink-0" />
+                                      <span className="leading-none">{item}</span>
+                                    </li>
+                                  ))}
+                                </ul>
+                              </div>
+
+                            </div>
+                            {/* View in contract - full width at bottom */}
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleClauseClick(term.originalText);
+                              }}
+                              className="w-full px-6 py-2.5 text-xs font-semibold text-muted-foreground hover:text-foreground flex items-center justify-center gap-1.5 transition-colors"
+                              style={{ backgroundColor: 'var(--muted)' }}
+                            >
+                              <HugeiconsIcon icon={ViewIcon} size={14} /> View in contract
+                            </button>
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
                   </div>
                 );
               })}
@@ -1580,22 +1556,24 @@ export default function AnalyzeDemoPage() {
               />
             </TabsContent>
 
-            {/* Advice Tab - Expandable Cards */}
-            <TabsContent value="advice" className="space-y-2">
+            {/* Advice Tab - Full Width Cards (Always Open) */}
+            <TabsContent value="advice" className="space-y-0 -mx-6 -mt-6 min-w-[calc(100%+48px)] block">
               {(!analysis.recommendations || analysis.recommendations.length === 0) && (
-                <div className="border border-border p-8 text-center rounded-lg">
+                <div className="border-y border-border p-8 text-center">
                   <CheckCircle2 className="w-6 h-6 text-muted-foreground/60 mx-auto mb-2" />
                   <p className="text-xs text-muted-foreground">No recommendations available</p>
                 </div>
               )}
               {analysis.recommendations?.map((rec, i) => {
-                const isExpanded = expandedAdvice === i;
                 // Handle both legacy string format and new object format
                 const isStructured = typeof rec === 'object' && rec !== null;
                 const advice = isStructured ? rec.advice : rec;
                 const rationale = isStructured ? rec.rationale : "Following this recommendation helps protect your rights and ensures you maintain leverage in negotiations. Industry standards support this approach.";
                 const howToImplement = isStructured ? rec.howToImplement : "Bring this up during your next negotiation session. Frame it as a standard industry practice.";
                 const priority = isStructured ? rec.priority : "medium";
+                const sampleLanguage = isStructured ? rec.sampleLanguage : undefined;
+                const riskIfIgnored = isStructured ? rec.riskIfIgnored : undefined;
+                const negotiationQuestions = isStructured ? rec.negotiationQuestions : undefined;
 
                 const priorityColor = priority === "high" ? "text-red-400" : priority === "medium" ? "text-amber-500" : "text-green-400";
                 const priorityLabel = priority === "high" ? "Address immediately" : priority === "medium" ? "Address before signing" : "Nice to have";
@@ -1604,58 +1582,62 @@ export default function AnalyzeDemoPage() {
                   <div
                     key={i}
                     className={cn(
-                      "border border-border transition-all rounded-lg",
-                      isExpanded && "bg-card border-[#404040]"
+                      "border-b border-border transition-all overflow-hidden",
+                      i === 0 && "border-t"
                     )}
                   >
-                    <button
-                      onClick={() => setExpandedAdvice(isExpanded ? null : i)}
-                      className="w-full p-3 flex items-start gap-2.5 text-left hover:bg-muted transition-colors"
+                    {/* Header */}
+                    <div
+                      className="px-6 py-3 text-left"
+                      style={{ backgroundColor: 'var(--muted)' }}
                     >
-                      <CheckCircle2 className="w-3.5 h-3.5 text-muted-foreground shrink-0 mt-0.5" />
-                      <div className="flex-1 min-w-0">
-                        <p className="text-xs text-muted-foreground">{advice}</p>
-                        {isStructured && (
-                          <span className={cn("text-[10px] mt-1 inline-block", priorityColor)}>
-                            {priority.charAt(0).toUpperCase() + priority.slice(1)} priority
-                          </span>
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className={cn("text-[10px] uppercase font-semibold", priorityColor)}>
+                          {priority} priority
+                        </span>
+                        <span className="text-[10px] text-muted-foreground/40">•</span>
+                        <span className="text-[10px] text-muted-foreground/60 uppercase font-semibold">{priorityLabel}</span>
+                      </div>
+                      <p className="text-xs text-foreground font-medium">{advice}</p>
+                    </div>
+                    {/* Always visible content */}
+                    <div className="border-t border-dashed border-border bg-card">
+                      <div className="px-6 py-3 space-y-3">
+                        <div>
+                          <p className="text-[10px] text-muted-foreground/60 uppercase tracking-wider mb-1">Rationale</p>
+                          <p className="text-xs text-muted-foreground">{rationale}</p>
+                        </div>
+                        {riskIfIgnored && (
+                          <div>
+                            <p className="text-[10px] text-muted-foreground/60 uppercase tracking-wider mb-1">Risk if Ignored</p>
+                            <p className="text-xs text-muted-foreground">{riskIfIgnored}</p>
+                          </div>
+                        )}
+                        <div>
+                          <p className="text-[10px] text-muted-foreground/60 uppercase tracking-wider mb-1">How to Implement</p>
+                          <p className="text-xs text-muted-foreground">{howToImplement}</p>
+                        </div>
+                        {sampleLanguage && (
+                          <div>
+                            <p className="text-[10px] text-muted-foreground/60 uppercase tracking-wider mb-1">Suggested Language</p>
+                            <p className="text-xs text-muted-foreground italic border-l-2 border-muted-foreground/20 pl-3">&ldquo;{sampleLanguage}&rdquo;</p>
+                          </div>
+                        )}
+                        {negotiationQuestions && negotiationQuestions.length > 0 && (
+                          <div>
+                            <p className="text-[10px] text-muted-foreground/60 uppercase tracking-wider mb-1">Questions to Ask</p>
+                            <ul className="text-xs text-muted-foreground space-y-1.5">
+                              {negotiationQuestions.map((q, idx) => (
+                                <li key={idx} className="flex items-start gap-2">
+                                  <span className="w-1 h-1 rounded-full bg-muted-foreground/40 shrink-0 mt-1.5" />
+                                  <span>{q}</span>
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
                         )}
                       </div>
-                      <div className={cn(
-                        "text-muted-foreground/60 transition-transform shrink-0",
-                        isExpanded && "rotate-180"
-                      )}>
-                        <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                          <path d="M2.5 4.5L6 8L9.5 4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                        </svg>
-                      </div>
-                    </button>
-                    <motion.div
-                      initial={false}
-                      animate={{ height: isExpanded ? "auto" : 0, opacity: isExpanded ? 1 : 0 }}
-                      transition={{ duration: 0.2, ease: "easeOut" }}
-                      className="overflow-hidden"
-                    >
-                      <div className="border-t border-border">
-                        <div className="p-3 space-y-3">
-                          <div>
-                            <p className="text-[10px] text-muted-foreground/60 uppercase tracking-wider mb-1">Rationale</p>
-                            <p className="text-xs text-muted-foreground">{rationale}</p>
-                          </div>
-                          <div>
-                            <p className="text-[10px] text-muted-foreground/60 uppercase tracking-wider mb-1">How to Implement</p>
-                            <p className="text-xs text-muted-foreground">{howToImplement}</p>
-                          </div>
-                          <div>
-                            <p className="text-[10px] text-muted-foreground/60 uppercase tracking-wider mb-1">Priority</p>
-                            <div className="flex items-center gap-2">
-                              <span className={cn("text-xs", priorityColor)}>{priority.charAt(0).toUpperCase() + priority.slice(1)}</span>
-                              <span className="text-[10px] text-muted-foreground/60">{priorityLabel}</span>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </motion.div>
+                    </div>
                   </div>
                 );
               })}
@@ -1888,9 +1870,8 @@ export default function AnalyzeDemoPage() {
                 )}
               </TabsContent>
             )}
-          </Tabs>
         </main>
-      </div>
+      </Tabs>
     </div>
   );
 }

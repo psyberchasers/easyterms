@@ -1,7 +1,7 @@
 "use client";
 
 import { ReactNode, useState, useEffect } from "react";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/components/providers/AuthProvider";
 import {
@@ -47,6 +47,7 @@ import {
   AiSearch02Icon,
   Settings03Icon,
   FileUploadIcon,
+  Upload02Icon,
   Moon02Icon,
   Sun01Icon,
   AiBrain02Icon,
@@ -73,45 +74,74 @@ function SidebarToggleButton() {
 }
 
 interface DashboardHeaderProps {
-  pageTitle: string;
-  isContractsPage: boolean;
-  isUploadPage: boolean;
-  isAnalyzeDemoPage: boolean;
   onSearchClick: () => void;
   theme: string;
   toggleTheme: () => void;
 }
 
 function DashboardHeader({
-  pageTitle,
-  isContractsPage,
-  isUploadPage,
-  isAnalyzeDemoPage,
   onSearchClick,
   theme,
   toggleTheme,
 }: DashboardHeaderProps) {
   const { state } = useSidebar();
   const isCollapsed = state === "collapsed";
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+
+  const isContractsPage = pathname.startsWith("/dashboard/contracts");
+  const isUploadPage = pathname.startsWith("/dashboard/upload");
+  const isAnalyzeDemoPage = pathname.startsWith("/dashboard/analyze-demo");
+
+  const role = searchParams.get("role");
+
+  // Build page title with breadcrumb for recipient
+  const getHeaderContent = () => {
+    if (isAnalyzeDemoPage) {
+      if (role === "recipient") {
+        return (
+          <>
+            <HugeiconsIcon icon={FileUploadIcon} size={16} style={{ color: '#565c65' }} />
+            <Link href="/dashboard/analyze-demo" className="text-sm hover:text-neutral-600 transition-colors" style={{ color: '#9ca3af' }}>Upload Contract</Link>
+            <span className="text-sm" style={{ color: '#9ca3af' }}>/</span>
+            <span className="text-sm font-medium" style={{ color: '#565c65' }}>Recipient</span>
+          </>
+        );
+      }
+      return (
+        <>
+          <HugeiconsIcon icon={FileUploadIcon} size={16} style={{ color: '#565c65' }} />
+          <span className="text-sm font-medium" style={{ color: '#565c65' }}>Upload Contract</span>
+        </>
+      );
+    }
+    if (isContractsPage) {
+      return (
+        <>
+          <HugeiconsIcon icon={ContractsIcon} size={16} style={{ color: '#565c65' }} />
+          <span className="text-sm font-medium" style={{ color: '#565c65' }}>Contracts</span>
+        </>
+      );
+    }
+    if (isUploadPage) {
+      return (
+        <>
+          <HugeiconsIcon icon={FileUploadIcon} size={16} style={{ color: '#565c65' }} />
+          <span className="text-sm font-medium" style={{ color: '#565c65' }}>Upload</span>
+        </>
+      );
+    }
+    return <span className="text-sm font-medium" style={{ color: '#565c65' }}>Dashboard</span>;
+  };
 
   return (
     <header
-      className="fixed top-0 right-0 z-50 flex h-12 items-center gap-2 border-b bg-background px-4 transition-[left] duration-200 ease-linear"
+      className="fixed top-0 right-0 z-50 flex h-12 items-center gap-2 border-b border-border bg-background px-4 transition-[left] duration-200 ease-linear"
       style={{
-        borderColor: '#e5e6e7',
         left: isCollapsed ? '3rem' : '14rem'
       }}
     >
-      {isContractsPage && (
-        <HugeiconsIcon icon={ContractsIcon} size={16} style={{ color: '#565c65' }} />
-      )}
-      {isUploadPage && (
-        <HugeiconsIcon icon={FileUploadIcon} size={16} style={{ color: '#565c65' }} />
-      )}
-      {isAnalyzeDemoPage && (
-        <HugeiconsIcon icon={AiBrain02Icon} size={16} style={{ color: '#565c65' }} />
-      )}
-      <span className="text-sm font-medium" style={{ color: '#565c65' }}>{pageTitle}</span>
+      {getHeaderContent()}
       <div className="flex-1" />
 
       {/* Actions */}
@@ -153,6 +183,7 @@ function DashboardHeader({
 
 export default function DashboardLayout({ children }: DashboardLayoutProps) {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const { user, profile, loading: authLoading, signOut } = useAuth();
   const { theme, toggleTheme } = useTheme();
     const [commandMenuOpen, setCommandMenuOpen] = useState(false);
@@ -186,37 +217,20 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
 
   const workspaceItems = [
     { title: "Contracts", icon: ContractsIcon, href: "/dashboard/contracts" },
-    { title: "Analyze Demo", icon: AiBrain02Icon, href: "/dashboard/analyze-demo" },
+    { title: "Upload Contract", icon: FileUploadIcon, href: "/dashboard/analyze-demo" },
     { title: "Projects", icon: Folder01Icon, href: "/dashboard/projects", hasDropdown: true },
     { title: "Templates", icon: GridViewIcon, href: "/dashboard/templates", hasDropdown: true },
     { title: "Documents", icon: File01Icon, href: "/dashboard/documents", hasAdd: true },
     { title: "Teams", icon: UserGroupIcon, href: "/dashboard/teams", badge: "5" },
   ];
 
-  // Get current page title
-  const getPageTitle = () => {
-    const allItems = [...mainNav, ...workspaceItems];
-    const currentItem = allItems.find(item => item.href === pathname);
-    if (currentItem) return currentItem.title;
-    if (pathname === "/dashboard") return "Dashboard";
-    if (pathname.startsWith("/dashboard/contracts")) return "Contracts";
-    if (pathname.startsWith("/dashboard/upload")) return "Upload";
-    if (pathname.startsWith("/dashboard/analyze-demo")) return "Analyze Demo";
-    return "Dashboard";
-  };
-
-  const pageTitle = getPageTitle();
-  const isContractsPage = pathname.startsWith("/dashboard/contracts");
-  const isUploadPage = pathname.startsWith("/dashboard/upload");
-  const isAnalyzeDemoPage = pathname.startsWith("/dashboard/analyze-demo");
-
   return (
     <SidebarProvider defaultOpen={true}>
-      <Sidebar collapsible="icon" className="border-r" style={{ backgroundColor: '#f9fbfc', borderColor: '#e5e6e7' }}>
+      <Sidebar collapsible="icon" className="border-r border-border bg-sidebar">
         {/* Header */}
         <div
-          className="flex items-center px-3 border-b group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-2"
-          style={{ height: '48px', borderColor: '#e5e6e7' }}
+          className="flex items-center px-3 border-b border-border group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-2"
+          style={{ height: '48px' }}
         >
           <div className="flex items-center gap-2">
             <div
@@ -229,7 +243,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
 
         {/* Search */}
         <div className="px-3 py-3 group-data-[collapsible=icon]:px-2 group-data-[collapsible=icon]:py-2">
-          <button className="w-full flex items-center gap-2 px-2.5 py-1.5 text-[13px] hover:bg-white/50 transition-colors rounded-lg group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0 group-data-[collapsible=icon]:border-0" style={{ color: '#565c65', border: '1px solid #e5e6e7' }}>
+          <button className="w-full flex items-center gap-2 px-2.5 py-1.5 text-[13px] hover:bg-muted/50 transition-colors rounded-lg border border-border group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0 group-data-[collapsible=icon]:border-0 text-muted-foreground">
             <HugeiconsIcon icon={AiSearch02Icon} size={14} className="shrink-0" />
             <span className="group-data-[collapsible=icon]:hidden">Search</span>
             <kbd className="ml-auto text-[11px] opacity-50 group-data-[collapsible=icon]:hidden">⌘K</kbd>
@@ -269,7 +283,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
           </SidebarGroup>
 
           {/* Divider */}
-          <div className="h-px mb-4 -mx-2 group-data-[collapsible=icon]:hidden" style={{ backgroundColor: '#e5e6e7' }} />
+          <div className="h-px mb-4 -mx-2 group-data-[collapsible=icon]:hidden bg-border" />
 
           {/* Workspace Section */}
           <SidebarGroup className="p-0 pb-4">
@@ -311,7 +325,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
           </SidebarGroup>
 
           {/* Divider */}
-          <div className="h-px mb-4 -mx-2 group-data-[collapsible=icon]:hidden" style={{ backgroundColor: '#e5e6e7' }} />
+          <div className="h-px mb-4 -mx-2 group-data-[collapsible=icon]:hidden bg-border" />
 
           {/* Contracts Section */}
           <SidebarGroup className="p-0 pb-4">
@@ -330,7 +344,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
         </SidebarContent>
 
         {/* Footer */}
-        <SidebarFooter className="p-2 mb-24" style={{ borderTop: '1px solid #e5e6e7' }}>
+        <SidebarFooter className="p-2 mb-24 border-t border-border">
           <SidebarMenu className="gap-0.5">
             <SidebarMenuItem>
               <SidebarMenuButton
@@ -418,10 +432,6 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
       <SidebarInset className="flex flex-col min-h-screen" style={{ backgroundColor: '#ffffff' }}>
         {/* Top bar - FIXED */}
         <DashboardHeader
-          pageTitle={pageTitle}
-          isContractsPage={isContractsPage}
-          isUploadPage={isUploadPage}
-          isAnalyzeDemoPage={isAnalyzeDemoPage}
           onSearchClick={() => setCommandMenuOpen(true)}
           theme={theme}
           toggleTheme={toggleTheme}

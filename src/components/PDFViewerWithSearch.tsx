@@ -88,7 +88,6 @@ export function PDFViewerWithSearch({
   const [match, setMatch] = useState<TextMatch | null>(null);
   const [searching, setSearching] = useState<boolean>(false);
   const [pageError, setPageError] = useState<boolean>(false);
-  const [pageRendered, setPageRendered] = useState<boolean>(false);
   const pdfDocRef = useRef<any>(null);
   const pageContainerRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -113,7 +112,6 @@ export function PDFViewerWithSearch({
     setError(null);
     setMatch(null);
     setPageError(false);
-    setPageRendered(false);
     pdfDocRef.current = null;
   }, [fileUrl]);
 
@@ -139,23 +137,10 @@ export function PDFViewerWithSearch({
 
   const onPageLoadError = useCallback(() => {
     setPageError(true);
-    setPageRendered(false);
   }, []);
 
   const onPageLoadSuccess = useCallback(() => {
     setPageError(false);
-    // Delay to ensure text layer is rendered
-    setTimeout(() => {
-      setPageRendered(true);
-    }, 100);
-  }, []);
-
-  // Suppress AbortException warnings for text layer cancellation
-  const onRenderError = useCallback((error: Error) => {
-    if (error.name === 'AbortException' || error.message?.includes('cancelled')) {
-      return; // Silently ignore cancellation errors
-    }
-    console.error('PDF render error:', error);
   }, []);
 
   // Search for text across all pages
@@ -269,116 +254,21 @@ export function PDFViewerWithSearch({
     findTextInPDF();
   }, [searchText, numPages, documentReady]);
 
-  // Highlight text in the text layer
+  // Scroll to match position when found
   useEffect(() => {
-    if (!pageRendered || !pageContainerRef.current) return;
-
-    // Clear previous highlights
-    const textLayer = pageContainerRef.current.querySelector('.react-pdf__Page__textContent');
-    if (!textLayer) return;
-
-    const spans = textLayer.querySelectorAll('span');
-    spans.forEach(span => {
-      span.classList.remove('pdf-text-highlight');
-    });
-
-    // If no search text or no match on this page, exit
-    if (!searchText || !match || match.pageNum !== currentPage) return;
-
-    const keywords = extractKeywords(searchText);
-    if (keywords.length === 0) return;
-
-    // Also extract important terms directly from search text (numbers, dates, amounts)
-    const importantTerms: string[] = [];
-    const termPatterns = [
-      /\d+%/g,                          // percentages
-      /\$[\d,]+/g,                      // dollar amounts
-      /\d+(?:st|nd|rd|th)/gi,          // ordinals
-      /(?:january|february|march|april|may|june|july|august|september|october|november|december)/gi,  // months
-      /\d+\s*(?:year|month|day|week)s?/gi,  // time periods
-      /(?:one|two|three|four|five|six|seven|eight|nine|ten)\s*(?:year|month|day|week)s?/gi,  // spelled numbers
-    ];
-
-    termPatterns.forEach(pattern => {
-      const matches = searchText.match(pattern);
-      if (matches) {
-        matches.forEach(m => importantTerms.push(m.toLowerCase().trim()));
-      }
-    });
-
-    // Combine keywords and important terms
-    const allTerms = [...new Set([...keywords, ...importantTerms])];
-
-    // Find spans that match and track their indices
-    const spanArray = Array.from(spans);
-    const matchingIndices: number[] = [];
-
-    spanArray.forEach((span, index) => {
-      const text = span.textContent || '';
-      const lowerText = text.toLowerCase();
-      const normalizedSpanText = normalizeText(text);
-
-      // Check if this span contains any keywords or important terms
-      const hasKeywordMatch = allTerms.some(term => {
-        if (normalizedSpanText.includes(term.replace(/[^\w\s]/g, ''))) return true;
-        if (lowerText.includes(term)) return true;
-        if (term.includes(normalizedSpanText) && normalizedSpanText.length > 2) return true;
-        return false;
-      });
-
-      if (hasKeywordMatch) {
-        matchingIndices.push(index);
-      }
-    });
-
-    // If we have matches, highlight the entire range from first to last match
-    // This creates a continuous highlight instead of spotty highlighting
-    if (matchingIndices.length > 0) {
-      const firstIndex = Math.max(0, matchingIndices[0]);
-      const lastIndex = Math.min(spanArray.length - 1, matchingIndices[matchingIndices.length - 1]);
-
-      // Highlight all spans in the range
-      for (let i = firstIndex; i <= lastIndex; i++) {
-        spanArray[i].classList.add('pdf-text-highlight');
-      }
-    }
-
-    // Scroll to first highlighted element
-    const firstHighlight = textLayer.querySelector('.pdf-text-highlight');
-    if (firstHighlight && scrollContainerRef.current) {
+    if (match && match.pageNum === currentPage && scrollContainerRef.current) {
       setTimeout(() => {
-        const rect = firstHighlight.getBoundingClientRect();
-        const containerRect = scrollContainerRef.current!.getBoundingClientRect();
-        const scrollTop = scrollContainerRef.current!.scrollTop + rect.top - containerRect.top - 150;
-
+        const scrollTarget = match.yPosition * scale - 150;
         scrollContainerRef.current?.scrollTo({
-          top: Math.max(0, scrollTop),
+          top: Math.max(0, scrollTarget),
           behavior: 'smooth'
         });
-      }, 100);
+      }, 300);
     }
-  }, [pageRendered, searchText, match, currentPage]);
-
-  // Reset pageRendered when page changes
-  useEffect(() => {
-    setPageRendered(false);
-  }, [currentPage]);
+  }, [match, currentPage, scale]);
 
   return (
     <div className={cn("flex flex-col h-full bg-muted/20", className)}>
-      {/* Inline highlight styles */}
-      <style jsx global>{`
-        .pdf-text-highlight {
-          background-color: rgba(139, 92, 246, 0.15) !important;
-          border-radius: 3px;
-          padding: 2px 0;
-          box-shadow: inset 0 0 0 1px rgba(139, 92, 246, 0.3);
-          box-decoration-break: clone;
-          -webkit-box-decoration-break: clone;
-          transition: background-color 0.2s ease;
-        }
-      `}</style>
-
       {/* Controls - Always visible with skeletons while loading */}
       <div className="flex items-center justify-between px-4 py-2 bg-background border-b border-border shrink-0">
         {/* Left - Zoom controls */}
@@ -501,6 +391,29 @@ export function PDFViewerWithSearch({
                   </div>
                 }
               />
+
+              {/* Highlight overlay - yellow highlight bar */}
+              {searchText && match && match.pageNum === currentPage && (
+                <div
+                  className="absolute left-0 right-0 pointer-events-none"
+                  style={{
+                    top: `${match.yPosition * scale - 15}px`,
+                    height: '40px',
+                  }}
+                >
+                  <div
+                    className="absolute inset-0"
+                    style={{
+                      background: 'linear-gradient(90deg, transparent 0%, rgba(250, 204, 21, 0.4) 10%, rgba(250, 204, 21, 0.4) 90%, transparent 100%)',
+                    }}
+                  />
+                  <div
+                    className="absolute -left-6 top-1/2 -translate-y-1/2 w-6 h-6 bg-yellow-400 flex items-center justify-center"
+                  >
+                    <Search className="w-3 h-3 text-black" />
+                  </div>
+                </div>
+              )}
             </div>
           )}
           {pageError && (

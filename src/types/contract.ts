@@ -50,6 +50,12 @@ export interface Recommendation {
   rationale: string;
   priority: "high" | "medium" | "low";
   howToImplement: string;
+  /** Suggested contract language to propose */
+  sampleLanguage?: string;
+  /** What could happen if this advice is ignored */
+  riskIfIgnored?: string;
+  /** Questions to ask the other party during negotiation (different from lawyer questions) */
+  negotiationQuestions?: string[];
 }
 
 export interface ContractAnalysis {
