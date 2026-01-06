@@ -119,29 +119,23 @@ export default function ContractsPage() {
   // Empty state
   if (contracts.length === 0 && !loading) {
     return (
-      <div className="h-full flex" style={{ backgroundColor: '#fcfcfc' }}>
+      <div className="h-full flex bg-background">
         <div className="flex-1 flex flex-col items-center justify-center p-8">
-          <div
-            className="w-12 h-12 rounded-xl border flex items-center justify-center mb-6"
-            style={{ borderColor: '#e5e6e7' }}
-          >
-            <HugeiconsIcon icon={ContractsIcon} size={24} style={{ color: '#565c65' }} />
+          <div className="w-12 h-12 rounded-xl border border-border flex items-center justify-center mb-6">
+            <HugeiconsIcon icon={ContractsIcon} size={24} className="text-muted-foreground" />
           </div>
 
           <h1 className="text-2xl font-semibold text-foreground mb-3">
             Oops! There's no contract here...
           </h1>
 
-          <p className="text-center max-w-md mb-8" style={{ color: '#565c65' }}>
+          <p className="text-center max-w-md mb-8 text-muted-foreground">
             Looks like there's nothing to see here! Go ahead and add some new data to kick things off.
           </p>
 
           <div className="flex items-center gap-3">
             <Link href="/analyze">
-              <Button
-                className="rounded-full px-5"
-                style={{ backgroundColor: '#1a1a1a', color: '#ffffff' }}
-              >
+              <Button className="rounded-full px-5 bg-foreground text-background hover:bg-foreground/90">
                 <HugeiconsIcon icon={PlusSignIcon} size={16} className="mr-2" />
                 Add Contract
               </Button>
@@ -149,8 +143,7 @@ export default function ContractsPage() {
 
             <Button
               variant="outline"
-              className="rounded-full px-5"
-              style={{ borderColor: '#e5e6e7', color: '#565c65' }}
+              className="rounded-full px-5 border-border text-muted-foreground"
             >
               <HugeiconsIcon icon={PlayIcon} size={16} className="mr-2" />
               Watch Demo
@@ -162,61 +155,56 @@ export default function ContractsPage() {
   }
 
   return (
-    <div className="h-full flex flex-col w-full" style={{ backgroundColor: '#ffffff' }}>
+    <div className="h-full flex flex-col w-full bg-background">
       {/* Toolbar */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-[#e5e6e7] w-full">
+      <div className="flex items-center justify-between px-4 py-3 border-b border-border w-full">
         <div className="flex items-center gap-3">
           {/* Filter buttons */}
           <button
             onClick={() => setFilter("all")}
             className={cn(
-              "px-3 py-1.5 rounded-md text-[12px] font-medium transition-colors",
-              filter === "all" ? "bg-[#f0f0f0]" : "hover:bg-[#f8f8f8]"
+              "px-3 py-1.5 rounded-md text-[12px] font-semibold transition-colors text-muted-foreground",
+              filter === "all" ? "bg-muted" : "hover:bg-muted/50"
             )}
-            style={{ color: '#565c65' }}
           >
             All ({contracts.length})
           </button>
           <button
             onClick={() => setFilter("high-risk")}
             className={cn(
-              "px-3 py-1.5 rounded-md text-[12px] font-medium transition-colors",
-              filter === "high-risk" ? "bg-[#f0f0f0]" : "hover:bg-[#f8f8f8]"
+              "px-3 py-1.5 rounded-md text-[12px] font-semibold transition-colors text-muted-foreground",
+              filter === "high-risk" ? "bg-muted" : "hover:bg-muted/50"
             )}
-            style={{ color: '#565c65' }}
           >
             High Risk
           </button>
           <button
             onClick={() => setFilter("medium-risk")}
             className={cn(
-              "px-3 py-1.5 rounded-md text-[12px] font-medium transition-colors",
-              filter === "medium-risk" ? "bg-[#f0f0f0]" : "hover:bg-[#f8f8f8]"
+              "px-3 py-1.5 rounded-md text-[12px] font-semibold transition-colors text-muted-foreground",
+              filter === "medium-risk" ? "bg-muted" : "hover:bg-muted/50"
             )}
-            style={{ color: '#565c65' }}
           >
             Medium Risk
           </button>
           <button
             onClick={() => setFilter("low-risk")}
             className={cn(
-              "px-3 py-1.5 rounded-md text-[12px] font-medium transition-colors",
-              filter === "low-risk" ? "bg-[#f0f0f0]" : "hover:bg-[#f8f8f8]"
+              "px-3 py-1.5 rounded-md text-[12px] font-semibold transition-colors text-muted-foreground",
+              filter === "low-risk" ? "bg-muted" : "hover:bg-muted/50"
             )}
-            style={{ color: '#565c65' }}
           >
             Low Risk
           </button>
-          <span className="text-[12px] ml-2" style={{ color: '#909090' }}>{filteredContracts.length} Results</span>
+          <span className="text-[12px] font-semibold ml-2 text-muted-foreground/60">{filteredContracts.length} Results</span>
         </div>
 
         {/* Search */}
         <div className="flex items-center gap-2">
           <input
             type="text"
-            placeholder="Search contracts..."
-            className="px-3 py-1.5 text-[12px] border rounded-md w-48"
-            style={{ borderColor: '#e5e6e7', color: '#565c65' }}
+            placeholder="Search contracts"
+            className="px-3 py-1.5 text-[12px] border border-border rounded-full w-48 bg-background text-foreground placeholder:text-muted-foreground"
           />
         </div>
       </div>
@@ -225,10 +213,8 @@ export default function ContractsPage() {
       <div className="flex-1 overflow-auto w-full">
         {/* Table Header */}
         <div
-          className="grid px-4 py-2.5 text-[11px] font-medium uppercase tracking-wider border-b border-[#e5e6e7] sticky top-0 w-full"
+          className="grid px-4 py-2.5 text-[11px] font-semibold uppercase tracking-wider border-b border-border sticky top-0 w-full bg-muted/50 text-muted-foreground/50"
           style={{
-            color: '#909090',
-            backgroundColor: '#ffffff',
             gridTemplateColumns: '1fr 280px 200px 120px 100px 50px 50px'
           }}
         >
@@ -248,34 +234,34 @@ export default function ContractsPage() {
           {filteredContracts.map((contract) => (
             <div
               key={contract.id}
-              className="grid px-4 py-3 items-center border-b hover:bg-[#fafafa] transition-colors cursor-pointer group"
-              style={{ borderColor: '#f0f0f0', gridTemplateColumns: '1fr 280px 200px 120px 100px 50px 50px' }}
+              className="grid px-4 py-3 items-center border-b border-border hover:bg-muted/50 transition-colors cursor-pointer group"
+              style={{ gridTemplateColumns: '1fr 280px 200px 120px 100px 50px 50px' }}
               onClick={() => router.push(`/dashboard/contracts/${contract.id}`)}
             >
               {/* Contract Name */}
               <div className="flex items-center gap-3 min-w-0 pr-4">
-                <span className="text-[13px] font-medium truncate" style={{ color: '#1a1a1a' }}>
+                <span className="text-[13px] font-medium truncate text-foreground">
                   {contract.title}
                 </span>
               </div>
 
               {/* Type */}
               <div>
-                <span className="text-[13px]" style={{ color: '#565c65' }}>
+                <span className="text-[13px] text-muted-foreground">
                   {contract.contract_type || "—"}
                 </span>
               </div>
 
               {/* Party */}
               <div>
-                <span className="text-[13px]" style={{ color: '#565c65' }}>
+                <span className="text-[13px] text-muted-foreground">
                   {getPartyName(contract)}
                 </span>
               </div>
 
               {/* Uploaded Date */}
               <div>
-                <span className="text-[13px]" style={{ color: '#909090' }}>
+                <span className="text-[13px] text-muted-foreground/70">
                   {new Date(contract.created_at).toLocaleDateString("en-US", {
                     day: "2-digit",
                     month: "2-digit",
@@ -288,7 +274,7 @@ export default function ContractsPage() {
               <div>
                 {contract.overall_risk && (
                   <span
-                    className="text-[11px] font-medium px-2.5 py-1 rounded-full"
+                    className="text-[11px] font-medium px-2.5 py-1 rounded-md"
                     style={{
                       backgroundColor: contract.overall_risk === 'high' ? 'rgba(239, 68, 68, 0.1)' :
                                        contract.overall_risk === 'medium' ? 'rgba(245, 158, 11, 0.1)' : 'rgba(34, 197, 94, 0.1)',
@@ -306,12 +292,12 @@ export default function ContractsPage() {
               <div className="flex justify-center" onClick={(e) => e.stopPropagation()}>
                 <button
                   onClick={() => toggleStar(contract.id, contract.is_starred)}
-                  className="p-1 rounded hover:bg-white/80 transition-colors"
+                  className="p-1 rounded hover:bg-muted transition-colors"
                 >
                   {contract.is_starred ? (
                     <Star className="w-4 h-4 text-amber-500 fill-amber-500" />
                   ) : (
-                    <Star className="w-4 h-4 text-gray-200 group-hover:text-gray-400" />
+                    <Star className="w-4 h-4 text-muted-foreground/30 group-hover:text-muted-foreground/60" />
                   )}
                 </button>
               </div>
@@ -320,8 +306,8 @@ export default function ContractsPage() {
               <div className="flex justify-center" onClick={(e) => e.stopPropagation()}>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <button className="p-1 rounded hover:bg-white/80 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <MoreHorizontal className="w-4 h-4" style={{ color: '#909090' }} />
+                    <button className="p-1 rounded hover:bg-muted opacity-0 group-hover:opacity-100 transition-opacity">
+                      <MoreHorizontal className="w-4 h-4 text-muted-foreground" />
                     </button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="rounded-lg w-44">

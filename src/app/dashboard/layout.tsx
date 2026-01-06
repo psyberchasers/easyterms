@@ -100,7 +100,7 @@ function DashboardHeader({
             <HugeiconsIcon icon={FileUploadIcon} size={16} className="text-muted-foreground" />
             <Link href="/dashboard/upload-contract" className="text-sm text-muted-foreground/60 hover:text-muted-foreground transition-colors">Upload Contract</Link>
             <span className="text-sm text-muted-foreground/60">/</span>
-            <span className="text-sm font-medium text-muted-foreground">Recipient</span>
+            <span className="text-sm font-semibold text-muted-foreground">Recipient</span>
           </>
         );
       }
@@ -110,14 +110,14 @@ function DashboardHeader({
             <HugeiconsIcon icon={FileUploadIcon} size={16} className="text-muted-foreground" />
             <Link href="/dashboard/upload-contract" className="text-sm text-muted-foreground/60 hover:text-muted-foreground transition-colors">Upload Contract</Link>
             <span className="text-sm text-muted-foreground/60">/</span>
-            <span className="text-sm font-medium text-muted-foreground">Sender</span>
+            <span className="text-sm font-semibold text-muted-foreground">Sender</span>
           </>
         );
       }
       return (
         <>
           <HugeiconsIcon icon={FileUploadIcon} size={16} className="text-muted-foreground" />
-          <span className="text-sm font-medium text-muted-foreground">Upload Contract</span>
+          <span className="text-sm font-semibold text-muted-foreground">Upload Contract</span>
         </>
       );
     }
@@ -125,11 +125,11 @@ function DashboardHeader({
       return (
         <>
           <HugeiconsIcon icon={ContractsIcon} size={16} className="text-muted-foreground" />
-          <span className="text-sm font-medium text-muted-foreground">Contracts</span>
+          <span className="text-sm font-semibold text-muted-foreground">Contracts</span>
         </>
       );
     }
-    return <span className="text-sm font-medium text-muted-foreground">Dashboard</span>;
+    return <span className="text-sm font-semibold text-muted-foreground">Dashboard</span>;
   };
 
   return (
@@ -146,19 +146,19 @@ function DashboardHeader({
       <SidebarToggleButton />
       <button
         onClick={onSearchClick}
-        className="h-8 px-3 flex items-center gap-2 border border-border hover:bg-muted transition-colors rounded-md text-[13px] font-medium text-muted-foreground"
+        className="h-8 px-3 flex items-center gap-2 border border-border hover:bg-muted transition-colors rounded-md text-[13px] font-semibold text-muted-foreground"
       >
         <HugeiconsIcon icon={AiSearch02Icon} size={14} />
         <span>Search</span>
       </button>
       <Link href="/settings">
-        <button className="h-8 px-3 flex items-center gap-2 border border-border hover:bg-muted transition-colors rounded-md text-[13px] font-medium text-muted-foreground">
+        <button className="h-8 px-3 flex items-center gap-2 border border-border hover:bg-muted transition-colors rounded-md text-[13px] font-semibold text-muted-foreground">
           <HugeiconsIcon icon={Settings03Icon} size={14} />
           <span>Settings</span>
         </button>
       </Link>
       <Link href="/dashboard/upload-contract">
-        <button className="h-8 px-3 flex items-center gap-2 transition-colors rounded-md text-[13px] font-medium text-white bg-purple-500 hover:bg-purple-600">
+        <button className="h-8 px-3 flex items-center gap-2 transition-colors rounded-md text-[13px] font-semibold text-white bg-purple-500 hover:bg-purple-600">
           <HugeiconsIcon icon={FileUploadIcon} size={14} />
           <span>Upload</span>
         </button>
@@ -228,13 +228,16 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
           className="flex items-center px-3 border-b border-sidebar-border group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-2"
           style={{ height: '48px' }}
         >
-          <div className="flex items-center gap-2">
-            <div
-              className="w-5 h-5 rounded-full shrink-0"
-              style={{ background: 'linear-gradient(135deg, #FFEF00 0%, #f59e0b 100%)' }}
-            />
-            <span className="text-[13px] font-semibold text-foreground group-data-[collapsible=icon]:hidden">EasyTerms</span>
-          </div>
+          <img
+            src={theme === "dark" ? "/16darkmode.svg" : "/16lightmode.svg"}
+            alt="EasyTerms"
+            className="h-8 w-auto group-data-[collapsible=icon]:hidden"
+          />
+          <img
+            src={theme === "dark" ? "/16darkmode.svg" : "/16lightmode.svg"}
+            alt="EasyTerms"
+            className="h-8 w-8 hidden group-data-[collapsible=icon]:block object-contain"
+          />
         </div>
 
         {/* Search */}

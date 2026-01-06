@@ -407,11 +407,6 @@ export function PDFViewerWithSearch({
                       background: 'linear-gradient(90deg, transparent 0%, rgba(250, 204, 21, 0.4) 10%, rgba(250, 204, 21, 0.4) 90%, transparent 100%)',
                     }}
                   />
-                  <div
-                    className="absolute -left-6 top-1/2 -translate-y-1/2 w-6 h-6 bg-yellow-400 flex items-center justify-center"
-                  >
-                    <Search className="w-3 h-3 text-black" />
-                  </div>
                 </div>
               )}
             </div>

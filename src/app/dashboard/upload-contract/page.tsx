@@ -83,7 +83,7 @@ const PDFViewerWithSearch = dynamic(() => import("@/components/PDFViewerWithSear
 });
 
 
-type AnalysisStatus = "idle" | "uploading" | "analyzing" | "complete" | "error";
+type AnalysisStatus = "idle" | "uploading" | "analyzing" | "complete" | "success" | "error";
 
 // Default missing clauses to check for
 const DEFAULT_MISSING_CLAUSES = [
@@ -183,8 +183,20 @@ export default function UploadContractPage() {
   const router = useRouter();
   const pathname = usePathname();
 
-  // Get role from pathname: /dashboard/upload-contract/recipient or /dashboard/upload-contract/sender
-  const selectedRole = pathname.includes("/recipient") ? "recipient" : pathname.includes("/sender") ? "sender" : null;
+  // Role selection state (local, not from URL)
+  const [selectedRole, setSelectedRole] = useState<"recipient" | "sender" | null>(
+    pathname.includes("/recipient") ? "recipient" : pathname.includes("/sender") ? "sender" : null
+  );
+  const [showUploadModal, setShowUploadModal] = useState(pathname.includes("/recipient") || pathname.includes("/sender"));
+
+  // Handle role selection with animation
+  const handleRoleSelect = (role: "recipient" | "sender") => {
+    setSelectedRole(role);
+    // Show upload modal after expansion animation
+    setTimeout(() => {
+      setShowUploadModal(true);
+    }, 400);
+  };
 
   // Core state
   const [status, setStatus] = useState<AnalysisStatus>("idle");
@@ -199,6 +211,7 @@ export default function UploadContractPage() {
 
   // UI state
   const [showDocument, setShowDocument] = useState(true);
+  const [pdfReady, setPdfReady] = useState(false);
   const [highlightedClause, setHighlightedClause] = useState<string | null>(null);
   const [isHovering, setIsHovering] = useState(false);
 
@@ -231,6 +244,29 @@ export default function UploadContractPage() {
         setPhraseIndex((prev) => (prev + 1) % loadingPhrases.length);
       }, 2500);
       return () => clearInterval(interval);
+    }
+  }, [status]);
+
+  // Transition from complete to success after delay
+  useEffect(() => {
+    if (status === "complete") {
+      const timer = setTimeout(() => {
+        setStatus("success");
+      }, 1200);
+      return () => clearTimeout(timer);
+    }
+  }, [status]);
+
+  // Set PDF ready when we have a successful analysis
+  useEffect(() => {
+    if (status === "success") {
+      // Small delay to let the fade-in animation start, then show PDF
+      const timer = setTimeout(() => {
+        setPdfReady(true);
+      }, 100);
+      return () => clearTimeout(timer);
+    } else if (status === "idle") {
+      setPdfReady(false);
     }
   }, [status]);
 
@@ -585,137 +621,185 @@ export default function UploadContractPage() {
   // IDLE STATE - Role Selection or Upload
   // ============================================
   if (status === "idle") {
-    // Show role selection if no role selected yet
-    if (!selectedRole) {
-      return (
-        <div className="h-full flex bg-card">
-          {/* Recipient Side */}
-          <motion.div
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.4, ease: [0.4, 0, 0.2, 1] }}
-            onClick={() => router.push("/dashboard/upload-contract/recipient")}
-            onMouseEnter={() => downloadIconRef.current?.startAnimation()}
-            onMouseLeave={() => downloadIconRef.current?.stopAnimation()}
-            className="flex-1 flex flex-col items-center justify-center cursor-pointer transition-all hover:bg-muted/50 border-r border-dashed border-foreground/10 group"
-          >
-            <div className="flex flex-col items-center gap-6 max-w-sm text-center">
-              <div className="w-20 h-20 rounded-2xl bg-purple-500/10 flex items-center justify-center group-hover:bg-purple-500/20 transition-colors">
-                <AnimatedDownloadIcon ref={downloadIconRef} size={40} className="text-purple-500" />
-              </div>
-              <div className="space-y-2">
-                <h2 className="text-xl font-semibold text-foreground">I received a contract</h2>
-                <p className="text-sm text-muted-foreground">
-                  Upload a contract you&apos;ve received to analyze terms, identify risks, and get recommendations
-                </p>
-              </div>
-              <div className="flex items-center gap-2 text-purple-500 font-medium text-sm group-hover:gap-3 transition-all">
-                <span>Get started</span>
-                <ChevronRight className="w-4 h-4" />
-              </div>
-            </div>
-          </motion.div>
+    return (
+      <div className="h-full flex bg-card overflow-hidden">
+        {/* Recipient Side */}
+        <motion.div
+          initial={{ opacity: 0, x: -20 }}
+          animate={{
+            opacity: selectedRole === "sender" ? 0 : 1,
+            x: selectedRole === "sender" ? -100 : 0,
+            flex: selectedRole === "recipient" ? 1 : selectedRole === "sender" ? 0 : 1
+          }}
+          transition={{ duration: 0.4, ease: [0.4, 0, 0.2, 1] }}
+          onClick={() => !selectedRole && handleRoleSelect("recipient")}
+          onMouseEnter={() => !selectedRole && downloadIconRef.current?.startAnimation()}
+          onMouseLeave={() => downloadIconRef.current?.stopAnimation()}
+          className={cn(
+            "flex flex-col items-center justify-center transition-all relative overflow-hidden",
+            !selectedRole && "cursor-pointer hover:bg-muted/50 border-r border-dashed border-foreground/10 group"
+          )}
+          style={{ flex: selectedRole === "recipient" ? 1 : selectedRole === "sender" ? 0 : 1 }}
+        >
 
-          {/* Sender Side */}
-          <motion.div
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.4, ease: [0.4, 0, 0.2, 1], delay: 0.1 }}
-            className="flex-1 flex flex-col items-center justify-center bg-muted/30 cursor-not-allowed relative overflow-hidden"
-          >
-            {/* Coming Soon Overlay */}
+          {/* Role selection content - hide when selected */}
+          <AnimatePresence>
+            {!selectedRole && (
+              <motion.div
+                exit={{ opacity: 0, y: -30 }}
+                transition={{ duration: 0.3 }}
+                className="flex flex-col items-center gap-6 max-w-sm text-center"
+              >
+                <div className="w-20 h-20 rounded-2xl bg-purple-500/10 flex items-center justify-center group-hover:bg-purple-500/20 transition-colors">
+                  <AnimatedDownloadIcon ref={downloadIconRef} size={40} className="text-purple-500" />
+                </div>
+                <div className="space-y-2">
+                  <h2 className="text-xl font-semibold text-foreground">I received a contract</h2>
+                  <p className="text-sm text-muted-foreground">
+                    Upload a contract you&apos;ve received to analyze terms, identify risks, and get recommendations
+                  </p>
+                </div>
+                <div className="flex items-center gap-2 text-purple-500 font-medium text-sm group-hover:gap-3 transition-all">
+                  <span>Get started</span>
+                  <ChevronRight className="w-4 h-4" />
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* Upload modal - slides up from bottom */}
+          <AnimatePresence mode="wait">
+            {showUploadModal && selectedRole === "recipient" && (
+              <motion.div
+                initial={{ opacity: 0, y: 100 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 100 }}
+                transition={{ duration: 0.4, ease: [0.4, 0, 0.2, 1] }}
+                className="absolute inset-0 flex flex-col p-8 z-10"
+              >
+                {/* Back button and role indicator */}
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ delay: 0.3 }}
+                  className="absolute top-3 left-4 flex items-center gap-2"
+                >
+                  <button
+                    onClick={() => {
+                      setShowUploadModal(false);
+                      setTimeout(() => setSelectedRole(null), 400);
+                    }}
+                    className="flex items-center gap-1.5 px-3 py-2 text-xs font-medium text-muted-foreground hover:text-foreground border border-border hover:bg-muted rounded-lg transition-colors"
+                  >
+                    <ChevronLeft className="w-3.5 h-3.5" />
+                    Change Role
+                  </button>
+                  <div className="flex items-center gap-1.5 px-3 py-2 text-xs font-medium bg-purple-500/10 text-purple-500 rounded-lg">
+                    Recipient
+                  </div>
+                </motion.div>
+
+                <div className="flex-1 flex items-center justify-center">
+                <motion.div
+                  initial={{ scale: 0.95 }}
+                  animate={{ scale: 1 }}
+                  transition={{ duration: 0.4, delay: 0.1 }}
+                  onDragOver={handleDragOver}
+                  onDrop={handleDrop}
+                  onClick={() => fileInputRef.current?.click()}
+                  onMouseEnter={() => setIsHovering(true)}
+                  onMouseLeave={() => setIsHovering(false)}
+                  className="w-full max-w-4xl p-32 text-center transition-all cursor-pointer rounded-xl"
+                  style={{
+                    border: `1.5px dashed ${isHovering ? '#8b5cf6' : 'var(--border)'}`,
+                    backgroundColor: isHovering ? 'rgba(139, 92, 246, 0.05)' : 'transparent',
+                    transition: 'all 0.2s ease',
+                  }}
+                >
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept=".pdf,.doc,.docx,.txt"
+                    onChange={handleFileInput}
+                    className="hidden"
+                  />
+                  <div className="flex flex-col items-center gap-3">
+                    <div className="w-14 h-14 rounded-full flex items-center justify-center transition-all bg-white">
+                      <HugeiconsIcon
+                        icon={FileUploadIcon}
+                        size={28}
+                        style={{
+                          color: isHovering ? '#8b5cf6' : 'var(--muted-foreground)',
+                          transition: 'color 0.2s ease'
+                        }}
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-sm font-medium text-foreground">
+                        Drop your file here, or{" "}
+                        <span className="text-purple-600 hover:text-purple-700 transition-colors">
+                          browse
+                        </span>
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        PDF, DOC, DOCX, TXT up to 200MB
+                      </p>
+                    </div>
+                  </div>
+                </motion.div>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </motion.div>
+
+        {/* Sender Side */}
+        <motion.div
+          initial={{ opacity: 0, x: 20 }}
+          animate={{
+            opacity: selectedRole === "recipient" ? 0 : 1,
+            x: selectedRole === "recipient" ? 100 : 0,
+            flex: selectedRole === "sender" ? 1 : selectedRole === "recipient" ? 0 : 1
+          }}
+          transition={{ duration: 0.4, ease: [0.4, 0, 0.2, 1], delay: 0.1 }}
+          className="flex flex-col items-center justify-center bg-muted/30 cursor-not-allowed relative overflow-hidden"
+          style={{ flex: selectedRole === "sender" ? 1 : selectedRole === "recipient" ? 0 : 1 }}
+        >
+          {/* Coming Soon Overlay */}
+          {!selectedRole && (
             <div className="absolute inset-0 bg-card/60 backdrop-blur-[1px] z-10 flex items-center justify-center">
               <span className="px-3 py-1.5 bg-foreground text-background text-xs font-medium rounded-full">
                 Coming Soon
               </span>
             </div>
+          )}
 
-            <div className="flex flex-col items-center gap-6 max-w-sm text-center opacity-50">
-              <div className="w-20 h-20 rounded-2xl bg-muted flex items-center justify-center">
-                <Upload className="w-10 h-10 text-muted-foreground" />
-              </div>
-              <div className="space-y-2">
-                <h2 className="text-xl font-semibold text-foreground">I&apos;m sending a contract</h2>
-                <p className="text-sm text-muted-foreground">
-                  Create and send contracts with built-in tracking, e-signatures, and analytics
-                </p>
-              </div>
-              <div className="flex items-center gap-2 text-muted-foreground font-medium text-sm">
-                <span>Get started</span>
-                <ChevronRight className="w-4 h-4" />
-              </div>
+          <div className="flex flex-col items-center gap-6 max-w-sm text-center opacity-50">
+            <div className="w-20 h-20 rounded-2xl bg-muted flex items-center justify-center">
+              <Upload className="w-10 h-10 text-muted-foreground" />
             </div>
-          </motion.div>
-        </div>
-      );
-    }
-
-    // Show upload zone for recipient
-    return (
-      <div className="h-full flex flex-col bg-background">
-        {/* Upload Zone */}
-        <div className="flex-1 flex items-center justify-center p-8">
-          <div
-            onDragOver={handleDragOver}
-            onDrop={handleDrop}
-            onClick={() => fileInputRef.current?.click()}
-            onMouseEnter={() => setIsHovering(true)}
-            onMouseLeave={() => setIsHovering(false)}
-            className="w-full max-w-4xl p-32 text-center transition-all cursor-pointer rounded-xl"
-            style={{
-              border: `1.5px dashed ${isHovering ? '#8b5cf6' : 'var(--border)'}`,
-              backgroundColor: isHovering ? 'rgba(139, 92, 246, 0.05)' : 'var(--background)',
-              transition: 'all 0.2s ease',
-            }}
-          >
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept=".pdf,.doc,.docx,.txt"
-                onChange={handleFileInput}
-                className="hidden"
-              />
-              <div className="flex flex-col items-center gap-3">
-                <div
-                  className="w-14 h-14 rounded-full flex items-center justify-center transition-all"
-                  style={{
-                    backgroundColor: isHovering ? 'rgba(139, 92, 246, 0.15)' : 'var(--muted)',
-                  }}
-                >
-                  <HugeiconsIcon
-                    icon={FileUploadIcon}
-                    size={28}
-                    style={{
-                      color: isHovering ? '#8b5cf6' : 'var(--muted-foreground)',
-                      transition: 'color 0.2s ease'
-                    }}
-                  />
-                </div>
-                <div className="space-y-1">
-                  <p className="text-sm font-medium text-foreground">
-                    Drop your file here, or{" "}
-                    <span
-                      className="text-purple-600 hover:text-purple-700 transition-colors"
-                    >
-                      browse
-                    </span>
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    PDF, DOC, DOCX, TXT up to 200MB
-                  </p>
-                </div>
-              </div>
+            <div className="space-y-2">
+              <h2 className="text-xl font-semibold text-foreground">I&apos;m sending a contract</h2>
+              <p className="text-sm text-muted-foreground">
+                Create and send contracts with built-in tracking, e-signatures, and analytics
+              </p>
+            </div>
+            <div className="flex items-center gap-2 text-muted-foreground font-medium text-sm">
+              <span>Get started</span>
+              <ChevronRight className="w-4 h-4" />
             </div>
           </div>
-        </div>
+        </motion.div>
+      </div>
     );
   }
 
   // ============================================
   // LOADING STATE - Dashboard style with purple theme
   // ============================================
-  if (status === "uploading" || status === "analyzing") {
-    const currentStep = status === "uploading" ? 0 : 1;
+  if (status === "uploading" || status === "analyzing" || status === "complete") {
+    const currentStep = status === "uploading" ? 0 : status === "analyzing" ? 1 : 2; // 2 means generating complete
     const steps = [
       { label: "Uploading", sublabel: "Securing your document" },
       { label: "Analyzing", sublabel: "Reading contract terms" },
@@ -726,15 +810,18 @@ export default function UploadContractPage() {
       <motion.div
         key="loading"
         initial={{ opacity: 0, y: 40 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4, ease: [0.4, 0, 0.2, 1] }}
+        animate={{
+          opacity: status === "complete" ? 0 : 1,
+          y: status === "complete" ? -20 : 0
+        }}
+        transition={{ duration: 0.5, ease: [0.4, 0, 0.2, 1] }}
         className="h-full flex flex-col items-center justify-center p-4 bg-background"
       >
         <div className="w-full max-w-sm space-y-8">
           {/* Music Loader - Purple tinted */}
           <div className="flex justify-center">
             <div className="w-32 h-32" style={{ filter: 'hue-rotate(220deg) saturate(1.5)' }}>
-              <Lottie animationData={loadMusicAnimation} loop={true} />
+              <Lottie animationData={loadMusicAnimation} loop={status !== "complete"} />
             </div>
           </div>
 
@@ -812,9 +899,7 @@ export default function UploadContractPage() {
                     <CheckCircle2 className="w-3 h-3" />
                   ) : i === currentStep ? (
                     <Loader2 className="w-3 h-3 animate-spin" />
-                  ) : (
-                    <span className="w-3 h-3 flex items-center justify-center text-[10px]">{i + 1}</span>
-                  )}
+                  ) : null}
                   <span className="hidden sm:inline font-semibold">{step.label}</span>
                 </div>
               ))}
@@ -823,19 +908,21 @@ export default function UploadContractPage() {
 
           {/* File Pill */}
           <div className="flex justify-center">
-            <div className="inline-flex items-center gap-3 px-4 py-2.5 rounded-lg bg-muted">
-              <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: 'rgba(139, 92, 246, 0.15)' }}>
+            <div className="inline-flex items-center gap-3 px-4 py-2.5 rounded-lg" style={{ backgroundColor: 'rgba(139, 92, 246, 0.15)' }}>
+              <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: 'rgba(139, 92, 246, 0.3)' }}>
                 <HugeiconsIcon icon={DocumentAttachmentIcon} size={16} style={{ color: '#8b5cf6' }} />
               </div>
-              <p className="text-xs font-medium text-foreground truncate max-w-[200px]">{fileName}</p>
+              <p className="text-xs font-medium text-foreground">{fileName}</p>
             </div>
           </div>
 
           {/* Tip */}
           <div className="flex justify-center">
-            <p className="text-xs text-muted-foreground/60 text-center">
-              Checking for 50+ common contract pitfalls
-            </p>
+            <div className="px-4 py-2 rounded-lg" style={{ backgroundColor: 'rgba(139, 92, 246, 0.1)' }}>
+              <p className="text-xs text-muted-foreground text-center">
+                Checking for 50+ common contract pitfalls
+              </p>
+            </div>
           </div>
         </div>
       </motion.div>
@@ -885,7 +972,12 @@ export default function UploadContractPage() {
   ];
 
   return (
-    <div className="flex h-full bg-card">
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5, ease: [0.4, 0, 0.2, 1] }}
+      className="flex h-full bg-card"
+    >
       {/* Document Side Panel */}
       <div
         className={cn(
@@ -922,11 +1014,17 @@ export default function UploadContractPage() {
             </div>
             {/* PDF Content */}
             <div className="flex-1 overflow-auto bg-card">
-              <PDFViewerWithSearch
-                fileUrl={fileUrl}
-                searchText={highlightedClause || ""}
-                className="h-full"
-              />
+              {pdfReady ? (
+                <PDFViewerWithSearch
+                  fileUrl={fileUrl}
+                  searchText={highlightedClause || ""}
+                  className="h-full"
+                />
+              ) : (
+                <div className="h-full flex items-center justify-center">
+                  <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
+                </div>
+              )}
             </div>
           </>
         )}
@@ -1075,7 +1173,7 @@ export default function UploadContractPage() {
                       paragraphs.push(sentences.slice(i, i + 3).join(' ').trim());
                     }
                     return paragraphs.map((para, i) => (
-                      <p key={i} className="text-sm text-muted-foreground leading-relaxed">{para}</p>
+                      <p key={i} className="text-sm text-foreground leading-relaxed">{para}</p>
                     ));
                   })()}
                 </div>
@@ -1842,6 +1940,6 @@ export default function UploadContractPage() {
             )}
         </main>
       </Tabs>
-    </div>
+    </motion.div>
   );
 }

@@ -1,18 +1,29 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import localFont from "next/font/local";
 import "./globals.css";
 import { AuthProvider } from "@/components/providers/AuthProvider";
 import { ThemeProvider } from "@/components/providers/ThemeProvider";
 // Footer removed from root - dashboard has its own layout
 
-const geist = Geist({
-  variable: "--font-geist",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
+const sfProRounded = localFont({
+  src: [
+    {
+      path: "../../public/SF-Pro-Rounded-Regular.otf",
+      weight: "400",
+      style: "normal",
+    },
+    {
+      path: "../../public/SF-Pro-Rounded-Medium.otf",
+      weight: "500",
+      style: "normal",
+    },
+    {
+      path: "../../public/SF-Pro-Rounded-Bold.otf",
+      weight: "700",
+      style: "normal",
+    },
+  ],
+  variable: "--font-sf-pro-rounded",
 });
 
 export const metadata: Metadata = {
@@ -41,8 +52,8 @@ export default function RootLayout({
         />
       </head>
       <body
-        className={`${geist.variable} ${geistMono.variable} antialiased min-h-screen flex flex-col`}
-        style={{ fontFamily: 'var(--font-geist), sans-serif' }}
+        className={`${sfProRounded.variable} antialiased min-h-screen flex flex-col`}
+        style={{ fontFamily: 'var(--font-sf-pro-rounded), system-ui, sans-serif' }}
       >
         <ThemeProvider>
           <AuthProvider>
