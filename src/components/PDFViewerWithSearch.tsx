@@ -19,11 +19,13 @@ interface TextMatch {
   yPosition: number;
   matchedText: string;
   score: number;
+  keywords: string[];
 }
 
 interface PDFViewerWithSearchProps {
   fileUrl: string;
   searchText?: string;
+  highlightColor?: "yellow" | "red" | "green";
   className?: string;
 }
 
@@ -74,9 +76,23 @@ function calculateMatchScore(searchKeywords: string[], pageText: string): number
   return score;
 }
 
+// Get highlight color based on type
+function getHighlightColors(color: "yellow" | "red" | "green") {
+  switch (color) {
+    case "red":
+      return { bg: "rgba(239, 68, 68, 0.35)", border: "rgba(239, 68, 68, 0.6)" };
+    case "green":
+      return { bg: "rgba(34, 197, 94, 0.35)", border: "rgba(34, 197, 94, 0.6)" };
+    case "yellow":
+    default:
+      return { bg: "rgba(250, 204, 21, 0.4)", border: "rgba(250, 204, 21, 0.7)" };
+  }
+}
+
 export function PDFViewerWithSearch({
   fileUrl,
   searchText,
+  highlightColor = "yellow",
   className,
 }: PDFViewerWithSearchProps) {
   const [numPages, setNumPages] = useState<number>(0);
@@ -88,6 +104,7 @@ export function PDFViewerWithSearch({
   const [match, setMatch] = useState<TextMatch | null>(null);
   const [searching, setSearching] = useState<boolean>(false);
   const [pageError, setPageError] = useState<boolean>(false);
+  const [pageRendered, setPageRendered] = useState<boolean>(false);
   const pdfDocRef = useRef<any>(null);
   const pageContainerRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -112,6 +129,7 @@ export function PDFViewerWithSearch({
     setError(null);
     setMatch(null);
     setPageError(false);
+    setPageRendered(false);
     pdfDocRef.current = null;
   }, [fileUrl]);
 
@@ -141,6 +159,9 @@ export function PDFViewerWithSearch({
 
   const onPageLoadSuccess = useCallback(() => {
     setPageError(false);
+    setTimeout(() => {
+      setPageRendered(true);
+    }, 150);
   }, []);
 
   // Search for text across all pages
@@ -231,7 +252,8 @@ export function PDFViewerWithSearch({
               pageNum,
               yPosition: bestY,
               matchedText: fullPageText.substring(0, 100),
-              score: pageScore
+              score: pageScore,
+              keywords
             };
           }
         } catch (err) {
@@ -254,18 +276,71 @@ export function PDFViewerWithSearch({
     findTextInPDF();
   }, [searchText, numPages, documentReady]);
 
-  // Scroll to match position when found
+  // Highlight text at the matched position (not by keyword, by Y position)
   useEffect(() => {
-    if (match && match.pageNum === currentPage && scrollContainerRef.current) {
-      setTimeout(() => {
-        const scrollTarget = match.yPosition * scale - 150;
-        scrollContainerRef.current?.scrollTo({
-          top: Math.max(0, scrollTarget),
-          behavior: 'smooth'
-        });
-      }, 300);
+    if (!pageRendered || !match || match.pageNum !== currentPage || !pageContainerRef.current) {
+      return;
     }
-  }, [match, currentPage, scale]);
+
+    const colors = getHighlightColors(highlightColor);
+    const textLayer = pageContainerRef.current.querySelector('.react-pdf__Page__textContent');
+    if (!textLayer) return;
+
+    const spans = textLayer.querySelectorAll('span');
+
+    // Clear previous highlights
+    spans.forEach(span => {
+      (span as HTMLElement).style.backgroundColor = '';
+      (span as HTMLElement).style.borderRadius = '';
+      (span as HTMLElement).style.padding = '';
+    });
+
+    // Get the container's position for calculating relative positions
+    const containerRect = pageContainerRef.current.getBoundingClientRect();
+    const targetY = match.yPosition * scale;
+    const tolerance = 25 * scale; // Only highlight spans within this Y range
+
+    let firstMatchedSpan: HTMLElement | null = null;
+
+    spans.forEach(span => {
+      const spanRect = span.getBoundingClientRect();
+      const spanY = spanRect.top - containerRect.top + (spanRect.height / 2);
+
+      // Only highlight spans at the same Y position (within tolerance)
+      if (Math.abs(spanY - targetY) < tolerance) {
+        const htmlSpan = span as HTMLElement;
+        htmlSpan.style.backgroundColor = colors.bg;
+        htmlSpan.style.borderRadius = '2px';
+        htmlSpan.style.padding = '2px 0';
+
+        if (!firstMatchedSpan) {
+          firstMatchedSpan = htmlSpan;
+        }
+      }
+    });
+
+    // Scroll to first matched span
+    if (firstMatchedSpan && scrollContainerRef.current) {
+      setTimeout(() => {
+        const container = scrollContainerRef.current;
+        const span = firstMatchedSpan;
+        if (container && span) {
+          const spanRect = span.getBoundingClientRect();
+          const containerRect = container.getBoundingClientRect();
+          const scrollTop = container.scrollTop + spanRect.top - containerRect.top - 150;
+          container.scrollTo({
+            top: Math.max(0, scrollTop),
+            behavior: 'smooth'
+          });
+        }
+      }, 100);
+    }
+  }, [pageRendered, match, currentPage, highlightColor, scale]);
+
+  // Reset pageRendered when page changes
+  useEffect(() => {
+    setPageRendered(false);
+  }, [currentPage]);
 
   return (
     <div className={cn("flex flex-col h-full bg-muted/20", className)}>
@@ -392,23 +467,6 @@ export function PDFViewerWithSearch({
                 }
               />
 
-              {/* Highlight overlay - yellow highlight bar */}
-              {searchText && match && match.pageNum === currentPage && (
-                <div
-                  className="absolute left-0 right-0 pointer-events-none"
-                  style={{
-                    top: `${match.yPosition * scale - 15}px`,
-                    height: '40px',
-                  }}
-                >
-                  <div
-                    className="absolute inset-0"
-                    style={{
-                      background: 'linear-gradient(90deg, transparent 0%, rgba(250, 204, 21, 0.4) 10%, rgba(250, 204, 21, 0.4) 90%, transparent 100%)',
-                    }}
-                  />
-                </div>
-              )}
             </div>
           )}
           {pageError && (

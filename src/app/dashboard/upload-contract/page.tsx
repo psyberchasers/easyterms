@@ -47,7 +47,9 @@ import {
   ArrowDownRight,
   ChevronLeft,
   ChevronRight,
+  FileOutput,
 } from "lucide-react";
+import { exportAnnotatedContract } from "@/lib/pdf-export";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
   LegalDocument01Icon,
@@ -220,6 +222,7 @@ export default function UploadContractPage() {
   const [savedContractId, setSavedContractId] = useState<string | null>(null);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [downloading, setDownloading] = useState(false);
+  const [exporting, setExporting] = useState(false);
 
   // Tab state
   const [activeTab, setActiveTab] = useState("overview");
@@ -420,6 +423,33 @@ export default function UploadContractPage() {
       setDownloading(false);
     }
   }, [analysis, fileName]);
+
+  // Handle export annotated PDF
+  const handleExportPDF = useCallback(async () => {
+    if (!fileUrl || !analysis) return;
+
+    setExporting(true);
+    try {
+      // Get key terms for annotation
+      const keyTerms = analysis.keyTerms?.map(term => ({
+        title: term.title,
+        content: term.content,
+        riskLevel: term.riskLevel,
+        originalText: term.originalText
+      })) || [];
+
+      // Export with annotations via server API
+      await exportAnnotatedContract(
+        fileUrl,
+        keyTerms,
+        `${fileName || 'contract'}-annotated.pdf`
+      );
+    } catch (err) {
+      console.error("Export PDF error:", err);
+    } finally {
+      setExporting(false);
+    }
+  }, [fileUrl, analysis, fileName]);
 
   // Handle clause click for highlighting
   const handleClauseClick = (originalText: string | undefined) => {
@@ -1065,6 +1095,18 @@ export default function UploadContractPage() {
                 {showDocument ? "Hide PDF" : "Show PDF"}
               </button>
               <button
+                onClick={handleExportPDF}
+                disabled={exporting}
+                className="h-7 px-2 text-[11px] text-muted-foreground hover:text-foreground border border-border hover:bg-muted flex items-center gap-1.5 transition-colors disabled:opacity-50 rounded-md"
+              >
+                {exporting ? (
+                  <Loader2 className="w-3 h-3 animate-spin" />
+                ) : (
+                  <FileOutput className="w-3 h-3" />
+                )}
+                Export
+              </button>
+              <button
                 onClick={handleDownloadReport}
                 disabled={downloading}
                 className="h-7 px-2 text-[11px] text-muted-foreground hover:text-foreground border border-border hover:bg-muted flex items-center gap-1.5 transition-colors disabled:opacity-50 rounded-md"
@@ -1435,17 +1477,9 @@ export default function UploadContractPage() {
                 const hasMedium = matchedRiskLevels.includes('medium');
                 const highestRisk = hasHigh ? 'high' : hasMedium ? 'medium' : 'low';
 
-                const colorScheme = {
-                  high: { border: 'border-red-500/30', bg: 'bg-red-500/5', text: 'text-red-400', dot: 'bg-red-400/60' },
-                  medium: { border: 'border-amber-500/30', bg: 'bg-amber-500/5', text: 'text-amber-400', dot: 'bg-amber-400/60' },
-                  low: { border: 'border-green-500/30', bg: 'bg-green-500/5', text: 'text-green-400', dot: 'bg-green-400/60' },
-                }[highestRisk];
+                const colorScheme = { border: 'border-purple-500/30', bg: 'bg-purple-500/5', text: 'text-purple-400', dot: 'bg-purple-400/60' };
 
-                const headerColors = {
-                  high: { bg: 'rgba(239, 68, 68, 0.08)', line: '#ef4444' },
-                  medium: { bg: 'rgba(245, 158, 11, 0.08)', line: '#f59e0b' },
-                  low: { bg: 'rgba(34, 197, 94, 0.08)', line: '#22c55e' },
-                }[highestRisk];
+                const headerColors = { bg: 'rgba(168, 85, 247, 0.08)', line: '#a855f7' };
 
                 return (
                 <div className={`${colorScheme.bg} overflow-hidden`}>
@@ -1481,6 +1515,7 @@ export default function UploadContractPage() {
                               handleClauseClick(textToHighlight);
                             }
                             if (matchingTermIndex !== undefined && matchingTermIndex >= 0) {
+                              setActiveTab('terms');
                               setExpandedTerm(matchingTermIndex);
                             }
                           }}
@@ -1676,28 +1711,28 @@ export default function UploadContractPage() {
                       <div className="px-6 py-3 space-y-3">
                         <div>
                           <p className="text-[10px] text-muted-foreground/60 uppercase tracking-wider mb-1">Rationale</p>
-                          <p className="text-xs text-muted-foreground">{rationale}</p>
+                          <p className="text-xs text-foreground">{rationale}</p>
                         </div>
                         {riskIfIgnored && (
                           <div>
                             <p className="text-[10px] text-muted-foreground/60 uppercase tracking-wider mb-1">Risk if Ignored</p>
-                            <p className="text-xs text-muted-foreground">{riskIfIgnored}</p>
+                            <p className="text-xs text-foreground">{riskIfIgnored}</p>
                           </div>
                         )}
                         <div>
                           <p className="text-[10px] text-muted-foreground/60 uppercase tracking-wider mb-1">How to Implement</p>
-                          <p className="text-xs text-muted-foreground">{howToImplement}</p>
+                          <p className="text-xs text-foreground">{howToImplement}</p>
                         </div>
                         {sampleLanguage && (
                           <div>
                             <p className="text-[10px] text-muted-foreground/60 uppercase tracking-wider mb-1">Suggested Language</p>
-                            <p className="text-xs text-muted-foreground italic border-l-2 border-muted-foreground/20 pl-3">&ldquo;{sampleLanguage}&rdquo;</p>
+                            <p className="text-xs text-foreground italic border-l-2 border-muted-foreground/20 pl-3">&ldquo;{sampleLanguage}&rdquo;</p>
                           </div>
                         )}
                         {negotiationQuestions && negotiationQuestions.length > 0 && (
                           <div>
                             <p className="text-[10px] text-muted-foreground/60 uppercase tracking-wider mb-1">Questions to Ask</p>
-                            <ul className="text-xs text-muted-foreground space-y-1.5">
+                            <ul className="text-xs text-foreground space-y-1.5">
                               {negotiationQuestions.map((q, idx) => (
                                 <li key={idx} className="flex items-start gap-2">
                                   <span className="w-1 h-1 rounded-full bg-muted-foreground/40 shrink-0 mt-1.5" />

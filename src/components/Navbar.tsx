@@ -101,7 +101,7 @@ export function Navbar({ showNewAnalysis = true, showBorder = false }: NavbarPro
         <div className="max-w-full mx-auto px-4 h-14 grid grid-cols-3 items-center">
           {/* Left - Logo */}
           <Link href="/" className="flex items-center gap-2">
-            <img src="/logo.png" alt="EasyTerms" className="h-5" />
+            <img src="/logoSingle.svg" alt="EasyTerms" className="h-6" />
           </Link>
 
           {/* Center - Command Menu Trigger */}
@@ -126,23 +126,23 @@ export function Navbar({ showNewAnalysis = true, showBorder = false }: NavbarPro
               {showNewAnalysis && (
                 <Link
                   href="/analyze"
-                  className="h-8 px-3 text-sm bg-primary text-primary-foreground hover:bg-primary/90 flex items-center gap-2 transition-colors"
+                  className="h-8 px-3 text-[13px] font-semibold bg-purple-500 hover:bg-purple-600 text-white rounded-md flex items-center gap-2 transition-colors"
                 >
-                  <HugeiconsIcon icon={AiSheetsIcon} size={18} className="text-primary-foreground/70" />
+                  <HugeiconsIcon icon={AiSheetsIcon} size={14} />
                   New Analysis
                 </Link>
               )}
               <Link
                 href="/dashboard"
-                className="h-8 px-3 text-sm text-muted-foreground hover:text-primary flex items-center gap-2 transition-colors group"
+                className="h-8 px-3 text-[13px] font-semibold text-muted-foreground hover:bg-muted border border-border rounded-md flex items-center gap-2 transition-colors"
               >
-                <HugeiconsIcon icon={DashboardSquare01Icon} size={18} className="group-hover:text-primary transition-colors" />
+                <HugeiconsIcon icon={DashboardSquare01Icon} size={14} />
                 Dashboard
               </Link>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <button className="w-8 h-8 border border-border flex items-center justify-center hover:border-muted-foreground/30 transition-colors">
-                    <HugeiconsIcon icon={UserFullViewIcon} size={16} className="text-muted-foreground" />
+                  <button className="w-8 h-8 border border-border rounded-md flex items-center justify-center hover:bg-muted transition-colors">
+                    <HugeiconsIcon icon={UserFullViewIcon} size={14} className="text-muted-foreground" />
                   </button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-56 bg-card border-border rounded-none">
@@ -183,14 +183,14 @@ export function Navbar({ showNewAnalysis = true, showBorder = false }: NavbarPro
             <>
               <Link
                 href="/login"
-                className="h-8 px-3 text-sm text-muted-foreground hover:text-foreground flex items-center gap-2 transition-colors"
+                className="h-8 px-3 text-[13px] font-semibold text-muted-foreground hover:bg-muted border border-border rounded-md flex items-center gap-2 transition-colors"
               >
                 <HugeiconsIcon icon={Login01Icon} size={14} />
                 Log In
               </Link>
               <Link
-                href="/signup"
-                className="h-8 px-3 text-sm bg-primary text-primary-foreground hover:bg-primary/90 flex items-center gap-2 transition-colors"
+                href="/login?mode=signup"
+                className="h-8 px-3 text-[13px] font-semibold bg-purple-500 hover:bg-purple-600 text-white rounded-md flex items-center gap-2 transition-colors"
               >
                 <HugeiconsIcon icon={AiUserIcon} size={14} />
                 Sign Up

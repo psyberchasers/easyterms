@@ -31,9 +31,10 @@ import {
   ChevronRight,
 } from "lucide-react";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { RepeatOffIcon, FolderBlockIcon, AiSheetsIcon, Alert02Icon } from "@hugeicons-pro/core-solid-rounded";
+import { RepeatOffIcon, FolderBlockIcon, AiSheetsIcon, Alert02Icon, FavouriteIcon } from "@hugeicons-pro/core-solid-rounded";
 import { cn } from "@/lib/utils";
 import { MusicLoader } from "@/components/MusicLoader";
+import { motion } from "framer-motion";
 import { DeleteConfirmModal } from "@/components/DeleteConfirmModal";
 import { ContractQuickView } from "@/components/ContractQuickView";
 
@@ -181,13 +182,18 @@ export default function DashboardPage() {
 
   return (
     <div>
-      {/* Top Section with White Background */}
-      <div className="bg-white px-6 pt-6 pb-4">
+      {/* Top Section */}
+      <div className="bg-background px-6 pt-6 pb-4">
         {/* Welcome & Stats */}
-        <div className="mb-6 flex items-start justify-between">
+        <motion.div
+          className="mb-6 flex items-start justify-between"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, delay: 0 }}
+        >
           <div>
-            <h1 className="text-2xl font-normal mb-1 flex items-center gap-2">
-              Welcome back <span className="bg-primary text-primary-foreground px-2 py-0.5 rounded-md text-xl font-medium">{profile?.full_name?.split(" ")[0] || "there"}</span>
+            <h1 className="text-2xl font-normal mb-1">
+              Welcome back, <span className="text-purple-500 font-medium">{profile?.full_name?.split(" ")[0] || "there"}</span>
             </h1>
             <p className="text-sm text-muted-foreground">
               Manage and analyze your music contracts
@@ -205,7 +211,7 @@ export default function DashboardPage() {
               Refresh
             </Button>
           </div>
-        </div>
+        </motion.div>
 
         {/* Error Display */}
         {error && (
@@ -226,14 +232,15 @@ export default function DashboardPage() {
         )}
 
         {/* Compact Stats Row */}
-        <div className="flex flex-wrap items-center gap-6 py-4">
+        <motion.div
+          className="flex flex-wrap items-center gap-6 py-4"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, delay: 0.1 }}
+        >
           <div className="flex items-center gap-1">
             <span className="text-2xl font-light text-foreground">{stats.total}</span>
             <span className="text-xs text-muted-foreground ml-1">contracts</span>
-          </div>
-          <div className="flex items-center gap-1">
-            <span className="text-2xl font-light text-green-500">{stats.active}</span>
-            <span className="text-xs text-muted-foreground ml-1">active</span>
           </div>
           <div className="flex items-center gap-1">
             <Star className="w-3.5 h-3.5 text-amber-500" />
@@ -242,30 +249,12 @@ export default function DashboardPage() {
 
           <div className="flex-1" />
 
-          <div className="flex items-center gap-2">
-            <Link href="/analyze">
-              <Button variant="outline" size="sm" className="h-7 text-xs border-border bg-transparent hover:bg-muted rounded-lg">
-                <HugeiconsIcon icon={AiSheetsIcon} size={12} className="mr-1" />
-                New
-              </Button>
-            </Link>
-            <Link href="/calendar">
-              <Button variant="ghost" size="sm" className="h-7 text-xs text-muted-foreground hover:text-foreground rounded-lg">
-                <Calendar className="w-3 h-3 mr-1" />
-                Calendar
-              </Button>
-            </Link>
-          </div>
-        </div>
-
-        {/* Filters & Search */}
-        <div className="flex items-center gap-3 pb-4">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5">
             <Button
               variant="outline"
               size="sm"
-              style={{ borderRadius: '8px', backgroundColor: filter === "all" ? '#FFEF00' : undefined }}
-              className="h-8 px-4 text-sm border"
+              style={{ borderRadius: '6px', backgroundColor: filter === "all" ? '#a855f7' : undefined, color: filter === "all" ? 'white' : undefined, borderColor: filter === "all" ? '#a855f7' : undefined }}
+              className="h-7 px-3 text-xs border"
               onClick={() => setFilter("all")}
             >
               All
@@ -273,66 +262,88 @@ export default function DashboardPage() {
             <Button
               variant="outline"
               size="sm"
-              style={{ borderRadius: '8px', backgroundColor: filter === "starred" ? '#FFEF00' : undefined }}
-              className="h-8 px-4 text-sm border"
+              style={{ borderRadius: '6px', backgroundColor: filter === "starred" ? '#a855f7' : undefined, color: filter === "starred" ? 'white' : undefined, borderColor: filter === "starred" ? '#a855f7' : undefined }}
+              className="h-7 px-3 text-xs border"
               onClick={() => setFilter("starred")}
             >
-              <Star className="w-3.5 h-3.5 mr-1.5" />
+              <HugeiconsIcon icon={FavouriteIcon} size={12} className="mr-1" />
               Starred
             </Button>
             <Button
               variant="outline"
               size="sm"
-              style={{ borderRadius: '8px', backgroundColor: filter === "high-risk" ? '#FFEF00' : undefined }}
-              className="h-8 px-4 text-sm border"
+              style={{ borderRadius: '6px', backgroundColor: filter === "high-risk" ? '#ef4444' : undefined, color: filter === "high-risk" ? 'white' : undefined, borderColor: filter === "high-risk" ? '#ef4444' : undefined }}
+              className="h-7 px-3 text-xs border"
               onClick={() => setFilter("high-risk")}
             >
-              <HugeiconsIcon icon={Alert02Icon} size={14} className="mr-1.5" />
+              <HugeiconsIcon icon={Alert02Icon} size={12} className="mr-1" />
               High Risk
             </Button>
+            <Link href="/analyze">
+              <Button variant="outline" size="sm" style={{ borderRadius: '6px' }} className="h-7 px-3 text-xs border-border bg-transparent hover:bg-muted">
+                <HugeiconsIcon icon={AiSheetsIcon} size={12} className="mr-1" />
+                New
+              </Button>
+            </Link>
+            <Link href="/calendar">
+              <Button variant="ghost" size="sm" style={{ borderRadius: '6px' }} className="h-7 px-3 text-xs text-muted-foreground hover:text-foreground">
+                <Calendar className="w-3 h-3 mr-1" />
+                Calendar
+              </Button>
+            </Link>
 
             {/* View Toggle */}
-            <div className="flex border border-border overflow-hidden h-8" style={{ borderRadius: '8px' }}>
+            <div className="flex border border-border overflow-hidden h-7" style={{ borderRadius: '6px' }}>
               <button
                 onClick={() => setViewMode("grid")}
                 className={cn(
-                  "w-8 h-full flex items-center justify-center transition-colors",
+                  "w-7 h-full flex items-center justify-center transition-colors",
                   viewMode === "grid" ? "bg-muted text-foreground" : "text-muted-foreground hover:text-foreground"
                 )}
               >
-                <LayoutGrid className="w-3.5 h-3.5" />
+                <LayoutGrid className="w-3 h-3" />
               </button>
               <button
                 onClick={() => setViewMode("list")}
                 className={cn(
-                  "w-8 h-full flex items-center justify-center border-l border-border transition-colors",
+                  "w-7 h-full flex items-center justify-center border-l border-border transition-colors",
                   viewMode === "list" ? "bg-muted text-foreground" : "text-muted-foreground hover:text-foreground"
                 )}
               >
-                <List className="w-3.5 h-3.5" />
+                <List className="w-3 h-3" />
               </button>
             </div>
           </div>
+        </motion.div>
 
-          <div className="flex-1" />
-
-          {/* Search - Right Side */}
+        {/* Search */}
+        <motion.div
+          className="flex items-center gap-3 pb-4"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, delay: 0.2 }}
+        >
           <div className="relative w-64">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/50 z-10" />
             <input
               type="text"
-              placeholder="Search contracts..."
+              placeholder="Search contracts"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               data-rounded="true"
-              className="w-full h-9 pl-11 pr-4 text-sm bg-white border border-border rounded-lg placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/50 transition-all"
+              className="w-full h-9 pl-11 pr-4 text-sm bg-background border border-border rounded-lg placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/50 transition-all"
             />
           </div>
-        </div>
+        </motion.div>
       </div>
 
       {/* Content with dotted background */}
-      <div className="p-6">
+      <motion.div
+        className="p-6"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4, delay: 0.3 }}
+      >
         {/* Contracts List */}
         {filteredContracts.length === 0 ? (
         <div className="border-2 border-dashed border-border bg-muted/10">
@@ -362,21 +373,10 @@ export default function DashboardPage() {
         /* Grid/Card View */
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {filteredContracts.map((contract) => {
-            const statusLabel = contract.status === "active"
-              ? "Active"
-              : contract.status === "negotiating"
-                ? "Negotiating"
-                : "Draft";
-
             return (
               <div
                 key={contract.id}
-                className={cn(
-                  "bg-background border rounded-xl overflow-hidden hover:shadow-sm transition-all group cursor-pointer",
-                  contract.overall_risk === "high" ? "border-red-300" :
-                  contract.overall_risk === "medium" ? "border-amber-300" :
-                  "border-green-300"
-                )}
+                className="bg-background border border-border rounded-xl overflow-hidden hover:shadow-sm transition-all group cursor-pointer"
                 onClick={() => setQuickView({ open: true, contract })}
               >
                 {/* Card Header */}
@@ -431,14 +431,6 @@ export default function DashboardPage() {
 
                 {/* Tags */}
                 <div className="px-4 pb-3 flex flex-wrap gap-1.5">
-                  <span className={cn(
-                    "text-[10px] font-medium px-2 py-0.5 rounded-lg",
-                    contract.status === "active" ? "bg-green-500/10 text-green-600" :
-                    contract.status === "negotiating" ? "bg-amber-500/10 text-amber-600" :
-                    "bg-muted text-muted-foreground"
-                  )}>
-                    {statusLabel}
-                  </span>
                   {contract.overall_risk && (
                     <span className={cn(
                       "text-[10px] font-medium px-2 py-0.5 rounded-lg",
@@ -471,9 +463,9 @@ export default function DashboardPage() {
         </div>
       ) : (
         /* List View - Table Style */
-        <div className="border border-border rounded-lg overflow-hidden bg-white">
+        <div className="border border-border rounded-lg overflow-hidden bg-background">
           {/* Table Header */}
-          <div className="grid grid-cols-12 gap-4 px-4 py-3 bg-white border-b border-border text-xs font-medium text-muted-foreground">
+          <div className="grid grid-cols-12 gap-4 px-4 py-3 bg-muted/50 border-b border-border text-xs font-medium text-muted-foreground">
             <div className="col-span-3">Contract</div>
             <div className="col-span-3">Type</div>
             <div className="col-span-2">Uploaded</div>
@@ -517,7 +509,7 @@ export default function DashboardPage() {
             return groups.map((group, groupIndex) => (
               <div key={group.label}>
                 {/* Group Label */}
-                <div className="px-4 py-2 bg-neutral-50 border-b border-border">
+                <div className="px-4 py-2 bg-muted/30 border-b border-border">
                   <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{group.label}</span>
                 </div>
 
@@ -527,7 +519,7 @@ export default function DashboardPage() {
                     <div
                       key={contract.id}
                       className={cn(
-                        "grid grid-cols-12 gap-4 px-4 py-4 items-center bg-white hover:bg-neutral-50 transition-colors cursor-pointer",
+                        "grid grid-cols-12 gap-4 px-4 py-4 items-center bg-background hover:bg-muted/50 transition-colors cursor-pointer",
                         i < group.contracts.length - 1 && "border-b border-border/50"
                       )}
                       onClick={() => setQuickView({ open: true, contract })}
@@ -638,6 +630,7 @@ export default function DashboardPage() {
           })()}
         </div>
       )}
+      </motion.div>
 
       {/* Delete Confirmation Modal */}
       <DeleteConfirmModal
@@ -652,11 +645,10 @@ export default function DashboardPage() {
       <ContractQuickView
         contract={quickView.contract}
         open={quickView.open}
-        onOpenChange={(open) => setQuickView({ open, contract: open ? quickView.contract : null })}
+        onOpenChange={(open) => setQuickView({ open, contract: quickView.contract })}
         onToggleStar={toggleStar}
         versionCount={quickView.contract ? contractVersions[quickView.contract.id]?.length || 0 : 0}
       />
     </div>
-  </div>
   );
 }

@@ -972,11 +972,7 @@ export default function AnalyzePage() {
                   const hasMedium = matchedRiskLevels.includes('medium');
                   const highestRisk = hasHigh ? 'high' : hasMedium ? 'medium' : 'low';
 
-                  const colorScheme = {
-                    high: { border: 'border-red-500/30', bg: 'bg-red-500/5', text: 'text-red-400', dot: 'bg-red-400/60' },
-                    medium: { border: 'border-amber-500/30', bg: 'bg-amber-500/5', text: 'text-amber-400', dot: 'bg-amber-400/60' },
-                    low: { border: 'border-green-500/30', bg: 'bg-green-500/5', text: 'text-green-400', dot: 'bg-green-400/60' },
-                  }[highestRisk];
+                  const colorScheme = { border: 'border-purple-500/30', bg: 'bg-purple-500/5', text: 'text-purple-400', dot: 'bg-purple-400/60' };
 
                   return (
                   <div className={`border ${colorScheme.border} ${colorScheme.bg} p-4`}>

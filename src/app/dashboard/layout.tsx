@@ -54,6 +54,7 @@ import {
 import { MusicLoader } from "@/components/MusicLoader";
 import { useTheme } from "@/components/providers/ThemeProvider";
 import { CommandMenu } from "@/components/CommandMenu";
+import { motion } from "framer-motion";
 
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -100,7 +101,7 @@ function DashboardHeader({
             <HugeiconsIcon icon={FileUploadIcon} size={16} className="text-muted-foreground" />
             <Link href="/dashboard/upload-contract" className="text-sm text-muted-foreground/60 hover:text-muted-foreground transition-colors">Upload Contract</Link>
             <span className="text-sm text-muted-foreground/60">/</span>
-            <span className="text-sm font-semibold text-muted-foreground">Recipient</span>
+            <span className="text-sm font-medium text-muted-foreground">Recipient</span>
           </>
         );
       }
@@ -110,14 +111,14 @@ function DashboardHeader({
             <HugeiconsIcon icon={FileUploadIcon} size={16} className="text-muted-foreground" />
             <Link href="/dashboard/upload-contract" className="text-sm text-muted-foreground/60 hover:text-muted-foreground transition-colors">Upload Contract</Link>
             <span className="text-sm text-muted-foreground/60">/</span>
-            <span className="text-sm font-semibold text-muted-foreground">Sender</span>
+            <span className="text-sm font-medium text-muted-foreground">Sender</span>
           </>
         );
       }
       return (
         <>
           <HugeiconsIcon icon={FileUploadIcon} size={16} className="text-muted-foreground" />
-          <span className="text-sm font-semibold text-muted-foreground">Upload Contract</span>
+          <span className="text-sm font-medium text-muted-foreground">Upload Contract</span>
         </>
       );
     }
@@ -125,11 +126,16 @@ function DashboardHeader({
       return (
         <>
           <HugeiconsIcon icon={ContractsIcon} size={16} className="text-muted-foreground" />
-          <span className="text-sm font-semibold text-muted-foreground">Contracts</span>
+          <span className="text-sm font-medium text-muted-foreground">Contracts</span>
         </>
       );
     }
-    return <span className="text-sm font-semibold text-muted-foreground">Dashboard</span>;
+    return (
+      <>
+        <HugeiconsIcon icon={Home01Icon} size={16} className="text-muted-foreground" />
+        <span className="text-sm font-medium text-muted-foreground">Home</span>
+      </>
+    );
   };
 
   return (
@@ -205,92 +211,66 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   }
 
   const mainNav = [
-    { title: "Home", icon: Home01Icon, href: "/dashboard", badge: null },
-    { title: "Updates", icon: Notification02Icon, href: "/dashboard/updates", badge: "3" },
-    { title: "Inbox", icon: InboxIcon, href: "/dashboard/inbox", badge: "12" },
-    { title: "My Tasks", icon: Task01Icon, href: "/dashboard/tasks", badge: null, hasAdd: true },
-  ];
-
-  const workspaceItems = [
-    { title: "Contracts", icon: ContractsIcon, href: "/dashboard/contracts" },
-    { title: "Upload Contract", icon: FileUploadIcon, href: "/dashboard/upload-contract" },
-    { title: "Projects", icon: Folder01Icon, href: "/dashboard/projects", hasDropdown: true },
-    { title: "Templates", icon: GridViewIcon, href: "/dashboard/templates", hasDropdown: true },
-    { title: "Documents", icon: File01Icon, href: "/dashboard/documents", hasAdd: true },
-    { title: "Teams", icon: UserGroupIcon, href: "/dashboard/teams", badge: "5" },
+    { title: "Home", icon: Home01Icon, href: "/dashboard", disabled: false },
+    { title: "Contracts", icon: ContractsIcon, href: "/dashboard/contracts", disabled: false },
+    { title: "Upload Contract", icon: FileUploadIcon, href: "/dashboard/upload-contract", disabled: false },
+    { title: "Templates", icon: GridViewIcon, href: "/dashboard/templates", disabled: false },
+    { title: "Inbox", icon: InboxIcon, href: "/dashboard/inbox", disabled: true },
+    { title: "My Tasks", icon: Task01Icon, href: "/dashboard/tasks", disabled: true },
+    { title: "Teams", icon: UserGroupIcon, href: "/dashboard/teams", disabled: true },
   ];
 
   return (
     <SidebarProvider defaultOpen={true}>
       <Sidebar collapsible="icon" className="border-border">
         {/* Header */}
-        <div
-          className="flex items-center px-3 border-b border-sidebar-border group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-2"
+        <motion.div
+          className="flex items-center px-3 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-2"
           style={{ height: '48px' }}
+          initial={{ opacity: 0, x: -10 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.3, delay: 0 }}
         >
           <img
-            src={theme === "dark" ? "/16darkmode.svg" : "/16lightmode.svg"}
+            src="/21.svg"
             alt="EasyTerms"
             className="h-8 w-auto group-data-[collapsible=icon]:hidden"
           />
           <img
-            src={theme === "dark" ? "/16darkmode.svg" : "/16lightmode.svg"}
+            src="/21.svg"
             alt="EasyTerms"
             className="h-8 w-8 hidden group-data-[collapsible=icon]:block object-contain"
           />
-        </div>
+        </motion.div>
 
-        {/* Search */}
-        <div className="px-3 py-3 group-data-[collapsible=icon]:px-2 group-data-[collapsible=icon]:py-2">
-          <button className="w-full flex items-center gap-2 px-2.5 py-1.5 text-[13px] hover:bg-sidebar-accent/50 transition-colors rounded-lg border border-sidebar-border group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0 group-data-[collapsible=icon]:border-0 text-sidebar-foreground/70">
-            <HugeiconsIcon icon={AiSearch02Icon} size={14} className="shrink-0" />
-            <span className="group-data-[collapsible=icon]:hidden">Search</span>
-            <kbd className="ml-auto text-[11px] opacity-50 group-data-[collapsible=icon]:hidden">⌘K</kbd>
-          </button>
-        </div>
+        {/* Divider under logo */}
+        <div className="h-px bg-sidebar-border" />
 
-        <SidebarContent className="px-2">
+        <SidebarContent className="px-2 pt-3">
           {/* Main Navigation */}
-          <SidebarGroup className="p-0 pb-4">
-            <SidebarMenu className="gap-0.5">
-              {mainNav.map((item) => {
-                const isActive = pathname === item.href;
-                return (
-                  <SidebarMenuItem key={item.title}>
-                    <SidebarMenuButton
-                      asChild
-                      isActive={isActive}
-                      tooltip={item.title}
-                      className="h-auto py-1.5 px-3 text-[13px] font-medium text-sidebar-foreground"
-                    >
-                      <Link href={item.href}>
-                        <HugeiconsIcon icon={item.icon} size={16} />
-                        <span>{item.title}</span>
-                        {item.badge && (
-                          <span className="ml-auto text-xs opacity-60 group-data-[collapsible=icon]:hidden">{item.badge}</span>
-                        )}
-                      </Link>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                );
-              })}
-            </SidebarMenu>
-          </SidebarGroup>
-
-          {/* Divider */}
-          <div className="h-px mb-4 -mx-2 group-data-[collapsible=icon]:hidden bg-sidebar-border" />
-
-          {/* Workspace Section */}
-          <SidebarGroup className="p-0 pb-4">
-            <SidebarGroupLabel
-              className="h-auto py-1.5 px-3 text-[11px] font-medium uppercase tracking-wider text-sidebar-foreground/70"
-            >
-              Workspace
-            </SidebarGroupLabel>
-            <SidebarGroupContent>
-              <SidebarMenu className="gap-0.5 mt-1">
-                {workspaceItems.map((item) => {
+          <motion.div
+            initial={{ opacity: 0, x: -10 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.3, delay: 0.1 }}
+          >
+            <SidebarGroup className="p-0 pb-4">
+              <SidebarMenu className="gap-0.5">
+                {mainNav.map((item, index) => {
                   const isActive = pathname === item.href;
+                  if (item.disabled) {
+                    return (
+                      <SidebarMenuItem key={item.title}>
+                        <SidebarMenuButton
+                          tooltip={item.title}
+                          className="h-auto py-1.5 px-3 text-[13px] font-medium text-sidebar-foreground/40 cursor-not-allowed"
+                          disabled
+                        >
+                          <HugeiconsIcon icon={item.icon} size={16} />
+                          <span>{item.title}</span>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                    );
+                  }
                   return (
                     <SidebarMenuItem key={item.title}>
                       <SidebarMenuButton
@@ -302,52 +282,63 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                         <Link href={item.href}>
                           <HugeiconsIcon icon={item.icon} size={16} />
                           <span>{item.title}</span>
-                          {item.badge && (
-                            <span className="ml-auto text-xs opacity-60 group-data-[collapsible=icon]:hidden">{item.badge}</span>
-                          )}
                         </Link>
                       </SidebarMenuButton>
                     </SidebarMenuItem>
                   );
                 })}
               </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
+            </SidebarGroup>
+          </motion.div>
 
           {/* Divider */}
-          <div className="h-px mb-4 -mx-2 group-data-[collapsible=icon]:hidden bg-sidebar-border" />
+          <motion.div
+            className="h-px mb-4 -mx-2 group-data-[collapsible=icon]:hidden bg-sidebar-border"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.3, delay: 0.2 }}
+          />
 
           {/* Contracts Section */}
-          <SidebarGroup className="p-0 pb-4">
-            <SidebarGroupLabel
-              className="h-auto py-1.5 px-3 text-[11px] font-medium uppercase tracking-wider text-sidebar-foreground/70"
-            >
-              Contracts
-            </SidebarGroupLabel>
-            <SidebarGroupContent>
-              <p className="px-3 py-2 text-[11px] text-sidebar-foreground/50 group-data-[collapsible=icon]:hidden">
-                Your contracts will appear here
-              </p>
-            </SidebarGroupContent>
-          </SidebarGroup>
+          <motion.div
+            initial={{ opacity: 0, x: -10 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.3, delay: 0.25 }}
+          >
+            <SidebarGroup className="p-0 pb-4">
+              <SidebarGroupLabel
+                className="h-auto py-1.5 px-3 text-[11px] font-medium uppercase tracking-wider text-sidebar-foreground/70"
+              >
+                Contracts
+              </SidebarGroupLabel>
+              <SidebarGroupContent>
+                <p className="px-3 py-2 text-[11px] text-sidebar-foreground/50 group-data-[collapsible=icon]:hidden">
+                  Your contracts will appear here
+                </p>
+              </SidebarGroupContent>
+            </SidebarGroup>
+          </motion.div>
         </SidebarContent>
 
         {/* Footer */}
         <SidebarFooter>
-          <SidebarMenu>
-            <SidebarMenuItem>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <SidebarMenuButton
-                    size="lg"
-                    className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
-                  >
-                    <div
-                      className="h-8 w-8 rounded-lg flex items-center justify-center text-sm font-semibold text-white shrink-0"
-                      style={{ background: 'linear-gradient(135deg, #f97316 0%, #ec4899 100%)' }}
+          <motion.div
+            initial={{ opacity: 0, x: -10 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.3, delay: 0.3 }}
+          >
+            <SidebarMenu>
+              <SidebarMenuItem>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <SidebarMenuButton
+                      size="lg"
+                      className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
                     >
-                      {profile?.full_name?.substring(0, 2).toUpperCase() || user?.email?.substring(0, 2).toUpperCase() || "US"}
-                    </div>
+                    <div
+                      className="h-8 w-8 rounded-lg shrink-0"
+                      style={{ background: 'linear-gradient(135deg, #f97316 0%, #ec4899 100%)' }}
+                    />
                     <div className="grid flex-1 text-left text-sm leading-tight">
                       <span className="truncate font-semibold">{profile?.full_name || "User"}</span>
                       <span className="truncate text-xs text-muted-foreground">{user?.email || "user@example.com"}</span>
@@ -364,11 +355,9 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                   <DropdownMenuItem className="p-0 font-normal">
                     <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
                       <div
-                        className="h-8 w-8 rounded-lg flex items-center justify-center text-sm font-semibold text-white shrink-0"
+                        className="h-8 w-8 rounded-lg shrink-0"
                         style={{ background: 'linear-gradient(135deg, #f97316 0%, #ec4899 100%)' }}
-                      >
-                        {profile?.full_name?.substring(0, 2).toUpperCase() || user?.email?.substring(0, 2).toUpperCase() || "US"}
-                      </div>
+                      />
                       <div className="grid flex-1 text-left text-sm leading-tight">
                         <span className="truncate font-semibold">{profile?.full_name || "User"}</span>
                         <span className="truncate text-xs text-muted-foreground">{user?.email || "user@example.com"}</span>
@@ -397,8 +386,9 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
-            </SidebarMenuItem>
-          </SidebarMenu>
+              </SidebarMenuItem>
+            </SidebarMenu>
+          </motion.div>
         </SidebarFooter>
       </Sidebar>
 

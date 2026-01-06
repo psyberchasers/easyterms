@@ -76,12 +76,12 @@ export default function Home() {
         <div className="relative z-10 max-w-4xl mx-auto text-center space-y-8">
           {/* Logo */}
           <div className="flex items-center justify-center animate-fade-in-up">
-            <img src="/logo.png" alt="EasyTerms" className="h-12" />
+            <img src="/logoSingle.svg" alt="EasyTerms" className="h-12" />
           </div>
 
           {/* Headline */}
           <div className="space-y-4 animate-fade-in-up stagger-1">
-            <h1 className="text-4xl md:text-6xl font-normal tracking-tight text-white">
+            <h1 className="text-4xl md:text-6xl font-normal tracking-tight text-foreground">
               Welcome to <span className="text-gradient">EasyTerms</span>
             </h1>
             <p className="text-xl md:text-2xl text-muted-foreground font-light">

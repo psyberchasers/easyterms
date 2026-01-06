@@ -846,8 +846,8 @@ export default function ContractDetailPage() {
                 const hasHigh = matchedRiskLevels.includes('high');
                 const hasMedium = matchedRiskLevels.includes('medium');
                 const highestRisk = hasHigh ? 'high' : hasMedium ? 'medium' : 'low';
-                const colorScheme = { high: { border: 'border-red-500/30', bg: 'bg-red-500/5', text: 'text-red-400', dot: 'bg-red-400/60' }, medium: { border: 'border-amber-500/30', bg: 'bg-amber-500/5', text: 'text-amber-400', dot: 'bg-amber-400/60' }, low: { border: 'border-green-500/30', bg: 'bg-green-500/5', text: 'text-green-400', dot: 'bg-green-400/60' } }[highestRisk];
-                const headerColors = { high: { bg: 'rgba(239, 68, 68, 0.08)', line: '#ef4444' }, medium: { bg: 'rgba(245, 158, 11, 0.08)', line: '#f59e0b' }, low: { bg: 'rgba(34, 197, 94, 0.08)', line: '#22c55e' } }[highestRisk];
+                const colorScheme = { border: 'border-purple-500/30', bg: 'bg-purple-500/5', text: 'text-purple-400', dot: 'bg-purple-400/60' };
+                const headerColors = { bg: 'rgba(168, 85, 247, 0.08)', line: '#a855f7' };
 
                 return (
                   <div className={`border ${colorScheme.border} ${colorScheme.bg} rounded-xl overflow-hidden`}>
@@ -978,7 +978,7 @@ export default function ContractDetailPage() {
                       </div>
                       <div className="p-3 rounded-lg">
                         <div className="flex items-center justify-between mb-2">
-                          <span className="text-[10px] text-muted-foreground px-2 py-0.5 border border-border rounded-full">Version {version.version_number + 1}</span>
+                          <span className="text-[10px] text-muted-foreground px-2 py-0.5 border border-border rounded-md">Version {version.version_number + 1}</span>
                           <span className="text-[10px] text-muted-foreground/60">{new Date(version.created_at).toLocaleDateString()}</span>
                         </div>
                         <p className="text-xs text-muted-foreground mb-2">{version.changes_summary}</p>

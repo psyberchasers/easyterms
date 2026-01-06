@@ -11,8 +11,6 @@ import {
   ExternalLink,
   MoreVertical,
   X,
-  Star,
-  Calendar,
   AlertTriangle,
   Clock,
   DollarSign,
@@ -25,6 +23,9 @@ import {
   Handshake,
   MapPin,
 } from "lucide-react";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { Calendar02Icon } from "@hugeicons-pro/core-stroke-rounded";
+import { FavouriteIcon } from "@hugeicons-pro/core-solid-rounded";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 
@@ -142,9 +143,7 @@ export function ContractQuickView({
   onToggleStar,
   versionCount = 0,
 }: ContractQuickViewProps) {
-  if (!contract) return null;
-
-  const analysis = contract.analysis as {
+  const analysis = contract?.analysis as {
     summary?: string;
     key_terms?: Array<{ term: string; explanation: string }>;
     overall_assessment?: string;
@@ -165,8 +164,8 @@ export function ContractQuickView({
     low: { label: "Low Risk", color: "bg-green-500/10 text-green-600 border-green-500/20" },
   };
 
-  const status = statusConfig[contract.status as keyof typeof statusConfig] || statusConfig.draft;
-  const risk = contract.overall_risk ? riskConfig[contract.overall_risk as keyof typeof riskConfig] : null;
+  const status = statusConfig[contract?.status as keyof typeof statusConfig] || statusConfig.draft;
+  const risk = contract?.overall_risk ? riskConfig[contract.overall_risk as keyof typeof riskConfig] : null;
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -174,6 +173,8 @@ export function ContractQuickView({
         side="right"
         className="w-full sm:max-w-[520px] p-0 flex flex-col overflow-hidden [&>button]:hidden"
       >
+        {contract && (
+          <>
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-3 border-b border-border bg-muted/30">
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -187,7 +188,7 @@ export function ContractQuickView({
             <button className="h-8 w-8 flex items-center justify-center rounded-lg border border-border hover:bg-muted transition-colors">
               <MoreVertical className="w-4 h-4 text-muted-foreground" />
             </button>
-            <Link href={`/contract/${contract.id}`}>
+            <Link href={`/dashboard/contracts/${contract.id}`}>
               <button className="h-8 w-8 flex items-center justify-center rounded-lg border border-border hover:bg-muted transition-colors">
                 <ExternalLink className="w-4 h-4 text-muted-foreground" />
               </button>
@@ -278,7 +279,7 @@ export function ContractQuickView({
             <div className="space-y-3">
               {/* Created Date */}
               <div className="flex items-center gap-3">
-                <Calendar className="w-4 h-4 text-muted-foreground" />
+                <HugeiconsIcon icon={Calendar02Icon} size={16} className="text-muted-foreground" />
                 <span className="text-sm text-muted-foreground">Created</span>
                 <span className="text-sm font-medium text-foreground ml-auto">
                   {new Date(contract.created_at).toLocaleDateString("en-US", {
@@ -286,20 +287,6 @@ export function ContractQuickView({
                     day: "numeric",
                     year: "numeric",
                   })}
-                </span>
-              </div>
-
-              {/* Status */}
-              <div className="flex items-center gap-3">
-                <Clock className="w-4 h-4 text-muted-foreground" />
-                <span className="text-sm text-muted-foreground">Status</span>
-                <span className={cn(
-                  "text-sm font-medium ml-auto",
-                  contract.status === "active" ? "text-green-600" :
-                  contract.status === "negotiating" ? "text-amber-600" :
-                  "text-foreground"
-                )}>
-                  {status.label}
                 </span>
               </div>
 
@@ -326,10 +313,13 @@ export function ContractQuickView({
 
               {/* Starred */}
               <div className="flex items-center gap-3">
-                <Star className={cn(
-                  "w-4 h-4",
-                  contract.is_starred ? "text-amber-500 fill-amber-500" : "text-muted-foreground"
-                )} />
+                <HugeiconsIcon
+                  icon={FavouriteIcon}
+                  size={16}
+                  className={cn(
+                    contract.is_starred ? "text-amber-500" : "text-muted-foreground"
+                  )}
+                />
                 <span className="text-sm text-muted-foreground">Starred</span>
                 <button
                   onClick={() => onToggleStar?.(contract.id, contract.is_starred)}
@@ -387,13 +377,15 @@ export function ContractQuickView({
 
         {/* Footer */}
         <div className="border-t border-border p-4 bg-muted/30">
-          <Link href={`/contract/${contract.id}`} className="block">
+          <Link href={`/dashboard/contracts/${contract.id}`} className="block">
             <Button className="w-full rounded-xl h-11" variant="outline">
               <FileCheck className="w-4 h-4 mr-2" />
               Open Full Analysis
             </Button>
           </Link>
         </div>
+        </>
+        )}
       </SheetContent>
     </Sheet>
   );
