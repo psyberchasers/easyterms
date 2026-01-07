@@ -186,10 +186,12 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Truncate if too long (OpenAI has token limits)
-    const maxChars = 50000;
+    // GPT-4o has 128k context window (~500k characters)
+    // Allow up to 400k characters for input, leaving room for prompt and response
+    const maxChars = 400000;
     if (contractText.length > maxChars) {
       contractText = contractText.substring(0, maxChars) + "\n\n[Document truncated due to length...]";
+      console.log(`Contract truncated from ${contractText.length} to ${maxChars} characters`);
     }
 
     // Build industry-specific prompt
@@ -230,12 +232,13 @@ ${contractText}`;
     });
 
     // Analyze with OpenAI using industry-specific prompt
+    // Use higher max_tokens for comprehensive analysis of long contracts
     const completion = await openai.chat.completions.create({
       model: "gpt-4o",
       messages: [
         {
           role: "system",
-          content: `You are an expert contract analyst specializing in the ${industry} industry. Always respond with valid JSON only.`,
+          content: `You are an expert contract analyst specializing in the ${industry} industry. Always respond with valid JSON only. Be thorough - analyze ALL sections of the contract.`,
         },
         {
           role: "user",
@@ -243,7 +246,7 @@ ${contractText}`;
         },
       ],
       temperature: 0.3,
-      max_tokens: 4000,
+      max_tokens: 16000, // Increased from 4000 to allow thorough analysis of long contracts
       response_format: { type: "json_object" },
     });
 

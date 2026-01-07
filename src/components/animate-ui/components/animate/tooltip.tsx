@@ -35,12 +35,14 @@ function TooltipTrigger({ ...props }: TooltipTriggerProps) {
 type TooltipContentProps = Omit<TooltipContentPrimitiveProps, 'asChild'> & {
   children: React.ReactNode;
   layout?: boolean | 'position' | 'size' | 'preserve-aspect';
+  arrowClassName?: string;
 };
 
 function TooltipContent({
   className,
   children,
   layout = 'preserve-aspect',
+  arrowClassName,
   ...props
 }: TooltipContentProps) {
   return (
@@ -51,11 +53,14 @@ function TooltipContent({
       )}
       {...props}
     >
-      <motion.div className="overflow-hidden px-3 py-1.5 text-xs text-balance">
+      <motion.div className="overflow-hidden px-3 py-1.5 text-xs">
         <motion.div layout={layout}>{children}</motion.div>
       </motion.div>
       <TooltipArrowPrimitive
-        className="fill-primary size-3 data-[side='bottom']:translate-y-[1px] data-[side='right']:translate-x-[1px] data-[side='left']:translate-x-[-1px] data-[side='top']:translate-y-[-1px]"
+        className={cn(
+          "fill-primary size-3 data-[side='bottom']:translate-y-[1px] data-[side='right']:translate-x-[1px] data-[side='left']:translate-x-[-1px] data-[side='top']:translate-y-[-1px]",
+          arrowClassName
+        )}
         tipRadius={2}
       />
     </TooltipContentPrimitive>

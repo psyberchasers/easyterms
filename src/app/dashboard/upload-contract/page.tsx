@@ -336,9 +336,27 @@ export default function UploadContractPage() {
 
       const data = await response.json();
 
-      // Add missing clauses if not present
+      // Only add missing clauses that are actually missing from the contract
       if (!data.analysis.missingClauses) {
-        data.analysis.missingClauses = DEFAULT_MISSING_CLAUSES;
+        const contractText = (data.extractedText || "").toLowerCase();
+        const actuallyMissing = DEFAULT_MISSING_CLAUSES.filter(item => {
+          const clauseLower = item.clause.toLowerCase();
+          // Check for common variations of the clause name
+          if (clauseLower.includes("audit")) {
+            return !contractText.includes("audit");
+          }
+          if (clauseLower.includes("reversion")) {
+            return !contractText.includes("reversion") && !contractText.includes("revert");
+          }
+          if (clauseLower.includes("creative control")) {
+            return !contractText.includes("creative control") && !contractText.includes("approval rights");
+          }
+          if (clauseLower.includes("termination")) {
+            return !contractText.includes("termination") && !contractText.includes("terminate");
+          }
+          return true; // Default to showing if we can't determine
+        });
+        data.analysis.missingClauses = actuallyMissing;
       }
 
       setAnalysis(data.analysis);

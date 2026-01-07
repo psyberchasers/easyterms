@@ -421,7 +421,7 @@ export default function ContractDetailPage() {
 
   if (error || !contract) {
     return (
-      <div className="h-full flex items-center justify-center" style={{ backgroundColor: '#fcfcfc' }}>
+      <div className="h-full flex items-center justify-center bg-[#faf9f7] dark:bg-background">
         <div className="text-center space-y-4 max-w-md p-6 border border-border rounded-lg">
           <div className="w-12 h-12 rounded-lg border border-red-400/30 flex items-center justify-center mx-auto">
             <AlertTriangle className="w-5 h-5 text-red-400" />
@@ -442,7 +442,7 @@ export default function ContractDetailPage() {
 
   if (!analysis) {
     return (
-      <div className="h-full flex items-center justify-center" style={{ backgroundColor: '#fcfcfc' }}>
+      <div className="h-full flex items-center justify-center bg-[#faf9f7] dark:bg-background">
         <div className="text-center space-y-4 max-w-md p-6 border border-border rounded-lg">
           <FileText className="w-12 h-12 text-muted-foreground/30 mx-auto" />
           <p className="text-sm text-muted-foreground">No analysis available for this contract</p>
@@ -465,7 +465,7 @@ export default function ContractDetailPage() {
   ];
 
   return (
-    <div className="flex h-full" style={{ backgroundColor: '#fcfcfc' }}>
+    <div className="flex h-full bg-[#faf9f7] dark:bg-background">
       {/* Document Side Panel */}
       <div
         className={cn(
@@ -754,7 +754,7 @@ export default function ContractDetailPage() {
                       );
                     })}
                     {analysis.potentialConcerns && analysis.potentialConcerns.length > 4 && (
-                      <span className="inline-flex items-center px-3 py-1.5 rounded-full text-xs font-medium cursor-pointer hover:opacity-80 transition-opacity" style={{ backgroundColor: '#f0f0f0', color: '#565c65' }} onClick={() => setActiveTab('terms')}>
+                      <span className="inline-flex items-center px-3 py-1.5 rounded-full text-xs font-medium cursor-pointer hover:opacity-80 transition-opacity bg-[#f0eeea] dark:bg-muted text-muted-foreground" onClick={() => setActiveTab('terms')}>
                         +{analysis.potentialConcerns.length - 4} more
                       </span>
                     )}
@@ -806,7 +806,7 @@ export default function ContractDetailPage() {
                       const isSelected = selectedKeyInfo === item.id;
                       return (
                         <motion.div key={item.id} layout style={{ transformOrigin: "50% 50% 0px", borderRadius: isSelected ? "16px" : "9999px", zIndex: isSelected ? 50 : 1 }} className="relative overflow-hidden">
-                          <motion.button onClick={() => setSelectedKeyInfo(isSelected ? null : item.id)} style={{ pointerEvents: !isSelected ? "all" : "none", display: isSelected ? "none" : "flex", backgroundColor: item.isBlue ? 'rgba(59, 130, 246, 0.1)' : '#f0f0f0', color: item.isBlue ? '#3b82f6' : '#565c65' }} whileTap={{ scale: 0.95 }} transition={{ type: "spring", stiffness: 350, damping: 35 }} layoutId={`pill-${item.id}`} className="inline-flex items-center px-3 py-1.5 text-xs font-medium cursor-pointer">
+                          <motion.button onClick={() => setSelectedKeyInfo(isSelected ? null : item.id)} style={{ pointerEvents: !isSelected ? "all" : "none", display: isSelected ? "none" : "flex", backgroundColor: item.isBlue ? 'rgba(59, 130, 246, 0.1)' : undefined, color: item.isBlue ? '#3b82f6' : undefined }} whileTap={{ scale: 0.95 }} transition={{ type: "spring", stiffness: 350, damping: 35 }} layoutId={`pill-${item.id}`} className={cn("inline-flex items-center px-3 py-1.5 text-xs font-medium cursor-pointer", !item.isBlue && "bg-[#f0eeea] dark:bg-muted text-muted-foreground")}>
                             {item.value}
                           </motion.button>
                           <AnimatePresence mode="popLayout">
@@ -889,7 +889,7 @@ export default function ContractDetailPage() {
                 const isExpanded = expandedTerm === i;
                 return (
                   <div key={i} className={cn("border border-border transition-all rounded-lg overflow-hidden", isExpanded && "border-[#d1d5db]")}>
-                    <button onClick={() => setExpandedTerm(isExpanded ? null : i)} className="w-full p-3 flex items-center gap-3 text-left transition-colors rounded-t-lg" style={{ backgroundColor: '#f5f5f4' }}>
+                    <button onClick={() => setExpandedTerm(isExpanded ? null : i)} className="w-full p-3 flex items-center gap-3 text-left transition-colors rounded-t-lg bg-[#f5f3ef] dark:bg-muted">
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-1">
                           <span className="text-xs text-foreground font-medium">{term.title}</span>
@@ -909,7 +909,7 @@ export default function ContractDetailPage() {
                           <div><p className="text-[10px] text-muted-foreground/60 uppercase tracking-wider mb-1">Risk Assessment</p><div className="flex items-start gap-2"><span className={cn("text-[10px] px-2.5 py-0.5 rounded-full capitalize shrink-0", getRiskColor(term.riskLevel))}>{term.riskLevel}</span><p className="text-xs text-foreground">{term.riskLevel === "high" && "This term significantly favors the other party and could limit your rights or earnings."}{term.riskLevel === "medium" && "This term has some elements that could be improved but is within industry norms."}{term.riskLevel === "low" && "This term is favorable or standard for agreements of this type."}</p></div></div>
                           <div><p className="text-[10px] text-muted-foreground/60 uppercase tracking-wider mb-1">Questions to Ask Your Lawyer</p><ul className="text-xs text-muted-foreground space-y-2">{(term.actionItems || getTermChecklist(term.title)).map((item, idx) => (<li key={idx} className="flex items-center gap-2"><HugeiconsIcon icon={HelpSquareIcon} size={12} className="text-primary shrink-0" /><span className="leading-none">{item}</span></li>))}</ul></div>
                         </div>
-                        <button onClick={(e) => { e.stopPropagation(); handleClauseClick(term.originalText); }} className="w-full px-3 py-2.5 text-xs font-semibold text-muted-foreground hover:text-foreground flex items-center justify-center gap-1.5 transition-colors" style={{ backgroundColor: '#f5f5f4' }}>
+                        <button onClick={(e) => { e.stopPropagation(); handleClauseClick(term.originalText); }} className="w-full px-3 py-2.5 text-xs font-semibold text-muted-foreground hover:text-foreground flex items-center justify-center gap-1.5 transition-colors bg-[#f5f3ef] dark:bg-muted">
                           <HugeiconsIcon icon={ViewIcon} size={14} /> View in contract
                         </button>
                       </div>

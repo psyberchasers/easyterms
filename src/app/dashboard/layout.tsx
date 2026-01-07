@@ -91,6 +91,7 @@ function DashboardHeader({
   const isContractsPage = pathname.startsWith("/dashboard/contracts");
   const isUploadContractPage = pathname.startsWith("/dashboard/upload-contract");
   const isChatPage = pathname.startsWith("/dashboard/chat");
+  const isTemplatesPage = pathname.startsWith("/dashboard/templates");
   const isRecipientPage = pathname.includes("/recipient");
   const isSenderPage = pathname.includes("/sender");
 
@@ -101,6 +102,14 @@ function DashboardHeader({
         <>
           <HugeiconsIcon icon={BubbleChatIcon} size={16} className="text-muted-foreground" />
           <span className="text-sm font-medium text-muted-foreground">Chat</span>
+        </>
+      );
+    }
+    if (isTemplatesPage) {
+      return (
+        <>
+          <HugeiconsIcon icon={GridViewIcon} size={16} className="text-muted-foreground" />
+          <span className="text-sm font-medium text-muted-foreground">Templates</span>
         </>
       );
     }
@@ -234,28 +243,24 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   return (
     <SidebarProvider defaultOpen={true}>
       <Sidebar collapsible="icon" className="border-border">
-        {/* Header */}
+        {/* Header - matches h-12 (48px) of main header with border-b */}
         <motion.div
-          className="flex items-center px-3 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-2"
-          style={{ height: '48px' }}
+          className="flex items-center px-3 h-12 border-b border-sidebar-border group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-2"
           initial={{ opacity: 0, x: -10 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.3, delay: 0 }}
         >
           <img
-            src="/21.svg"
+            src={theme === "dark" ? "/fullLogoWhite.svg" : "/fullLogo.svg"}
             alt="EasyTerms"
             className="h-8 w-auto group-data-[collapsible=icon]:hidden"
           />
           <img
-            src="/21.svg"
+            src="/smallLogo.svg"
             alt="EasyTerms"
             className="h-8 w-8 hidden group-data-[collapsible=icon]:block object-contain"
           />
         </motion.div>
-
-        {/* Divider under logo */}
-        <div className="h-px bg-sidebar-border" />
 
         <SidebarContent className="px-2 pt-3">
           {/* Main Navigation */}
