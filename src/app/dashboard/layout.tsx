@@ -296,11 +296,13 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.3, delay: 0 }}
         >
-          <img
-            src={theme === "dark" ? "/darkModeS.svg" : "/lightModeS.svg"}
-            alt="EasyTerms"
-            className="h-7 w-auto ml-1"
-          />
+          <Link href="/dashboard" className="hover:opacity-80 transition-opacity">
+            <img
+              src={theme === "dark" ? "/darkModeS.svg" : "/lightModeS.svg"}
+              alt="EasyTerms"
+              className="h-7 w-auto ml-1"
+            />
+          </Link>
         </motion.div>
 
         <SidebarContent className="px-2 pt-3">
