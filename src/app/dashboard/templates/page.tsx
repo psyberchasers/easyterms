@@ -212,10 +212,10 @@ const ClauseItem = ({
   onToggle: () => void;
   isDragging?: boolean;
 }) => {
-  const importanceColors = {
-    critical: "bg-red-500/10 text-red-400 border-red-500/20",
-    important: "bg-amber-500/10 text-amber-400 border-amber-500/20",
-    standard: "bg-muted text-muted-foreground border-border",
+  const importanceTextColors = {
+    critical: "text-red-400",
+    important: "text-amber-400",
+    standard: "text-muted-foreground",
   };
 
   const explanation = clauseExplanations[clause.id] || clause.description;
@@ -244,9 +244,14 @@ const ClauseItem = ({
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2">
               <span className="text-sm font-medium">{clause.name}</span>
-              <Badge variant="outline" className={cn("text-[10px]", importanceColors[clause.importance])}>
-                {clause.importance}
-              </Badge>
+              {clause.importance !== "standard" && (
+                <>
+                  <span className="text-muted-foreground/40">·</span>
+                  <span className={cn("text-[10px] font-medium uppercase tracking-wide", importanceTextColors[clause.importance])}>
+                    {clause.importance}
+                  </span>
+                </>
+              )}
             </div>
             <p className="text-xs text-muted-foreground line-clamp-1">{clause.description}</p>
           </div>
