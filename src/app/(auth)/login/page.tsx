@@ -175,12 +175,11 @@ export default function LoginPage() {
         </div>
 
         <div className="flex-1 flex items-center relative z-10">
-          <h1 className="text-4xl font-medium text-foreground leading-tight">
-            Understand your
-            <br />
+          <h1 className="text-4xl font-medium text-foreground leading-tight flex flex-wrap items-center gap-x-3">
+            <span>Understand your</span>
             <LayoutGroup>
               <motion.span
-                className="inline-block bg-purple-500 text-white px-3 py-1.5 -rotate-3 -mt-1 ml-6 whitespace-nowrap text-3xl"
+                className="inline-flex items-center bg-purple-500 text-white px-3 py-1.5 -rotate-2 whitespace-nowrap text-3xl translate-y-0.5"
                 layout="size"
                 transition={{
                   layout: { duration: 0.4, ease: [0.4, 0, 0.2, 1] }

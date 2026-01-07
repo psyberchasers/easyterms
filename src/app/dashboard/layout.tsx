@@ -200,8 +200,9 @@ function DashboardHeader({
       </Link>
       <button
         onClick={toggleTheme}
-        className="h-8 w-8 flex items-center justify-center border border-border hover:bg-muted transition-colors rounded-md"
-        title={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
+        disabled
+        className="h-8 w-8 flex items-center justify-center border border-border hover:bg-muted transition-colors rounded-md opacity-50 cursor-not-allowed"
+        title="Theme toggle temporarily disabled"
       >
         {theme === "dark" ? (
           <HugeiconsIcon icon={Sun01Icon} size={14} className="text-muted-foreground" />
