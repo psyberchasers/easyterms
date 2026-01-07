@@ -154,14 +154,13 @@ export default function LoginPage() {
   return (
     <div className="h-screen flex bg-background overflow-hidden">
       {/* Left Panel - Branding */}
-      <div className="hidden lg:flex lg:w-1/2 flex-col justify-between p-12 border-r border-border relative overflow-hidden">
-        {/* Tiled Logo Background */}
+      <div className="hidden lg:flex lg:w-1/2 flex-col justify-between p-12 border-r border-dashed border-border relative overflow-hidden">
+        {/* Light Dots Background */}
         <div
-          className="absolute inset-0 opacity-[0.03]"
+          className="absolute inset-0"
           style={{
-            backgroundImage: `url('/logoSingle.svg')`,
-            backgroundSize: '80px 80px',
-            backgroundRepeat: 'repeat',
+            backgroundImage: `radial-gradient(circle, rgba(255,255,255,0.08) 1px, transparent 1px)`,
+            backgroundSize: '24px 24px',
           }}
         />
 
