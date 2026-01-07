@@ -86,7 +86,7 @@
   --destructive-foreground: oklch(0.98 0.01 25);
   --border: #2d2d2d;
   --input: #252525;
-  --ring: #FFEF00;
+  --ring: #a855f7;
   /* Status colors */
   --warning: oklch(0.75 0.15 60);
   --warning-foreground: oklch(0.15 0.02 60);
@@ -135,7 +135,7 @@
   --destructive-foreground: oklch(0.98 0.01 25);
   --border: #ebebeb;
   --input: #f9f9f8;
-  --ring: #FFEF00;
+  --ring: #a855f7;
   /* Status colors - slightly adjusted for light bg */
   --warning: oklch(0.7 0.17 60);
   --warning-foreground: oklch(0.2 0.02 60);
