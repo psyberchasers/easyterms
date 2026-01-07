@@ -36,6 +36,7 @@ type TooltipContentProps = Omit<TooltipContentPrimitiveProps, 'asChild'> & {
   children: React.ReactNode;
   layout?: boolean | 'position' | 'size' | 'preserve-aspect';
   arrowClassName?: string;
+  hidden?: boolean;
 };
 
 function TooltipContent({
@@ -43,8 +44,11 @@ function TooltipContent({
   children,
   layout = 'preserve-aspect',
   arrowClassName,
+  hidden,
   ...props
 }: TooltipContentProps) {
+  if (hidden) return null;
+
   return (
     <TooltipContentPrimitive
       className={cn(
