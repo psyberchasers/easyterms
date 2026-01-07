@@ -262,7 +262,7 @@ export default function LoginPage() {
                         placeholder="Your name"
                         value={fullName}
                         onChange={(e) => setFullName(e.target.value)}
-                        className="pl-10 bg-background border-border text-foreground placeholder:text-muted-foreground/40 focus:border-[#404040] focus:ring-0 h-10"
+                        className="pl-10 bg-background border-border text-foreground placeholder:text-muted-foreground/40 focus:border-purple-500 focus:ring-purple-500/50 focus:ring-[3px] h-10"
                         style={{ borderRadius: '12px' }}
                         data-rounded="true"
                         required
@@ -281,7 +281,7 @@ export default function LoginPage() {
                       placeholder="you@example.com"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      className="pl-10 bg-background border-border text-foreground placeholder:text-muted-foreground/40 focus:border-[#404040] focus:ring-0 h-10"
+                      className="pl-10 bg-background border-border text-foreground placeholder:text-muted-foreground/40 focus:border-purple-500 focus:ring-purple-500/50 focus:ring-[3px] h-10"
                       style={{ borderRadius: '12px' }}
                       data-rounded="true"
                       required
@@ -306,7 +306,7 @@ export default function LoginPage() {
                       placeholder="••••••••"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
-                      className="pl-10 bg-background border-border text-foreground placeholder:text-muted-foreground/40 focus:border-[#404040] focus:ring-0 h-10"
+                      className="pl-10 bg-background border-border text-foreground placeholder:text-muted-foreground/40 focus:border-purple-500 focus:ring-purple-500/50 focus:ring-[3px] h-10"
                       style={{ borderRadius: '12px' }}
                       data-rounded="true"
                       minLength={mode === "signup" ? 6 : undefined}
