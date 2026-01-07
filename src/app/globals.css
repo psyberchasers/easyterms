@@ -186,7 +186,7 @@
   [data-slot="select-trigger"]:focus-visible,
   [data-slot="select-trigger"][data-state="open"] {
     outline: none !important;
-    border-color: oklch(0.78 0.16 75) !important;
+    border-color: #a855f7 !important;
     box-shadow: none !important;
     ring: none !important;
   }
