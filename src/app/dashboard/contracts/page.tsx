@@ -7,6 +7,7 @@ import { createClient } from "@/lib/supabase/client";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { Contract } from "@/types/database";
 import { Button } from "@/components/ui/button";
+import { motion } from "framer-motion";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -16,7 +17,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { MoreHorizontal, Star, StarOff, Trash2, Plus } from "lucide-react";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { ContractsIcon, PlusSignIcon, PlayIcon, FilterIcon } from "@hugeicons-pro/core-stroke-rounded";
+import { ContractsIcon, PlusSignIcon, PlayIcon, FilterIcon, ViewIcon } from "@hugeicons-pro/core-stroke-rounded";
 import { cn } from "@/lib/utils";
 import { MusicLoader } from "@/components/MusicLoader";
 import { DeleteConfirmModal } from "@/components/DeleteConfirmModal";
@@ -108,6 +109,11 @@ export default function ContractsPage() {
     return parties.label || parties.artist || parties.company || parties.client || "—";
   };
 
+  const getCategory = (contract: Contract) => {
+    const analysis = contract.analysis as { industry?: string; category?: string } | null;
+    return analysis?.industry || analysis?.category || "—";
+  };
+
   if (initialLoad && loading) {
     return (
       <div className="flex items-center justify-center h-full min-h-[400px]">
@@ -157,13 +163,18 @@ export default function ContractsPage() {
   return (
     <div className="h-full flex flex-col w-full bg-background">
       {/* Toolbar */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-border w-full">
+      <motion.div
+        className="flex items-center justify-between px-4 py-3 border-b border-border w-full"
+        initial={{ opacity: 0, y: -10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3 }}
+      >
         <div className="flex items-center gap-3">
           {/* Filter buttons */}
           <button
             onClick={() => setFilter("all")}
             className={cn(
-              "px-3 py-1.5 rounded-md text-[12px] font-semibold transition-colors text-muted-foreground",
+              "px-3 py-1.5 rounded-md text-[12px] font-medium transition-colors text-muted-foreground",
               filter === "all" ? "bg-muted" : "hover:bg-muted/50"
             )}
           >
@@ -172,7 +183,7 @@ export default function ContractsPage() {
           <button
             onClick={() => setFilter("high-risk")}
             className={cn(
-              "px-3 py-1.5 rounded-md text-[12px] font-semibold transition-colors text-muted-foreground",
+              "px-3 py-1.5 rounded-md text-[12px] font-medium transition-colors text-muted-foreground",
               filter === "high-risk" ? "bg-muted" : "hover:bg-muted/50"
             )}
           >
@@ -181,7 +192,7 @@ export default function ContractsPage() {
           <button
             onClick={() => setFilter("medium-risk")}
             className={cn(
-              "px-3 py-1.5 rounded-md text-[12px] font-semibold transition-colors text-muted-foreground",
+              "px-3 py-1.5 rounded-md text-[12px] font-medium transition-colors text-muted-foreground",
               filter === "medium-risk" ? "bg-muted" : "hover:bg-muted/50"
             )}
           >
@@ -190,13 +201,13 @@ export default function ContractsPage() {
           <button
             onClick={() => setFilter("low-risk")}
             className={cn(
-              "px-3 py-1.5 rounded-md text-[12px] font-semibold transition-colors text-muted-foreground",
+              "px-3 py-1.5 rounded-md text-[12px] font-medium transition-colors text-muted-foreground",
               filter === "low-risk" ? "bg-muted" : "hover:bg-muted/50"
             )}
           >
             Low Risk
           </button>
-          <span className="text-[12px] font-semibold ml-2 text-muted-foreground/60">{filteredContracts.length} Results</span>
+          <span className="text-[12px] font-medium ml-2 text-muted-foreground/60">{filteredContracts.length} Results</span>
         </div>
 
         {/* Search */}
@@ -204,22 +215,26 @@ export default function ContractsPage() {
           <input
             type="text"
             placeholder="Search contracts"
-            className="px-3 py-1.5 text-[12px] border border-border rounded-full w-48 bg-background text-foreground placeholder:text-muted-foreground"
+            className="px-3 py-1.5 text-[12px] border border-border rounded-lg w-48 bg-background text-foreground placeholder:text-muted-foreground"
           />
         </div>
-      </div>
+      </motion.div>
 
       {/* Table */}
       <div className="flex-1 overflow-auto w-full">
         {/* Table Header */}
-        <div
+        <motion.div
           className="grid px-4 py-2.5 text-[11px] font-semibold uppercase tracking-wider border-b border-border sticky top-0 w-full bg-muted/50 text-muted-foreground/50"
           style={{
-            gridTemplateColumns: '1fr 280px 200px 120px 100px 50px 50px'
+            gridTemplateColumns: '1fr 200px 120px 150px 120px 100px 50px 50px'
           }}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.3, delay: 0.1 }}
         >
           <div>Contract</div>
           <div>Type</div>
+          <div>Category</div>
           <div>Party</div>
           <div>Uploaded</div>
           <div>Risk</div>
@@ -227,28 +242,48 @@ export default function ContractsPage() {
             <Star className="w-3 h-3 inline" />
           </div>
           <div></div>
-        </div>
+        </motion.div>
 
         {/* Table Body */}
         <div>
-          {filteredContracts.map((contract) => (
-            <div
+          {filteredContracts.map((contract, index) => (
+            <motion.div
               key={contract.id}
               className="grid px-4 py-3 items-center border-b border-border hover:bg-muted/50 transition-colors cursor-pointer group"
-              style={{ gridTemplateColumns: '1fr 280px 200px 120px 100px 50px 50px' }}
+              style={{ gridTemplateColumns: '1fr 200px 120px 150px 120px 100px 50px 50px' }}
               onClick={() => router.push(`/dashboard/contracts/${contract.id}`)}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3, delay: 0.15 + index * 0.05 }}
             >
               {/* Contract Name */}
-              <div className="flex items-center gap-3 min-w-0 pr-4">
+              <div className="flex items-center gap-2 min-w-0 pr-4">
                 <span className="text-[13px] font-medium truncate text-foreground">
                   {contract.title}
                 </span>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setQuickView({ open: true, contract });
+                  }}
+                  className="shrink-0 p-1.5 rounded-md border border-transparent hover:border-border hover:bg-muted opacity-0 group-hover:opacity-100 transition-all"
+                  title="Quick View"
+                >
+                  <HugeiconsIcon icon={ViewIcon} size={14} className="text-muted-foreground" />
+                </button>
               </div>
 
               {/* Type */}
               <div>
                 <span className="text-[13px] text-muted-foreground">
                   {contract.contract_type || "—"}
+                </span>
+              </div>
+
+              {/* Category */}
+              <div>
+                <span className="text-[13px] text-muted-foreground capitalize">
+                  {getCategory(contract)}
                 </span>
               </div>
 
@@ -340,7 +375,7 @@ export default function ContractsPage() {
                   </DropdownMenuContent>
                 </DropdownMenu>
               </div>
-            </div>
+            </motion.div>
           ))}
         </div>
 

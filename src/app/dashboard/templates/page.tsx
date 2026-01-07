@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
+import { useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   FileText,
@@ -27,6 +28,13 @@ import {
   Edit02Icon,
   GridViewIcon,
   PlusSignIcon,
+  Calendar02Icon,
+  DollarCircleIcon,
+  KeyIcon,
+  Clock01Icon,
+  SecurityCheckIcon,
+  TaskDone02Icon,
+  FileExportIcon,
 } from "@hugeicons-pro/core-stroke-rounded";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -34,6 +42,9 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import {
   Tooltip,
@@ -305,12 +316,27 @@ const ClauseEditor = ({
                   ))}
                 </select>
               ) : variable.type === "date" ? (
-                <Input
-                  type="date"
-                  value={values[variable.id] || ""}
-                  onChange={(e) => onChange(variable.id, e.target.value)}
-                  className="h-9 border-0 border-b-2 border-border rounded-none bg-transparent px-0 focus-visible:ring-0 focus-visible:border-purple-500 transition-colors"
-                />
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <button
+                      className={cn(
+                        "w-full h-9 flex items-center justify-between border-0 border-b-2 border-border bg-transparent px-0 text-sm text-left focus:outline-none focus:border-purple-500 transition-colors",
+                        !values[variable.id] && "text-muted-foreground"
+                      )}
+                    >
+                      {values[variable.id] ? format(new Date(values[variable.id]), "PPP") : "Select date"}
+                      <HugeiconsIcon icon={Calendar02Icon} size={16} className="text-muted-foreground" />
+                    </button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start" side="bottom">
+                    <Calendar
+                      mode="single"
+                      selected={values[variable.id] ? new Date(values[variable.id]) : undefined}
+                      onSelect={(date) => onChange(variable.id, date ? format(date, "yyyy-MM-dd") : "")}
+                      initialFocus
+                    />
+                  </PopoverContent>
+                </Popover>
               ) : (
                 <Input
                   type={variable.type === "number" || variable.type === "percentage" ? "number" : "text"}
@@ -334,8 +360,10 @@ const ClauseEditor = ({
 };
 
 export default function TemplatesPage() {
+  const searchParams = useSearchParams();
   const [activeTab, setActiveTab] = useState<"browse" | "builder">("browse");
   const [selectedTemplate, setSelectedTemplate] = useState<ContractTemplate | null>(null);
+  const [initialTemplateHandled, setInitialTemplateHandled] = useState(false);
 
   // Builder state
   const [builderStep, setBuilderStep] = useState(1);
@@ -357,7 +385,7 @@ export default function TemplatesPage() {
   const [currentClauseIndex, setCurrentClauseIndex] = useState(0);
 
   // Start builder with a template
-  const startWithTemplate = (template: ContractTemplate) => {
+  const startWithTemplate = useCallback((template: ContractTemplate) => {
     setSelectedTemplate(template);
     setSelectedClauses(template.defaultClauses);
     setContractTitle(template.name);
@@ -367,7 +395,21 @@ export default function TemplatesPage() {
     setPdfUrl(null);
     setBuilderStep(1);
     setActiveTab("builder");
-  };
+  }, []);
+
+  // Handle template query parameter from command menu
+  useEffect(() => {
+    if (initialTemplateHandled) return;
+
+    const templateId = searchParams.get("template");
+    if (templateId) {
+      const template = contractTemplates.find(t => t.id === templateId);
+      if (template) {
+        startWithTemplate(template);
+        setInitialTemplateHandled(true);
+      }
+    }
+  }, [searchParams, startWithTemplate, initialTemplateHandled]);
 
   // Toggle clause selection
   const toggleClause = (clauseId: string) => {
@@ -559,13 +601,13 @@ export default function TemplatesPage() {
 
   // Clause categories
   const clauseCategories = [
-    { id: "all", label: "All" },
-    { id: "financial", label: "Financial" },
-    { id: "rights", label: "Rights" },
-    { id: "term", label: "Term" },
-    { id: "protection", label: "Protection" },
-    { id: "obligations", label: "Obligations" },
-    { id: "general", label: "General" },
+    { id: "all", label: "All", icon: GridViewIcon },
+    { id: "financial", label: "Financial", icon: DollarCircleIcon },
+    { id: "rights", label: "Rights", icon: KeyIcon },
+    { id: "term", label: "Term", icon: Clock01Icon },
+    { id: "protection", label: "Protection", icon: SecurityCheckIcon },
+    { id: "obligations", label: "Obligations", icon: TaskDone02Icon },
+    { id: "general", label: "General", icon: FileExportIcon },
   ];
 
   return (
@@ -586,7 +628,7 @@ export default function TemplatesPage() {
                   <button
                     onClick={() => setBuilderStep(item.step)}
                     className={cn(
-                      "flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs transition-colors",
+                      "flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-bold transition-colors",
                       builderStep === item.step
                         ? "bg-purple-500 text-white"
                         : builderStep > item.step
@@ -788,12 +830,13 @@ export default function TemplatesPage() {
                       key={cat.id}
                       onClick={() => setClauseFilter(cat.id)}
                       className={cn(
-                        "px-3 py-1.5 rounded-full text-xs transition-colors",
+                        "px-3 py-1.5 rounded-md text-xs font-bold transition-colors flex items-center gap-1.5",
                         clauseFilter === cat.id
                           ? "bg-purple-500 text-white"
                           : "bg-muted text-muted-foreground hover:bg-muted/80"
                       )}
                     >
+                      <HugeiconsIcon icon={cat.icon} size={14} />
                       {cat.label}
                     </button>
                   ))}
@@ -867,130 +910,153 @@ export default function TemplatesPage() {
 
           {/* Step 3: Customize */}
           {builderStep === 3 && (
-            <div className="space-y-4">
-              {/* Contract Details - Always visible at top */}
-              {currentClauseIndex === 0 && (
-                <motion.div
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="space-y-4"
-                >
-                  <div className="flex justify-center">
-                    <span className="inline-flex items-center px-4 py-1.5 rounded-full bg-muted text-sm font-medium">
-                      Contract Details
-                    </span>
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="rounded-xl overflow-hidden flex flex-col"
+              style={{ minHeight: "500px", border: "1px solid var(--step3-border)", backgroundColor: "var(--step3-header)" }}
+            >
+              {/* Header */}
+              <div className="px-5 py-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    {currentClauseIndex === 0 ? (
+                      <span className="text-sm font-medium">Contract Details</span>
+                    ) : (
+                      <>
+                        <span className="text-sm font-medium">
+                          {getClauseById(selectedClauses[currentClauseIndex - 1])?.name}
+                        </span>
+                        <Badge variant="outline" className="text-[10px]">
+                          {getClauseById(selectedClauses[currentClauseIndex - 1])?.category}
+                        </Badge>
+                      </>
+                    )}
                   </div>
-                  <div className="grid md:grid-cols-3 gap-6 p-5">
-                    <div className="space-y-2">
-                      <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-                        {selectedTemplate?.parties.party1 || "Party 1"} Name
-                      </Label>
-                      <Input
-                        placeholder={`Enter ${selectedTemplate?.parties.party1 || "Party 1"} name`}
-                        value={partyNames.party1}
-                        onChange={(e) => setPartyNames((p) => ({ ...p, party1: e.target.value }))}
-                        className="border-0 border-b-2 border-border rounded-none bg-transparent px-0 focus-visible:ring-0 focus-visible:border-purple-500 transition-colors"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-                        {selectedTemplate?.parties.party2 || "Party 2"} Name
-                      </Label>
-                      <Input
-                        placeholder={`Enter ${selectedTemplate?.parties.party2 || "Party 2"} name`}
-                        value={partyNames.party2}
-                        onChange={(e) => setPartyNames((p) => ({ ...p, party2: e.target.value }))}
-                        className="border-0 border-b-2 border-border rounded-none bg-transparent px-0 focus-visible:ring-0 focus-visible:border-purple-500 transition-colors"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-                        Contract Date
-                      </Label>
-                      <Input
-                        type="date"
-                        value={contractDate}
-                        onChange={(e) => setContractDate(e.target.value)}
-                        className="border-0 border-b-2 border-border rounded-none bg-transparent px-0 focus-visible:ring-0 focus-visible:border-purple-500 transition-colors"
-                      />
-                    </div>
-                  </div>
-                </motion.div>
-              )}
-
-              {/* Clause Stepper - Shows one clause at a time */}
-              {currentClauseIndex > 0 && (() => {
-                const clauseId = selectedClauses[currentClauseIndex - 1];
-                const clause = getClauseById(clauseId);
-                if (!clause) return null;
-
-                return (
-                  <motion.div
-                    key={clauseId}
-                    initial={{ opacity: 0, x: 20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: -20 }}
-                    transition={{ duration: 0.2 }}
-                    className="space-y-4"
-                  >
-                    {/* Progress Header */}
-                    <div className="flex justify-center">
-                      <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-muted text-sm font-medium">
-                        Clause {currentClauseIndex} of {selectedClauses.length}
-                      </span>
-                    </div>
-
-                    {/* Progress Dots */}
-                    <div className="flex items-center justify-center gap-1.5">
-                      {selectedClauses.map((_, idx) => (
-                        <button
-                          key={idx}
-                          onClick={() => setCurrentClauseIndex(idx + 1)}
-                          className={cn(
-                            "w-2 h-2 rounded-full transition-all",
-                            idx + 1 === currentClauseIndex
-                              ? "bg-purple-500 w-6"
-                              : idx + 1 < currentClauseIndex
-                              ? "bg-purple-500/50"
-                              : "bg-muted-foreground/30"
-                          )}
-                        />
-                      ))}
-                    </div>
-
-                    {/* Clause Editor - Full Width */}
-                    <div className="p-6 border border-border rounded-xl bg-card">
-                      <ClauseEditor
-                        clause={clause}
-                        values={clauseValues[clauseId] || {}}
-                        onChange={(variableId, value) =>
-                          updateClauseValue(clauseId, variableId, value)
-                        }
-                        partyNames={{
-                          party1: partyNames.party1 || selectedTemplate?.parties.party1 || "Party 1",
-                          party2: partyNames.party2 || selectedTemplate?.parties.party2 || "Party 2",
-                        }}
-                      />
-                    </div>
-                  </motion.div>
-                );
-              })()}
-
-              {/* Contract Details View - Progress indicator */}
-              {currentClauseIndex === 0 && (
-                <div className="flex items-center justify-center gap-1.5 pt-2">
-                  <div className="w-6 h-2 rounded-full bg-purple-500" />
+                  <span className="text-xs text-muted-foreground">
+                    {currentClauseIndex === 0
+                      ? `${selectedClauses.length} clauses to customize`
+                      : `Clause ${currentClauseIndex} of ${selectedClauses.length}`
+                    }
+                  </span>
+                </div>
+                {/* Progress bar */}
+                <div className="flex items-center gap-1 mt-3">
+                  <div
+                    className={cn(
+                      "h-1 rounded-full transition-all",
+                      currentClauseIndex === 0 ? "bg-purple-500 flex-[0.5]" : "bg-purple-500/30 flex-[0.5]"
+                    )}
+                  />
                   {selectedClauses.map((_, idx) => (
                     <div
                       key={idx}
-                      className="w-2 h-2 rounded-full bg-muted-foreground/30"
+                      className={cn(
+                        "h-1 flex-1 rounded-full transition-all",
+                        idx + 1 <= currentClauseIndex
+                          ? "bg-purple-500"
+                          : "bg-muted-foreground/20"
+                      )}
                     />
                   ))}
                 </div>
-              )}
+              </div>
 
-              {/* Navigation */}
-              <div className="flex items-center justify-between pt-4 border-t border-border">
+              {/* Content */}
+              <div className="flex-1 overflow-auto rounded-t-xl" style={{ backgroundColor: "var(--step3-content)", borderTop: "1px solid var(--step3-border)" }}>
+                <div className="p-6">
+                <AnimatePresence mode="wait">
+                  {currentClauseIndex === 0 ? (
+                    <motion.div
+                      key="contract-details"
+                      initial={{ opacity: 0, x: 20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      exit={{ opacity: 0, x: -20 }}
+                      transition={{ duration: 0.2 }}
+                      className="grid md:grid-cols-3 gap-6"
+                    >
+                      <div className="space-y-2">
+                        <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                          {selectedTemplate?.parties.party1 || "Party 1"} Name
+                        </Label>
+                        <Input
+                          placeholder={`Enter ${selectedTemplate?.parties.party1 || "Party 1"} name`}
+                          value={partyNames.party1}
+                          onChange={(e) => setPartyNames((p) => ({ ...p, party1: e.target.value }))}
+                          className="border-0 border-b border-muted-foreground/30 rounded-none bg-transparent px-0 shadow-none focus-visible:ring-0 focus-visible:border-purple-500 transition-colors"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                          {selectedTemplate?.parties.party2 || "Party 2"} Name
+                        </Label>
+                        <Input
+                          placeholder={`Enter ${selectedTemplate?.parties.party2 || "Party 2"} name`}
+                          value={partyNames.party2}
+                          onChange={(e) => setPartyNames((p) => ({ ...p, party2: e.target.value }))}
+                          className="border-0 border-b border-muted-foreground/30 rounded-none bg-transparent px-0 shadow-none focus-visible:ring-0 focus-visible:border-purple-500 transition-colors"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                          Contract Date
+                        </Label>
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <button
+                              className={cn(
+                                "w-full h-9 flex items-center justify-between border-0 border-b border-muted-foreground/30 bg-transparent px-0 text-sm text-left focus:outline-none focus:border-purple-500 transition-colors",
+                                !contractDate && "text-muted-foreground"
+                              )}
+                            >
+                              {contractDate ? format(new Date(contractDate), "PPP") : "Select date"}
+                              <HugeiconsIcon icon={Calendar02Icon} size={16} className="text-muted-foreground" />
+                            </button>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-auto p-0" align="end" side="bottom">
+                            <Calendar
+                              mode="single"
+                              selected={contractDate ? new Date(contractDate) : undefined}
+                              onSelect={(date) => setContractDate(date ? format(date, "yyyy-MM-dd") : "")}
+                              initialFocus
+                            />
+                          </PopoverContent>
+                        </Popover>
+                      </div>
+                    </motion.div>
+                  ) : (() => {
+                    const clauseId = selectedClauses[currentClauseIndex - 1];
+                    const clause = getClauseById(clauseId);
+                    if (!clause) return null;
+
+                    return (
+                      <motion.div
+                        key={clauseId}
+                        initial={{ opacity: 0, x: 20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        exit={{ opacity: 0, x: -20 }}
+                        transition={{ duration: 0.2 }}
+                      >
+                        <ClauseEditor
+                          clause={clause}
+                          values={clauseValues[clauseId] || {}}
+                          onChange={(variableId, value) =>
+                            updateClauseValue(clauseId, variableId, value)
+                          }
+                          partyNames={{
+                            party1: partyNames.party1 || selectedTemplate?.parties.party1 || "Party 1",
+                            party2: partyNames.party2 || selectedTemplate?.parties.party2 || "Party 2",
+                          }}
+                        />
+                      </motion.div>
+                    );
+                  })()}
+                </AnimatePresence>
+                </div>
+              </div>
+
+              {/* Footer */}
+              <div className="px-5 py-4 flex items-center justify-between" style={{ borderTop: "1px solid var(--step3-border)" }}>
                 <Button
                   variant="outline"
                   onClick={() => {
@@ -1006,6 +1072,7 @@ export default function TemplatesPage() {
                 </Button>
 
                 <Button
+                  variant="outline"
                   onClick={() => {
                     if (currentClauseIndex < selectedClauses.length) {
                       setCurrentClauseIndex(currentClauseIndex + 1);
@@ -1013,13 +1080,13 @@ export default function TemplatesPage() {
                       setBuilderStep(4);
                     }
                   }}
-                  className="bg-purple-500 hover:bg-purple-600"
+                  className="group bg-white text-black hover:bg-purple-500 hover:text-white hover:border-purple-500 border-white transition-colors"
                 >
                   {currentClauseIndex < selectedClauses.length ? "Next Clause" : "Review Contract"}
                   <ChevronRight className="w-4 h-4 ml-2" />
                 </Button>
               </div>
-            </div>
+            </motion.div>
           )}
 
           {/* Step 4: Review & Export */}

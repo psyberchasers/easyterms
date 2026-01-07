@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import { cn } from "@/lib/utils";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
@@ -20,7 +21,9 @@ import {
   ArrowUp02Icon,
   ArrowDown02Icon,
 } from "@hugeicons-pro/core-stroke-rounded";
-import { Link2, Trash2, Command } from "lucide-react";
+import { Link2, Trash2, Command, Loader2 } from "lucide-react";
+import { createClient } from "@/lib/supabase/client";
+import { contractTemplates } from "@/config/contract-templates";
 
 interface CommandMenuProps {
   open: boolean;
@@ -39,59 +42,17 @@ interface SearchResult {
 
 const filterTabs = [
   { id: "all", label: "All", icon: null },
-  { id: "tasks", label: "Tasks", icon: Task01Icon },
-  { id: "documents", label: "Documents", icon: File01Icon },
-  { id: "inbox", label: "Inbox", icon: InboxIcon },
   { id: "contracts", label: "Contracts", icon: ContractsIcon },
-  { id: "projects", label: "Projects", icon: Folder01Icon },
   { id: "templates", label: "Templates", icon: GridViewIcon },
 ];
 
-// Mock recent results - in real app, this would come from API/state
-const mockResults: SearchResult[] = [
-  {
-    id: "1",
-    title: "Recording Agreement Draft",
-    category: "Contracts",
-    icon: <HugeiconsIcon icon={ContractsIcon} size={20} style={{ color: '#565c65' }} />,
-    timestamp: "2:30 PM, January 3",
-    href: "/dashboard/contracts",
-  },
-  {
-    id: "2",
-    title: "Publishing Deal Analysis",
-    category: "Documents",
-    icon: <HugeiconsIcon icon={File01Icon} size={20} style={{ color: '#565c65' }} />,
-    timestamp: "11:45 AM, January 2",
-    href: "/dashboard/documents",
-  },
-  {
-    id: "3",
-    title: "Artist Management Contract",
-    category: "Contracts",
-    icon: <HugeiconsIcon icon={ContractsIcon} size={20} style={{ color: '#565c65' }} />,
-    status: { label: "High Risk", color: "#ef4444" },
-    timestamp: "9:15 AM, December 28",
-    href: "/dashboard/contracts",
-  },
-  {
-    id: "4",
-    title: "Q4 Royalty Reports",
-    category: "Reports",
-    icon: <HugeiconsIcon icon={ChartHistogramIcon} size={20} style={{ color: '#565c65' }} />,
-    timestamp: "4:00 PM, December 20",
-    href: "/dashboard",
-  },
-  {
-    id: "5",
-    title: "Distribution Agreement",
-    category: "Contracts",
-    icon: <HugeiconsIcon icon={ContractsIcon} size={20} style={{ color: '#565c65' }} />,
-    status: { label: "Low Risk", color: "#22c55e" },
-    timestamp: "1:20 PM, December 15",
-    href: "/dashboard/contracts",
-  },
-];
+// Risk level to status mapping
+const getRiskStatus = (risk: string | null) => {
+  if (risk === "high") return { label: "High Risk", color: "#ef4444" };
+  if (risk === "medium") return { label: "Medium Risk", color: "#f59e0b" };
+  if (risk === "low") return { label: "Low Risk", color: "#22c55e" };
+  return undefined;
+};
 
 const quickActions = [
   { id: "upload", label: "Upload Contract", icon: FileUploadIcon, href: "/dashboard/upload" },
@@ -100,24 +61,170 @@ const quickActions = [
   { id: "settings", label: "Settings", icon: Settings02Icon, href: "/settings" },
 ];
 
+const RECENT_CONTRACTS_KEY = "command-menu-recent-contracts";
+const MAX_RECENT = 5;
+
+// Store minimal contract data for localStorage
+interface RecentContract {
+  id: string;
+  title: string;
+  overall_risk: string | null;
+  created_at: string;
+}
+
 export function CommandMenu({ open, onOpenChange }: CommandMenuProps) {
   const router = useRouter();
   const [search, setSearch] = useState("");
   const [activeFilter, setActiveFilter] = useState("all");
   const [selectedIndex, setSelectedIndex] = useState(0);
-  const [results, setResults] = useState<SearchResult[]>(mockResults);
+  const [results, setResults] = useState<SearchResult[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [contracts, setContracts] = useState<SearchResult[]>([]);
+  const [recentContracts, setRecentContracts] = useState<SearchResult[]>([]);
+  const supabase = createClient();
+
+  // Convert templates to SearchResults - memoized to prevent infinite loops
+  const templates: SearchResult[] = useMemo(() =>
+    contractTemplates.map((template) => ({
+      id: template.id,
+      title: template.name,
+      category: "Templates",
+      icon: <HugeiconsIcon icon={GridViewIcon} size={20} style={{ color: '#565c65' }} />,
+      timestamp: template.description.slice(0, 50) + "...",
+      href: `/dashboard/templates?template=${template.id}`,
+    })), []);
+
+  // Load recent contracts from localStorage on mount
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem(RECENT_CONTRACTS_KEY);
+      if (stored) {
+        const recentData: RecentContract[] = JSON.parse(stored);
+        const recentResults: SearchResult[] = recentData.map((contract) => ({
+          id: contract.id,
+          title: contract.title,
+          category: "Contracts",
+          icon: <HugeiconsIcon icon={ContractsIcon} size={20} style={{ color: '#565c65' }} />,
+          status: getRiskStatus(contract.overall_risk),
+          timestamp: new Date(contract.created_at).toLocaleDateString("en-US", {
+            month: "short",
+            day: "numeric",
+            year: "numeric",
+          }),
+          href: `/dashboard/contracts/${contract.id}`,
+        }));
+        setRecentContracts(recentResults);
+      }
+    } catch (err) {
+      console.error("Error loading recent contracts:", err);
+    }
+  }, []);
+
+  // Save contract to recent when selected
+  const saveToRecent = useCallback((contract: SearchResult) => {
+    try {
+      const stored = localStorage.getItem(RECENT_CONTRACTS_KEY);
+      let recentData: RecentContract[] = stored ? JSON.parse(stored) : [];
+
+      // Remove if already exists (to move to front)
+      recentData = recentData.filter(c => c.id !== contract.id);
+
+      // Add to front
+      recentData.unshift({
+        id: contract.id,
+        title: contract.title,
+        overall_risk: contract.status?.label.includes("High") ? "high" :
+                      contract.status?.label.includes("Medium") ? "medium" :
+                      contract.status?.label.includes("Low") ? "low" : null,
+        created_at: new Date().toISOString(),
+      });
+
+      // Keep only last MAX_RECENT
+      recentData = recentData.slice(0, MAX_RECENT);
+
+      localStorage.setItem(RECENT_CONTRACTS_KEY, JSON.stringify(recentData));
+
+      // Update state
+      const recentResults: SearchResult[] = recentData.map((c) => ({
+        id: c.id,
+        title: c.title,
+        category: "Contracts",
+        icon: <HugeiconsIcon icon={ContractsIcon} size={20} style={{ color: '#565c65' }} />,
+        status: getRiskStatus(c.overall_risk),
+        timestamp: new Date(c.created_at).toLocaleDateString("en-US", {
+          month: "short",
+          day: "numeric",
+          year: "numeric",
+        }),
+        href: `/dashboard/contracts/${c.id}`,
+      }));
+      setRecentContracts(recentResults);
+    } catch (err) {
+      console.error("Error saving recent contract:", err);
+    }
+  }, []);
+
+  // Fetch contracts when menu opens
+  useEffect(() => {
+    if (!open) return;
+
+    const fetchContracts = async () => {
+      setLoading(true);
+      try {
+        const { data, error } = await supabase
+          .from("contracts")
+          .select("id, title, contract_type, overall_risk, created_at")
+          .order("created_at", { ascending: false })
+          .limit(50);
+
+        if (error) {
+          console.error("Error fetching contracts:", error);
+          return;
+        }
+
+        const contractResults: SearchResult[] = (data || []).map((contract) => ({
+          id: contract.id,
+          title: contract.title,
+          category: "Contracts",
+          icon: <HugeiconsIcon icon={ContractsIcon} size={20} style={{ color: '#565c65' }} />,
+          status: getRiskStatus(contract.overall_risk),
+          timestamp: new Date(contract.created_at).toLocaleDateString("en-US", {
+            month: "short",
+            day: "numeric",
+            year: "numeric",
+          }),
+          href: `/dashboard/contracts/${contract.id}`,
+        }));
+
+        setContracts(contractResults);
+      } catch (err) {
+        console.error("Error:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchContracts();
+  }, [open, supabase]);
 
   // Filter results based on search and active filter
   useEffect(() => {
-    let filtered = mockResults;
-
-    if (search) {
-      filtered = filtered.filter(r =>
-        r.title.toLowerCase().includes(search.toLowerCase()) ||
-        r.category.toLowerCase().includes(search.toLowerCase())
-      );
+    if (!search) {
+      setResults([]);
+      setSelectedIndex(0);
+      return;
     }
 
+    // Combine contracts and templates for searching
+    let allItems = [...contracts, ...templates];
+
+    // Filter by search term
+    let filtered = allItems.filter(r =>
+      r.title.toLowerCase().includes(search.toLowerCase()) ||
+      r.category.toLowerCase().includes(search.toLowerCase())
+    );
+
+    // Filter by category tab
     if (activeFilter !== "all") {
       filtered = filtered.filter(r =>
         r.category.toLowerCase() === activeFilter.toLowerCase()
@@ -126,32 +233,40 @@ export function CommandMenu({ open, onOpenChange }: CommandMenuProps) {
 
     setResults(filtered);
     setSelectedIndex(0);
-  }, [search, activeFilter]);
+  }, [search, activeFilter, contracts, templates]);
 
   // Keyboard navigation
   const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
-    const totalItems = results.length + quickActions.length;
+    // When searching, use results; otherwise use recent contracts
+    const displayedItems = search ? results : recentContracts;
+    const totalItems = displayedItems.length + (search ? 0 : quickActions.length);
 
     if (e.key === "ArrowDown") {
       e.preventDefault();
-      setSelectedIndex(i => (i + 1) % totalItems);
+      setSelectedIndex(i => (i + 1) % Math.max(totalItems, 1));
     } else if (e.key === "ArrowUp") {
       e.preventDefault();
-      setSelectedIndex(i => (i - 1 + totalItems) % totalItems);
+      setSelectedIndex(i => (i - 1 + Math.max(totalItems, 1)) % Math.max(totalItems, 1));
     } else if (e.key === "Enter") {
       e.preventDefault();
-      if (selectedIndex < results.length) {
-        router.push(results[selectedIndex].href);
+      if (selectedIndex < displayedItems.length) {
+        const selectedContract = displayedItems[selectedIndex];
+        if (selectedContract.category === "Contracts") {
+          saveToRecent(selectedContract);
+        }
+        router.push(selectedContract.href);
         onOpenChange(false);
-      } else {
-        const actionIndex = selectedIndex - results.length;
-        router.push(quickActions[actionIndex].href);
-        onOpenChange(false);
+      } else if (!search) {
+        const actionIndex = selectedIndex - displayedItems.length;
+        if (actionIndex < quickActions.length) {
+          router.push(quickActions[actionIndex].href);
+          onOpenChange(false);
+        }
       }
     } else if (e.key === "Escape") {
       onOpenChange(false);
     }
-  }, [results, selectedIndex, router, onOpenChange]);
+  }, [search, results, recentContracts, selectedIndex, router, onOpenChange, saveToRecent]);
 
   // Reset state when closing
   useEffect(() => {
@@ -162,7 +277,11 @@ export function CommandMenu({ open, onOpenChange }: CommandMenuProps) {
     }
   }, [open]);
 
-  const handleSelect = (href: string) => {
+  const handleSelect = (href: string, contract?: SearchResult) => {
+    // Save to recent if it's a contract
+    if (contract && contract.category === "Contracts") {
+      saveToRecent(contract);
+    }
     router.push(href);
     onOpenChange(false);
   };
@@ -180,6 +299,9 @@ export function CommandMenu({ open, onOpenChange }: CommandMenuProps) {
         }}
         onKeyDown={handleKeyDown}
       >
+        <VisuallyHidden>
+          <DialogTitle>Command Menu</DialogTitle>
+        </VisuallyHidden>
         {/* Search Input */}
         <div className="flex items-center gap-3 px-4 py-3">
           <Command className="w-4 h-4" style={{ color: '#a6aab1' }} />
@@ -215,21 +337,96 @@ export function CommandMenu({ open, onOpenChange }: CommandMenuProps) {
 
         {/* Results */}
         <div className="max-h-[500px] overflow-y-auto">
-          {/* Recent Results */}
-          {results.length > 0 && (
-            <>
-              <div className="px-4 py-2">
-                <span className="text-[12px] font-medium" style={{ color: '#808184' }}>
-                  Recent results:
-                </span>
-              </div>
-              <div>
+          {/* Recent Results Label */}
+          <div className="px-4 py-2">
+            <span className="text-[12px] font-medium" style={{ color: '#808184' }}>
+              {search ? "Results:" : "Recent results:"}
+            </span>
+          </div>
+
+          {/* Loading state */}
+          {loading && (
+            <div className="px-4 py-6 text-center">
+              <Loader2 className="w-5 h-5 animate-spin mx-auto" style={{ color: '#808184' }} />
+            </div>
+          )}
+
+          {/* Recent contracts when not searching */}
+          {!search && !loading && recentContracts.length > 0 && (
+            <div>
+              {recentContracts.map((result, index) => {
+                const isSelected = selectedIndex === index;
+                return (
+                  <div
+                    key={result.id}
+                    onClick={() => handleSelect(result.href, result)}
+                    className={cn(
+                      "flex items-center gap-3 px-4 py-3 cursor-pointer transition-colors",
+                      isSelected ? "bg-[#f5f5f5]" : "hover:bg-[#fafafa]"
+                    )}
+                  >
+                    <div
+                      className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0"
+                      style={{ backgroundColor: '#f5f5f5' }}
+                    >
+                      {result.icon}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[14px] font-medium truncate" style={{ color: '#0e1011' }}>
+                        {result.title}
+                      </p>
+                      <div className="flex items-center gap-2 text-[12px]" style={{ color: '#75797b' }}>
+                        <span>{result.category}</span>
+                        {result.status && (
+                          <>
+                            <span>·</span>
+                            <span className="flex items-center gap-1">
+                              <span
+                                className="w-1.5 h-1.5 rounded-full"
+                                style={{ backgroundColor: result.status.color }}
+                              />
+                              {result.status.label}
+                            </span>
+                          </>
+                        )}
+                        {result.timestamp && (
+                          <>
+                            <span>·</span>
+                            <span>{result.timestamp}</span>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                    <div
+                      className="w-6 h-6 rounded border flex items-center justify-center text-[11px] font-medium shrink-0"
+                      style={{ borderColor: '#e5e6e7', color: '#808184' }}
+                    >
+                      {index + 1}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          {/* No recent contracts when not searching */}
+          {!search && !loading && recentContracts.length === 0 && (
+            <div className="px-4 py-6 text-center">
+              <p className="text-[13px]" style={{ color: '#808184' }}>
+                No recent contracts
+              </p>
+            </div>
+          )}
+
+          {/* Show results when searching */}
+          {search && results.length > 0 && (
+            <div>
                 {results.map((result, index) => {
                   const isSelected = selectedIndex === index;
                   return (
                     <div
                       key={result.id}
-                      onClick={() => handleSelect(result.href)}
+                      onClick={() => handleSelect(result.href, result)}
                       className={cn(
                         "flex items-center gap-3 px-4 py-3 cursor-pointer transition-colors",
                         isSelected ? "bg-[#f5f5f5]" : "hover:bg-[#fafafa]"
@@ -280,12 +477,6 @@ export function CommandMenu({ open, onOpenChange }: CommandMenuProps) {
                           <button className="w-8 h-8 rounded-lg border flex items-center justify-center hover:bg-white" style={{ borderColor: '#e5e6e7' }}>
                             <Trash2 className="w-4 h-4" style={{ color: '#565c65' }} />
                           </button>
-                          <button
-                            className="px-3 py-1.5 rounded-lg text-[13px] font-medium"
-                            style={{ backgroundColor: '#1a1a1a', color: '#ffffff' }}
-                          >
-                            Select
-                          </button>
                         </div>
                       )}
 
@@ -299,12 +490,11 @@ export function CommandMenu({ open, onOpenChange }: CommandMenuProps) {
                     </div>
                   );
                 })}
-              </div>
-            </>
+            </div>
           )}
 
           {/* Quick Actions */}
-          {search === "" && (
+          {search === "" && !loading && (
             <>
               <div className="px-4 py-2">
                 <span className="text-[12px] font-medium" style={{ color: '#808184' }}>
@@ -313,7 +503,7 @@ export function CommandMenu({ open, onOpenChange }: CommandMenuProps) {
               </div>
               <div>
                 {quickActions.map((action, index) => {
-                  const actualIndex = results.length + index;
+                  const actualIndex = recentContracts.length + index;
                   const isSelected = selectedIndex === actualIndex;
                   return (
                     <div

@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/components/providers/AuthProvider";
+import { useTheme } from "@/components/providers/ThemeProvider";
 import { createClient } from "@/lib/supabase/client";
 import {
   DropdownMenu,
@@ -42,6 +43,7 @@ import {
 interface NavbarProps {
   showNewAnalysis?: boolean;
   showBorder?: boolean;
+  showSearch?: boolean;
 }
 
 interface Contract {
@@ -52,8 +54,9 @@ interface Contract {
   created_at: string;
 }
 
-export function Navbar({ showNewAnalysis = true, showBorder = false }: NavbarProps) {
+export function Navbar({ showNewAnalysis = true, showBorder = false, showSearch = true }: NavbarProps) {
   const { user, profile, loading, signOut } = useAuth();
+  const { theme } = useTheme();
   const router = useRouter();
   const [commandOpen, setCommandOpen] = useState(false);
   const [contracts, setContracts] = useState<Contract[]>([]);
@@ -101,20 +104,22 @@ export function Navbar({ showNewAnalysis = true, showBorder = false }: NavbarPro
         <div className="max-w-full mx-auto px-4 h-14 grid grid-cols-3 items-center">
           {/* Left - Logo */}
           <Link href="/" className="flex items-center gap-2">
-            <img src="/logoSingle.svg" alt="EasyTerms" className="h-6" />
+            <img src={theme === "dark" ? "/darkmodeS.svg" : "/logoSingle.svg"} alt="EasyTerms" className="h-8" />
           </Link>
 
           {/* Center - Command Menu Trigger */}
           <div className="flex justify-center items-center">
-            <button
-              onClick={() => setCommandOpen(true)}
-              className="group hidden sm:flex items-center justify-center gap-3 h-10 px-4 text-base text-muted-foreground hover:text-foreground bg-transparent transition-colors min-w-[240px] relative"
-            >
-              <HugeiconsIcon icon={AiSearch02Icon} size={18} className="text-muted-foreground/60 group-hover:text-primary transition-colors" />
-              <span>Search</span>
-              {/* Underline that expands from middle */}
-              <span className="absolute bottom-0 left-1/2 h-0.5 w-0 bg-primary -translate-x-1/2 transition-all duration-300 ease-out group-hover:w-full" />
-            </button>
+            {showSearch && (
+              <button
+                onClick={() => setCommandOpen(true)}
+                className="group hidden sm:flex items-center justify-center gap-3 h-10 px-4 text-base text-muted-foreground hover:text-foreground bg-transparent transition-colors min-w-[240px] relative"
+              >
+                <HugeiconsIcon icon={AiSearch02Icon} size={18} className="text-muted-foreground/60 group-hover:text-primary transition-colors" />
+                <span>Search</span>
+                {/* Underline that expands from middle */}
+                <span className="absolute bottom-0 left-1/2 h-0.5 w-0 bg-primary -translate-x-1/2 transition-all duration-300 ease-out group-hover:w-full" />
+              </button>
+            )}
           </div>
 
           {/* Right - Nav */}
@@ -157,7 +162,7 @@ export function Navbar({ showNewAnalysis = true, showBorder = false }: NavbarPro
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild className="text-muted-foreground hover:text-foreground focus:text-foreground focus:bg-muted">
-                    <Link href="/compare">
+                    <Link href="/dashboard/compare">
                       <HugeiconsIcon icon={RepeatOffIcon} size={16} className="mr-2" />
                       Compare
                     </Link>
@@ -296,7 +301,7 @@ export function Navbar({ showNewAnalysis = true, showBorder = false }: NavbarPro
                   </div>
                 </button>
                 <button
-                  onClick={() => runCommand(() => router.push("/compare"))}
+                  onClick={() => runCommand(() => router.push("/dashboard/compare"))}
                   className="w-full flex items-center gap-3 px-2 py-2.5 rounded-lg hover:bg-muted transition-colors text-left"
                 >
                   <div className="w-8 h-8 rounded-lg bg-muted flex items-center justify-center">

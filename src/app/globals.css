@@ -61,6 +61,11 @@
 
 :root {
   --radius: 0.75rem;
+  /* Step 3 card colors - Dark mode */
+  --step3-header: #101010;
+  --step3-content: #1d1d1d;
+  --step3-footer: #101010;
+  --step3-border: #2b2b2b;
   /* Dark theme as default - Premium music contract aesthetic */
   --background: #1a1a1a;
   --foreground: oklch(0.95 0.01 250);
@@ -106,6 +111,11 @@
 
 /* Light theme - Inverted colors */
 [data-theme="light"] {
+  /* Step 3 card colors - Light mode */
+  --step3-header: #f5f5f5;
+  --step3-content: #ffffff;
+  --step3-footer: #f5f5f5;
+  --step3-border: #e5e5e5;
   --background: #ffffff;
   --foreground: oklch(0.15 0.01 250);
   --card: #f9f9f8;

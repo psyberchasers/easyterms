@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { useTheme } from "@/components/providers/ThemeProvider";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -26,6 +27,7 @@ export default function LoginPage() {
   const [redirect, setRedirect] = useState("/dashboard");
   const [wordIndex, setWordIndex] = useState(0);
   const router = useRouter();
+  const { theme } = useTheme();
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -165,17 +167,21 @@ export default function LoginPage() {
 
         <div className="relative z-10">
           <Link href="/" className="flex items-center gap-2">
-            <img src="/logoSingle.svg" alt="EasyTerms" className="h-24" />
+            <img
+              src={theme === "dark" ? "/darkmodeS.svg" : "/lightmodeS.svg"}
+              alt="EasyTerms"
+              className="h-10"
+            />
           </Link>
         </div>
 
         <div className="flex-1 flex items-center relative z-10">
-          <h1 className="text-5xl font-medium text-foreground leading-tight">
+          <h1 className="text-4xl font-medium text-foreground leading-tight">
             Understand your
             <br />
             <LayoutGroup>
               <motion.span
-                className="inline-block bg-purple-500 text-white px-4 py-2 -rotate-3 -mt-1 ml-8 whitespace-nowrap"
+                className="inline-block bg-purple-500 text-white px-3 py-1.5 -rotate-3 -mt-1 ml-6 whitespace-nowrap text-3xl"
                 layout="size"
                 transition={{
                   layout: { duration: 0.4, ease: [0.4, 0, 0.2, 1] }
@@ -207,7 +213,11 @@ export default function LoginPage() {
         <div className="w-full max-w-sm">
           {/* Mobile Logo */}
           <div className="lg:hidden flex items-center justify-center mb-8">
-            <img src="/logoSingle.svg" alt="EasyTerms" className="h-12" />
+            <img
+              src={theme === "dark" ? "/darkmodeS.svg" : "/lightmodeS.svg"}
+              alt="EasyTerms"
+              className="h-8"
+            />
           </div>
 
           <AnimatePresence mode="wait">
@@ -219,8 +229,13 @@ export default function LoginPage() {
               transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
               className="space-y-6"
             >
-              <div>
-                <h2 className="text-2xl font-medium text-purple-500">
+              <div className="text-center">
+                <h2 className="text-2xl font-medium text-[#e8e4df] flex items-center justify-center gap-2">
+                  <img
+                    src={theme === "dark" ? "/darkmodeS.svg" : "/lightmodeS.svg"}
+                    alt=""
+                    className="h-6"
+                  />
                   {mode === "login" ? "Welcome back" : "Create an account"}
                 </h2>
                 <p className="text-muted-foreground/60 mt-1 text-sm">

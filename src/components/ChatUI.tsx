@@ -2,12 +2,11 @@
 
 import { ArrowUp, BookOpen, Upload, FileText, AlertTriangle, CheckCircle2 } from "lucide-react";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { AiCloudIcon } from "@hugeicons-pro/core-stroke-rounded";
+import { AiCloudIcon, CloudUploadIcon } from "@hugeicons-pro/core-stroke-rounded";
 import {
   AnimatePresence,
   motion,
   MotionConfig,
-  useMotionValue,
 } from "motion/react";
 import { JSX, useMemo, useCallback } from "react";
 import { useLayoutEffect, useRef, useState } from "react";
@@ -61,41 +60,44 @@ const AnalysisResult = ({ analysis, fileName }: { analysis: ContractAnalysis; fi
   };
 
   return (
-    <div className="space-y-4 w-full">
+    <div className="flex flex-col w-full">
       {/* Header */}
-      <div className="flex items-start justify-between gap-3">
-        <div className="flex items-center gap-2 min-w-0">
-          <div className="w-8 h-8 rounded-lg bg-purple-500/10 flex items-center justify-center shrink-0">
-            <FileText className="w-4 h-4 text-purple-400" />
-          </div>
-          <div className="min-w-0">
-            <p className="text-sm font-medium truncate">{fileName}</p>
-            {analysis.contractType && (
-              <p className="text-xs text-muted-foreground">{analysis.contractType}</p>
-            )}
-          </div>
+      <div className="bg-purple-500/15 px-4 py-3 flex items-center gap-3 rounded-t-2xl">
+        <div className="w-10 h-10 rounded-xl bg-purple-500/20 flex items-center justify-center shrink-0">
+          <FileText className="w-5 h-5 text-purple-400" />
         </div>
-        <span className={cn("text-xs px-2.5 py-1 rounded-full border shrink-0 font-medium", getRiskColor(analysis.overallRiskAssessment || ""))}>
-          {analysis.overallRiskAssessment === "low" ? "Low Risk" :
-           analysis.overallRiskAssessment === "medium" ? "Medium Risk" :
-           analysis.overallRiskAssessment === "high" ? "High Risk" : "Analyzed"}
-        </span>
+        <div className="min-w-0">
+          <p className="text-sm font-medium truncate">{fileName}</p>
+          <p className="text-xs text-muted-foreground flex items-center gap-1.5">
+            {analysis.contractType && <span>{analysis.contractType}</span>}
+            {analysis.contractType && analysis.overallRiskAssessment && <span>·</span>}
+            {analysis.overallRiskAssessment && (
+              <span>
+                {analysis.overallRiskAssessment === "low" ? "Low Risk" :
+                 analysis.overallRiskAssessment === "medium" ? "Medium Risk" :
+                 analysis.overallRiskAssessment === "high" ? "High Risk" : "Analyzed"}
+              </span>
+            )}
+          </p>
+        </div>
       </div>
 
       {/* Summary */}
-      <p className="text-sm leading-relaxed">{analysis.summary}</p>
+      <div className="px-4 py-4 border-t border-border/50 rounded-b-2xl">
+        <p className="text-sm leading-relaxed">{analysis.summary}</p>
+      </div>
 
       {/* Key Stats */}
       {(analysis.financialTerms?.royaltyRate || analysis.termLength) && (
-        <div className="grid grid-cols-2 gap-2">
+        <div className="grid grid-cols-2 border-t border-border/50 w-full rounded-b-2xl">
           {analysis.financialTerms?.royaltyRate && (
-            <div className="bg-background rounded-xl p-3 border border-border">
+            <div className="bg-background/50 p-4 border-r border-border/50">
               <p className="text-[10px] uppercase tracking-wider text-muted-foreground/60 mb-1">Royalty</p>
               <p className="text-sm font-semibold">{analysis.financialTerms.royaltyRate}</p>
             </div>
           )}
           {analysis.termLength && (
-            <div className="bg-background rounded-xl p-3 border border-border">
+            <div className="bg-background/50 p-4">
               <p className="text-[10px] uppercase tracking-wider text-muted-foreground/60 mb-1">Term</p>
               <p className="text-sm font-semibold">{analysis.termLength}</p>
             </div>
@@ -105,7 +107,7 @@ const AnalysisResult = ({ analysis, fileName }: { analysis: ContractAnalysis; fi
 
       {/* Concerns */}
       {analysis.potentialConcerns && analysis.potentialConcerns.length > 0 && (
-        <div className="bg-red-500/5 rounded-xl p-3 border border-red-500/10">
+        <div className="bg-red-500/5 p-4 border-t border-border/50 rounded-b-2xl">
           <div className="flex items-center gap-2 mb-2">
             <AlertTriangle className="w-3.5 h-3.5 text-red-400" />
             <span className="text-xs font-medium text-red-400">{analysis.potentialConcerns.length} Concerns</span>
@@ -128,7 +130,7 @@ const AnalysisResult = ({ analysis, fileName }: { analysis: ContractAnalysis; fi
 
       {/* Recommendations */}
       {analysis.recommendations && analysis.recommendations.length > 0 && (
-        <div className="bg-emerald-500/5 rounded-xl p-3 border border-emerald-500/10">
+        <div className="bg-emerald-500/5 p-4 border-t border-border/50 rounded-b-2xl">
           <div className="flex items-center gap-2 mb-2">
             <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
             <span className="text-xs font-medium text-emerald-400">Recommendations</span>
@@ -234,7 +236,6 @@ const ChatUI = () => {
 
   // Animation state
   const [messageIndex, setMessageIndex] = useState(0);
-  const scrollMarginTop = useMotionValue(0);
 
   // Deep Mind state
   const [isDeepMindMode, setIsDeepMindMode] = useState(false);
@@ -414,26 +415,14 @@ const ChatUI = () => {
 
   // Auto-scroll to latest message when new messages are added
   useLayoutEffect(() => {
-    const currentMessageCount = chatMessages.length;
-    const calculatedScrollMargin =
-      currentMessageCount > 0
-        ? window.innerHeight -
-          (messageElementsRef.current[currentMessageCount - 1]?.clientHeight ||
-            0) -
-          (inputContainerRef.current?.clientHeight || 0) -
-          20
-        : 0;
-
-    scrollMarginTop.set(calculatedScrollMargin);
-
-    // Smooth scroll to the latest message
+    // Smooth scroll to the bottom of messages
     requestAnimationFrame(() => {
       messageEndRef.current?.scrollIntoView({
-        block: "start",
+        block: "end",
         behavior: "smooth",
       });
     });
-  }, [chatMessages, messageIndex, scrollMarginTop]);
+  }, [chatMessages]);
 
   return (
     <MotionConfig
@@ -480,7 +469,7 @@ const ChatUI = () => {
         />
 
         {/* Chat Messages Container */}
-        <motion.div className="no-scroll flex h-full max-w-3xl flex-1 flex-col overflow-scroll scroll-smooth px-3 py-6">
+        <motion.div className="no-scroll flex h-full max-w-3xl flex-1 flex-col overflow-y-auto scroll-smooth px-3 pt-4 pb-40">
           {chatMessages.length === 0 && (
             <div
               className="flex-1 flex flex-col items-center justify-center gap-4 cursor-pointer"
@@ -507,19 +496,27 @@ const ChatUI = () => {
               }}
               key={message.id}
               className={cn(
-                "my-2 w-fit break-words rounded-2xl px-4 py-3",
+                "my-2 w-fit break-words rounded-2xl",
                 message.isFromUser
-                  ? "self-end bg-purple-500 text-white max-w-xs"
-                  : "self-start bg-muted max-w-md",
-                message.type === "analysis" && "max-w-xl"
+                  ? "self-end bg-purple-500 text-white max-w-xs px-4 py-3"
+                  : "self-start bg-muted max-w-md px-4 py-3",
+                message.type === "analysis" && "max-w-xl !p-0"
               )}
             >
               {message.type === "analysis" && message.analysis ? (
                 <AnalysisResult analysis={message.analysis} fileName={message.fileName || "Contract"} />
               ) : message.type === "file" ? (
-                <div className="flex items-center gap-2">
-                  <FileText className="w-4 h-4" />
-                  <span>{message.fileName}</span>
+                <div className="flex flex-col -mx-4 -my-3">
+                  <div className="bg-purple-600 px-4 py-2 rounded-t-2xl flex items-center gap-2">
+                    <HugeiconsIcon icon={CloudUploadIcon} size={12} className="text-purple-200/70" />
+                    <span className="text-xs text-purple-200/70 font-medium">Upload initiated</span>
+                  </div>
+                  <div className="flex items-center gap-3 px-4 py-3">
+                    <div className="w-10 h-10 rounded-xl bg-purple-700 flex items-center justify-center shrink-0">
+                      <FileText className="w-5 h-5 text-purple-300" />
+                    </div>
+                    <span className="text-sm text-white/90">{message.fileName}</span>
+                  </div>
                 </div>
               ) : !message.isFromUser ? (
                 <FormattedMessage content={message.message} />
@@ -544,16 +541,13 @@ const ChatUI = () => {
               <TextShimmer>{thinkingMessage}</TextShimmer>
             </motion.div>
           )}
-          <motion.div
-            ref={messageEndRef}
-            style={{ marginTop: scrollMarginTop }}
-          />
+          <div ref={messageEndRef} />
         </motion.div>
 
         {/* Input Container */}
         <div
           ref={inputContainerRef}
-          className="rounded-t-4xl fixed bottom-2 w-full max-w-3xl gap-1 px-3 pb-3"
+          className="fixed bottom-0 w-full max-w-3xl px-3 pb-4"
         >
           {/* Suggestion Pills */}
           {chatMessages.length === 0 && (

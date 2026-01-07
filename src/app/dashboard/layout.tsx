@@ -32,13 +32,6 @@ import {
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
   Home01Icon,
-  Notification02Icon,
-  InboxIcon,
-  Task01Icon,
-  ChartHistogramIcon,
-  Folder01Icon,
-  File01Icon,
-  UserGroupIcon,
   Settings02Icon,
   GridViewIcon,
   PanelRightIcon,
@@ -46,16 +39,23 @@ import {
   AiSearch02Icon,
   Settings03Icon,
   FileUploadIcon,
-  Upload02Icon,
   Moon02Icon,
   Sun01Icon,
-  AiBrain02Icon,
-  BubbleChatIcon,
+  ChatSparkIcon,
+  CreditCardIcon,
+  GitCompareIcon,
 } from "@hugeicons-pro/core-stroke-rounded";
 import { MusicLoader } from "@/components/MusicLoader";
 import { useTheme } from "@/components/providers/ThemeProvider";
 import { CommandMenu } from "@/components/CommandMenu";
 import { motion } from "framer-motion";
+import { createClient } from "@/lib/supabase/client";
+
+interface SidebarContract {
+  id: string;
+  title: string;
+  overall_risk: string | null;
+}
 
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -92,6 +92,7 @@ function DashboardHeader({
   const isUploadContractPage = pathname.startsWith("/dashboard/upload-contract");
   const isChatPage = pathname.startsWith("/dashboard/chat");
   const isTemplatesPage = pathname.startsWith("/dashboard/templates");
+  const isComparePage = pathname.startsWith("/dashboard/compare");
   const isRecipientPage = pathname.includes("/recipient");
   const isSenderPage = pathname.includes("/sender");
 
@@ -100,7 +101,7 @@ function DashboardHeader({
     if (isChatPage) {
       return (
         <>
-          <HugeiconsIcon icon={BubbleChatIcon} size={16} className="text-muted-foreground" />
+          <HugeiconsIcon icon={ChatSparkIcon} size={16} className="text-muted-foreground" />
           <span className="text-sm font-medium text-muted-foreground">Chat</span>
         </>
       );
@@ -149,6 +150,14 @@ function DashboardHeader({
         </>
       );
     }
+    if (isComparePage) {
+      return (
+        <>
+          <HugeiconsIcon icon={GitCompareIcon} size={16} className="text-muted-foreground" />
+          <span className="text-sm font-medium text-muted-foreground">Compare</span>
+        </>
+      );
+    }
     return (
       <>
         <HugeiconsIcon icon={Home01Icon} size={16} className="text-muted-foreground" />
@@ -176,12 +185,13 @@ function DashboardHeader({
         <HugeiconsIcon icon={AiSearch02Icon} size={14} />
         <span>Search</span>
       </button>
-      <Link href="/settings">
-        <button className="h-8 px-3 flex items-center gap-2 border border-border hover:bg-muted transition-colors rounded-md text-[13px] font-semibold text-muted-foreground">
-          <HugeiconsIcon icon={Settings03Icon} size={14} />
-          <span>Settings</span>
-        </button>
-      </Link>
+      <button
+        disabled
+        className="h-8 px-3 flex items-center gap-2 border border-border rounded-md text-[13px] font-semibold text-muted-foreground/40 cursor-not-allowed"
+      >
+        <HugeiconsIcon icon={Settings03Icon} size={14} />
+        <span>Settings</span>
+      </button>
       <Link href="/dashboard/upload-contract">
         <button className="h-8 px-3 flex items-center gap-2 transition-colors rounded-md text-[13px] font-semibold text-white bg-purple-500 hover:bg-purple-600">
           <HugeiconsIcon icon={FileUploadIcon} size={14} />
@@ -207,7 +217,44 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   const pathname = usePathname();
   const { user, profile, loading: authLoading, signOut } = useAuth();
   const { theme, toggleTheme } = useTheme();
-    const [commandMenuOpen, setCommandMenuOpen] = useState(false);
+  const [commandMenuOpen, setCommandMenuOpen] = useState(false);
+  const [sidebarContracts, setSidebarContracts] = useState<SidebarContract[]>([]);
+  const supabase = createClient();
+
+  // Fetch recent contracts for sidebar
+  useEffect(() => {
+    if (!user) return;
+
+    const fetchContracts = async () => {
+      const { data, error } = await supabase
+        .from("contracts")
+        .select("id, title, overall_risk")
+        .order("created_at", { ascending: false })
+        .limit(7);
+
+      if (!error && data) {
+        setSidebarContracts(data);
+      }
+    };
+
+    fetchContracts();
+
+    // Subscribe to realtime changes
+    const channel = supabase
+      .channel("sidebar-contracts")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "contracts" },
+        () => {
+          fetchContracts();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user, supabase]);
 
   // ⌘K keyboard shortcut
   useEffect(() => {
@@ -230,14 +277,12 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   }
 
   const mainNav = [
-    { title: "Home", icon: Home01Icon, href: "/dashboard", disabled: false },
-    { title: "Chat", icon: BubbleChatIcon, href: "/dashboard/chat", disabled: false },
-    { title: "Contracts", icon: ContractsIcon, href: "/dashboard/contracts", disabled: false },
-    { title: "Upload Contract", icon: FileUploadIcon, href: "/dashboard/upload-contract", disabled: false },
-    { title: "Templates", icon: GridViewIcon, href: "/dashboard/templates", disabled: false },
-    { title: "Inbox", icon: InboxIcon, href: "/dashboard/inbox", disabled: true },
-    { title: "My Tasks", icon: Task01Icon, href: "/dashboard/tasks", disabled: true },
-    { title: "Teams", icon: UserGroupIcon, href: "/dashboard/teams", disabled: true },
+    { title: "Home", icon: Home01Icon, href: "/dashboard" },
+    { title: "Chat", icon: ChatSparkIcon, href: "/dashboard/chat" },
+    { title: "Contracts", icon: ContractsIcon, href: "/dashboard/contracts" },
+    { title: "Upload Contract", icon: FileUploadIcon, href: "/dashboard/upload-contract" },
+    { title: "Compare", icon: GitCompareIcon, href: "/dashboard/compare" },
+    { title: "Templates", icon: GridViewIcon, href: "/dashboard/templates" },
   ];
 
   return (
@@ -251,14 +296,9 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
           transition={{ duration: 0.3, delay: 0 }}
         >
           <img
-            src={theme === "dark" ? "/fullLogoWhite.svg" : "/fullLogo.svg"}
+            src={theme === "dark" ? "/darkmodeS.svg" : "/lightmodeS.svg"}
             alt="EasyTerms"
-            className="h-8 w-auto group-data-[collapsible=icon]:hidden"
-          />
-          <img
-            src="/smallLogo.svg"
-            alt="EasyTerms"
-            className="h-8 w-8 hidden group-data-[collapsible=icon]:block object-contain"
+            className="h-7 w-auto ml-1"
           />
         </motion.div>
 
@@ -271,22 +311,8 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
           >
             <SidebarGroup className="p-0 pb-4">
               <SidebarMenu className="gap-0.5">
-                {mainNav.map((item, index) => {
+                {mainNav.map((item) => {
                   const isActive = pathname === item.href;
-                  if (item.disabled) {
-                    return (
-                      <SidebarMenuItem key={item.title}>
-                        <SidebarMenuButton
-                          tooltip={item.title}
-                          className="h-auto py-1.5 px-3 text-[13px] font-medium text-sidebar-foreground/40 cursor-not-allowed"
-                          disabled
-                        >
-                          <HugeiconsIcon icon={item.icon} size={16} />
-                          <span>{item.title}</span>
-                        </SidebarMenuButton>
-                      </SidebarMenuItem>
-                    );
-                  }
                   return (
                     <SidebarMenuItem key={item.title}>
                       <SidebarMenuButton
@@ -328,9 +354,35 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                 Contracts
               </SidebarGroupLabel>
               <SidebarGroupContent>
-                <p className="px-3 py-2 text-[11px] text-sidebar-foreground/50 group-data-[collapsible=icon]:hidden">
-                  Your contracts will appear here
-                </p>
+                {sidebarContracts.length === 0 ? (
+                  <p className="px-3 py-2 text-[11px] text-sidebar-foreground/50 group-data-[collapsible=icon]:hidden">
+                    Your contracts will appear here
+                  </p>
+                ) : (
+                  <SidebarMenu className="gap-0.5">
+                    {sidebarContracts.map((contract) => {
+                      const isActive = pathname === `/dashboard/contracts/${contract.id}`;
+                      const riskColor = contract.overall_risk === "high" ? "bg-red-500" :
+                                       contract.overall_risk === "medium" ? "bg-yellow-500" :
+                                       contract.overall_risk === "low" ? "bg-green-500" : "bg-muted-foreground/30";
+                      return (
+                        <SidebarMenuItem key={contract.id}>
+                          <SidebarMenuButton
+                            asChild
+                            isActive={isActive}
+                            tooltip={contract.title}
+                            className="h-auto py-1.5 px-3 text-[12px] font-normal text-sidebar-foreground/80"
+                          >
+                            <Link href={`/dashboard/contracts/${contract.id}`}>
+                              <span className={`w-1.5 h-1.5 rounded-full ${riskColor} shrink-0`} />
+                              <span className="truncate">{contract.title}</span>
+                            </Link>
+                          </SidebarMenuButton>
+                        </SidebarMenuItem>
+                      );
+                    })}
+                  </SidebarMenu>
+                )}
               </SidebarGroupContent>
             </SidebarGroup>
           </motion.div>
@@ -381,13 +433,11 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                     </div>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={toggleTheme}>
-                    {theme === "dark" ? (
-                      <HugeiconsIcon icon={Sun01Icon} size={16} className="mr-2" />
-                    ) : (
-                      <HugeiconsIcon icon={Moon02Icon} size={16} className="mr-2" />
-                    )}
-                    Appearance
+                  <DropdownMenuItem asChild>
+                    <Link href="/settings/billing">
+                      <HugeiconsIcon icon={CreditCardIcon} size={16} className="mr-2" />
+                      Billing
+                    </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
                     <Link href="/settings">

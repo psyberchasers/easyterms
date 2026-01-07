@@ -25,7 +25,8 @@ import {
 } from "lucide-react";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Calendar02Icon } from "@hugeicons-pro/core-stroke-rounded";
-import { FavouriteIcon } from "@hugeicons-pro/core-solid-rounded";
+import { StarIcon } from "@hugeicons-pro/core-solid-rounded";
+import { UserIcon, Building02Icon } from "@hugeicons-pro/core-stroke-rounded";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 
@@ -37,32 +38,32 @@ function SummaryHighlights({ summary }: { summary: string }) {
   // Keywords to categorize sentences
   const categories = [
     {
-      keywords: ['agreement', 'contract', 'between', 'parties', 'grant'],
+      keywords: ['agreement', 'contract', 'between', 'parties', 'grant', 'allows', 'permits', 'authorizes'],
       icon: Handshake,
       title: 'Agreement Type'
     },
     {
-      keywords: ['rights', 'ownership', 'retain', 'exclusive', 'license', 'claim'],
+      keywords: ['rights', 'ownership', 'retain', 'exclusive', 'license', 'claim', 'credit', 'attribution', 'favored nations'],
       icon: Shield,
       title: 'Rights & Ownership'
     },
     {
-      keywords: ['split', 'fee', 'payment', 'royalt', 'advance', 'percent', '%', '50/50'],
+      keywords: ['split', 'fee', 'payment', 'royalt', 'advance', 'percent', '%', '50/50', '$', 'compensation', 'sum', 'price'],
       icon: Percent,
       title: 'Financial Terms'
     },
     {
-      keywords: ['term', 'renew', 'terminat', 'annual', 'year', 'notice', 'days'],
+      keywords: ['term', 'renew', 'terminat', 'annual', 'year', 'month', 'notice', 'days', 'period', 'duration', 'expires'],
       icon: RefreshCw,
       title: 'Term & Renewal'
     },
     {
-      keywords: ['approv', 'consent', 'response', 'hour', 'automatic'],
+      keywords: ['approv', 'consent', 'response', 'hour', 'automatic', 'requires', 'must'],
       icon: Clock,
       title: 'Approval Process'
     },
     {
-      keywords: ['law', 'govern', 'jurisdiction', 'dispute', 'mediat', 'arbitrat', 'california', 'state'],
+      keywords: ['law', 'govern', 'jurisdiction', 'dispute', 'mediat', 'arbitrat', 'california', 'state', 'legal'],
       icon: Scale,
       title: 'Legal & Jurisdiction'
     },
@@ -95,8 +96,8 @@ function SummaryHighlights({ summary }: { summary: string }) {
     }
   });
 
-  // If we couldn't categorize much, just show as paragraphs
-  if (categorized.length < 2) {
+  // If we couldn't categorize anything, just show as paragraphs
+  if (categorized.length === 0) {
     return (
       <p className="text-[15px] text-muted-foreground leading-relaxed">
         {summary}
@@ -146,25 +147,45 @@ export function ContractQuickView({
   const analysis = contract?.analysis as {
     summary?: string;
     key_terms?: Array<{ term: string; explanation: string }>;
+    keyTerms?: Array<{ term: string; explanation: string }>;
     overall_assessment?: string;
     contract_type?: string;
-    parties?: { artist?: string; label?: string };
+    contractType?: string;
+    parties?: {
+      artist?: string;
+      label?: string;
+      publisher?: string;
+      company?: string;
+      individual?: string;
+      client?: string;
+      brand?: string;
+    };
     financial_terms?: { royalty_rate?: string; advance?: string };
   } | null;
 
-  const statusConfig = {
-    active: { label: "Active", color: "bg-green-500/10 text-green-600 border-green-500/20" },
-    negotiating: { label: "Negotiating", color: "bg-amber-500/10 text-amber-600 border-amber-500/20" },
-    draft: { label: "Draft", color: "bg-muted text-muted-foreground border-border" },
-  };
+  // Get the addressee (person) - check multiple fields
+  const addressee = analysis?.parties?.artist || analysis?.parties?.individual || analysis?.parties?.client;
+  // Get the company - check multiple fields
+  const company = analysis?.parties?.label || analysis?.parties?.publisher || analysis?.parties?.company || analysis?.parties?.brand;
 
   const riskConfig = {
-    high: { label: "High Risk", color: "bg-red-500/10 text-red-600 border-red-500/20" },
-    medium: { label: "Medium Risk", color: "bg-amber-500/10 text-amber-600 border-amber-500/20" },
-    low: { label: "Low Risk", color: "bg-green-500/10 text-green-600 border-green-500/20" },
+    high: {
+      label: "High Risk",
+      color: "bg-red-500/10 text-red-600 border-red-500/20",
+      explanation: "This contract contains terms that may significantly disadvantage you or require careful legal review."
+    },
+    medium: {
+      label: "Medium Risk",
+      color: "bg-amber-500/10 text-amber-600 border-amber-500/20",
+      explanation: "This contract has some clauses that warrant attention but is generally balanced."
+    },
+    low: {
+      label: "Low Risk",
+      color: "bg-green-500/10 text-green-600 border-green-500/20",
+      explanation: "This contract appears to have fair and standard terms with no major concerns."
+    },
   };
 
-  const status = statusConfig[contract?.status as keyof typeof statusConfig] || statusConfig.draft;
   const risk = contract?.overall_risk ? riskConfig[contract.overall_risk as keyof typeof riskConfig] : null;
 
   return (
@@ -234,23 +255,22 @@ export function ContractQuickView({
             </div>
 
             {/* Tags */}
-            <div className="flex flex-wrap gap-2 mt-4">
-              <span className={cn(
-                "text-xs font-medium px-3 py-1.5 rounded-lg border",
-                status.color
-              )}>
-                {status.label}
-              </span>
+            <div className="mt-4 space-y-2">
               {risk && (
-                <span className={cn(
-                  "text-xs font-medium px-3 py-1.5 rounded-lg border",
-                  risk.color
-                )}>
-                  {risk.label}
-                </span>
+                <div className="flex items-center gap-2">
+                  <span className={cn(
+                    "text-xs font-medium px-3 py-1.5 rounded-lg border shrink-0",
+                    risk.color
+                  )}>
+                    {risk.label}
+                  </span>
+                  <span className="text-xs text-muted-foreground">
+                    {risk.explanation}
+                  </span>
+                </div>
               )}
               {versionCount > 0 && (
-                <span className="text-xs font-medium px-3 py-1.5 rounded-lg border border-border bg-muted text-muted-foreground">
+                <span className="inline-block text-xs font-medium px-3 py-1.5 rounded-lg border border-border bg-muted text-muted-foreground">
                   {versionCount + 1} versions
                 </span>
               )}
@@ -271,7 +291,7 @@ export function ContractQuickView({
             )}
           </div>
 
-          <div className="mx-6 border-t border-border" />
+          <div className="border-t border-border" />
 
           {/* Quick Stats List */}
           <div className="p-6">
@@ -289,6 +309,28 @@ export function ContractQuickView({
                   })}
                 </span>
               </div>
+
+              {/* Addressee / Artist */}
+              {addressee && (
+                <div className="flex items-center gap-3">
+                  <HugeiconsIcon icon={UserIcon} size={16} className="text-muted-foreground" />
+                  <span className="text-sm text-muted-foreground">Addressed To</span>
+                  <span className="text-sm font-medium text-foreground ml-auto">
+                    {addressee}
+                  </span>
+                </div>
+              )}
+
+              {/* Company / Label */}
+              {company && (
+                <div className="flex items-center gap-3">
+                  <HugeiconsIcon icon={Building02Icon} size={16} className="text-muted-foreground" />
+                  <span className="text-sm text-muted-foreground">Company</span>
+                  <span className="text-sm font-medium text-foreground ml-auto">
+                    {company}
+                  </span>
+                </div>
+              )}
 
               {/* Risk Level */}
               {contract.overall_risk && (
@@ -314,7 +356,7 @@ export function ContractQuickView({
               {/* Starred */}
               <div className="flex items-center gap-3">
                 <HugeiconsIcon
-                  icon={FavouriteIcon}
+                  icon={StarIcon}
                   size={16}
                   className={cn(
                     contract.is_starred ? "text-amber-500" : "text-muted-foreground"

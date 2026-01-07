@@ -25,13 +25,10 @@ import {
   Trash2,
   Search,
   RefreshCw,
-  Calendar,
-  LayoutGrid,
-  List,
   ChevronRight,
 } from "lucide-react";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { RepeatOffIcon, FolderBlockIcon, AiSheetsIcon, Alert02Icon, FavouriteIcon } from "@hugeicons-pro/core-solid-rounded";
+import { RepeatOffIcon, FolderBlockIcon, AiSheetsIcon, Alert02Icon, StarIcon } from "@hugeicons-pro/core-solid-rounded";
 import { cn } from "@/lib/utils";
 import { MusicLoader } from "@/components/MusicLoader";
 import { motion } from "framer-motion";
@@ -200,7 +197,7 @@ export default function DashboardPage() {
             </p>
           </div>
           <div className="flex items-center gap-2">
-            <Link href="/compare">
+            <Link href="/dashboard/compare">
               <Button variant="outline" size="sm" className="rounded-lg">
                 <HugeiconsIcon icon={RepeatOffIcon} size={16} className="mr-2" />
                 Compare
@@ -266,7 +263,7 @@ export default function DashboardPage() {
               className="h-7 px-3 text-xs border"
               onClick={() => setFilter("starred")}
             >
-              <HugeiconsIcon icon={FavouriteIcon} size={12} className="mr-1" />
+              <HugeiconsIcon icon={StarIcon} size={12} className="mr-1" />
               Starred
             </Button>
             <Button
@@ -285,34 +282,6 @@ export default function DashboardPage() {
                 New
               </Button>
             </Link>
-            <Link href="/calendar">
-              <Button variant="ghost" size="sm" style={{ borderRadius: '6px' }} className="h-7 px-3 text-xs text-muted-foreground hover:text-foreground">
-                <Calendar className="w-3 h-3 mr-1" />
-                Calendar
-              </Button>
-            </Link>
-
-            {/* View Toggle */}
-            <div className="flex border border-border overflow-hidden h-7" style={{ borderRadius: '6px' }}>
-              <button
-                onClick={() => setViewMode("grid")}
-                className={cn(
-                  "w-7 h-full flex items-center justify-center transition-colors",
-                  viewMode === "grid" ? "bg-muted text-foreground" : "text-muted-foreground hover:text-foreground"
-                )}
-              >
-                <LayoutGrid className="w-3 h-3" />
-              </button>
-              <button
-                onClick={() => setViewMode("list")}
-                className={cn(
-                  "w-7 h-full flex items-center justify-center border-l border-border transition-colors",
-                  viewMode === "list" ? "bg-muted text-foreground" : "text-muted-foreground hover:text-foreground"
-                )}
-              >
-                <List className="w-3 h-3" />
-              </button>
-            </div>
           </div>
         </motion.div>
 
@@ -450,7 +419,7 @@ export default function DashboardPage() {
 
                 {/* Action Footer */}
                 <Link
-                  href={`/contract/${contract.id}`}
+                  href={`/dashboard/contracts/${contract.id}`}
                   onClick={(e) => e.stopPropagation()}
                   className="flex items-center justify-between px-4 py-3 border-t border-border bg-muted/50 hover:bg-muted transition-colors"
                 >
@@ -603,7 +572,7 @@ export default function DashboardPage() {
                               )}
                             </DropdownMenuItem>
                             <DropdownMenuItem asChild>
-                              <Link href={`/compare?contracts=${contract.id}`} onClick={(e) => e.stopPropagation()}>
+                              <Link href={`/dashboard/compare?contracts=${contract.id}`} onClick={(e) => e.stopPropagation()}>
                                 <HugeiconsIcon icon={RepeatOffIcon} size={16} className="mr-2" />
                                 Compare
                               </Link>
