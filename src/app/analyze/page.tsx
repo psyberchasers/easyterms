@@ -414,7 +414,7 @@ export default function AnalyzePage() {
   if (status === "idle") {
     return (
       <div className="min-h-screen bg-background flex flex-col">
-        <Navbar showNewAnalysis={false} showSearch={false} />
+        <Navbar showNewAnalysis={false} />
         <div className="pt-14">
           <GuestBanner />
         </div>
@@ -569,7 +569,7 @@ export default function AnalyzePage() {
 
   return (
     <div className="flex flex-col h-screen bg-background">
-      <Navbar showBorder showSearch={!!user} />
+      <Navbar showBorder />
       <div className="pt-14">
         <GuestBanner />
       </div>

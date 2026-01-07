@@ -54,7 +54,7 @@ interface Contract {
   created_at: string;
 }
 
-export function Navbar({ showNewAnalysis = true, showBorder = false, showSearch = true }: NavbarProps) {
+export function Navbar({ showNewAnalysis = true, showBorder = false, showSearch = false }: NavbarProps) {
   const { user, profile, loading, signOut } = useAuth();
   const { theme } = useTheme();
   const router = useRouter();
