@@ -104,7 +104,7 @@ export function Navbar({ showNewAnalysis = true, showBorder = false, showSearch 
         <div className="max-w-full mx-auto px-4 h-14 grid grid-cols-3 items-center">
           {/* Left - Logo */}
           <Link href="/" className="flex items-center gap-2">
-            <img src={theme === "dark" ? "/darkmodeS.svg" : "/logoSingle.svg"} alt="EasyTerms" className="h-8" />
+            <img src={theme === "dark" ? "/darkModeS.svg" : "/logoSingle.svg"} alt="EasyTerms" className="h-8" />
           </Link>
 
           {/* Center - Command Menu Trigger */}

@@ -296,7 +296,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
           transition={{ duration: 0.3, delay: 0 }}
         >
           <img
-            src={theme === "dark" ? "/darkmodeS.svg" : "/lightmodeS.svg"}
+            src={theme === "dark" ? "/darkModeS.svg" : "/lightModeS.svg"}
             alt="EasyTerms"
             className="h-7 w-auto ml-1"
           />

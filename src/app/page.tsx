@@ -63,7 +63,7 @@ export default function Home() {
         <div className="relative z-10 max-w-4xl mx-auto text-center space-y-8">
           {/* Logo */}
           <div className="flex items-center justify-center animate-fade-in-up">
-            <img src={theme === "dark" ? "/darkmodeS.svg" : "/logoSingle.svg"} alt="EasyTerms" className="h-12" />
+            <img src={theme === "dark" ? "/darkModeS.svg" : "/logoSingle.svg"} alt="EasyTerms" className="h-12" />
           </div>
 
           {/* Headline */}
@@ -272,7 +272,7 @@ export default function Home() {
           <div className="flex flex-col md:flex-row items-center justify-between pt-8 border-t border-border">
             <div className="flex items-center gap-2 mb-4 md:mb-0">
               <img
-                src={theme === "dark" ? "/darkmodeS.svg" : "/logoSingle.svg"}
+                src={theme === "dark" ? "/darkModeS.svg" : "/logoSingle.svg"}
                 alt="EasyTerms"
                 className="h-6"
               />

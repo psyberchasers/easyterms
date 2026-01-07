@@ -168,7 +168,7 @@ export default function LoginPage() {
         <div className="relative z-10">
           <Link href="/" className="flex items-center gap-2">
             <img
-              src={theme === "dark" ? "/darkmodeS.svg" : "/lightmodeS.svg"}
+              src={theme === "dark" ? "/darkModeS.svg" : "/lightModeS.svg"}
               alt="EasyTerms"
               className="h-10"
             />
@@ -214,7 +214,7 @@ export default function LoginPage() {
           {/* Mobile Logo */}
           <div className="lg:hidden flex items-center justify-center mb-8">
             <img
-              src={theme === "dark" ? "/darkmodeS.svg" : "/lightmodeS.svg"}
+              src={theme === "dark" ? "/darkModeS.svg" : "/lightModeS.svg"}
               alt="EasyTerms"
               className="h-8"
             />
@@ -232,7 +232,7 @@ export default function LoginPage() {
               <div className="text-center">
                 <h2 className="text-2xl font-medium text-[#e8e4df] flex items-center justify-center gap-2">
                   <img
-                    src={theme === "dark" ? "/darkmodeS.svg" : "/lightmodeS.svg"}
+                    src={theme === "dark" ? "/darkModeS.svg" : "/lightModeS.svg"}
                     alt=""
                     className="h-6"
                   />
