@@ -102,6 +102,21 @@ interface ContractAnalysisViewProps {
   originalFile?: File | null;
 }
 
+// Helper to safely render values that might be objects
+function renderValue(value: unknown): string {
+  if (value === null || value === undefined) return '';
+  if (typeof value === 'string') return value;
+  if (typeof value === 'number') return String(value);
+  if (typeof value === 'object') {
+    // Handle objects like { Albums: "15%", "12-inch Singles": "12%" }
+    const entries = Object.entries(value as Record<string, unknown>);
+    if (entries.length === 0) return '';
+    if (entries.length === 1) return String(entries[0][1]);
+    return entries.map(([key, val]) => `${key}: ${val}`).join(', ');
+  }
+  return String(value);
+}
+
 // Risk color helper
 function getRiskColor(level: string) {
   switch (level) {
@@ -458,7 +473,7 @@ export function ContractAnalysisView({
                         <p className="text-[10px] font-medium uppercase tracking-wider shrink-0 transition-colors duration-300" style={{ color: selectedFinancial === 'royalty' ? '#a855f7' : 'var(--foreground)' }}>Royalty</p>
                         <span className="mx-2 text-[10px] transition-colors duration-300" style={{ color: selectedFinancial === 'royalty' ? '#a855f7' : 'var(--muted-foreground)' }}>·</span>
                         <p className="text-[10px] tracking-wider uppercase shrink-0 transition-colors duration-300" style={{ color: selectedFinancial === 'royalty' ? '#a855f7' : 'var(--foreground)' }}>
-                          {analysis.financialTerms.royaltyRate}
+                          {renderValue(analysis.financialTerms.royaltyRate)}
                         </p>
                       </div>
                     </div>
@@ -475,7 +490,7 @@ export function ContractAnalysisView({
                         <p className="text-[10px] font-medium uppercase tracking-wider shrink-0 transition-colors duration-300" style={{ color: selectedFinancial === 'term' ? '#a855f7' : 'var(--foreground)' }}>Term</p>
                         <span className="mx-2 text-[10px] transition-colors duration-300" style={{ color: selectedFinancial === 'term' ? '#a855f7' : 'var(--muted-foreground)' }}>·</span>
                         <p className="text-[10px] tracking-wider uppercase shrink-0 transition-colors duration-300" style={{ color: selectedFinancial === 'term' ? '#a855f7' : 'var(--foreground)' }}>
-                          {analysis.termLength}
+                          {renderValue(analysis.termLength)}
                         </p>
                       </div>
                     </div>
@@ -492,7 +507,7 @@ export function ContractAnalysisView({
                         <p className="text-[10px] font-medium uppercase tracking-wider shrink-0 transition-colors duration-300" style={{ color: selectedFinancial === 'advance' ? '#a855f7' : 'var(--foreground)' }}>Advance</p>
                         <span className="mx-2 text-[10px] transition-colors duration-300" style={{ color: selectedFinancial === 'advance' ? '#a855f7' : 'var(--muted-foreground)' }}>·</span>
                         <p className="text-[10px] tracking-wider uppercase shrink-0 transition-colors duration-300" style={{ color: selectedFinancial === 'advance' ? '#a855f7' : 'var(--foreground)' }}>
-                          {analysis.financialTerms.advanceAmount}
+                          {renderValue(analysis.financialTerms.advanceAmount)}
                         </p>
                       </div>
                     </div>
@@ -509,7 +524,7 @@ export function ContractAnalysisView({
                         <p className="text-[10px] font-medium uppercase tracking-wider shrink-0 transition-colors duration-300" style={{ color: selectedFinancial === 'payment' ? '#a855f7' : 'var(--foreground)' }}>Payment</p>
                         <span className="mx-2 text-[10px] transition-colors duration-300" style={{ color: selectedFinancial === 'payment' ? '#a855f7' : 'var(--muted-foreground)' }}>·</span>
                         <p className="text-[10px] tracking-wider uppercase shrink-0 transition-colors duration-300" style={{ color: selectedFinancial === 'payment' ? '#a855f7' : 'var(--foreground)' }}>
-                          {analysis.financialTerms.paymentSchedule}
+                          {renderValue(analysis.financialTerms.paymentSchedule)}
                         </p>
                       </div>
                     </div>
@@ -610,15 +625,15 @@ export function ContractAnalysisView({
                     };
                     Object.entries(analysis.parties).forEach(([key, value]) => {
                       if (value && key !== 'other') {
-                        keyInfoItems.push({ id: `party-${key}`, label: labels[key] || key, value: value as string, isBlue: true });
+                        keyInfoItems.push({ id: `party-${key}`, label: labels[key] || key, value: renderValue(value), isBlue: true });
                       }
                     });
                   }
                   if (analysis.contractType) keyInfoItems.push({ id: 'type', label: 'Contract Type', value: analysis.contractType });
-                  if (analysis.effectiveDate) keyInfoItems.push({ id: 'date', label: 'Effective Date', value: analysis.effectiveDate });
-                  if (analysis.termLength) keyInfoItems.push({ id: 'term', label: 'Term Length', value: analysis.termLength });
-                  if (analysis.rightsAndOwnership?.territorialRights) keyInfoItems.push({ id: 'territory', label: 'Territory', value: analysis.rightsAndOwnership.territorialRights });
-                  if (analysis.rightsAndOwnership?.exclusivity) keyInfoItems.push({ id: 'exclusivity', label: 'Exclusivity', value: analysis.rightsAndOwnership.exclusivity });
+                  if (analysis.effectiveDate) keyInfoItems.push({ id: 'date', label: 'Effective Date', value: renderValue(analysis.effectiveDate) });
+                  if (analysis.termLength) keyInfoItems.push({ id: 'term', label: 'Term Length', value: renderValue(analysis.termLength) });
+                  if (analysis.rightsAndOwnership?.territorialRights) keyInfoItems.push({ id: 'territory', label: 'Territory', value: renderValue(analysis.rightsAndOwnership.territorialRights) });
+                  if (analysis.rightsAndOwnership?.exclusivity) keyInfoItems.push({ id: 'exclusivity', label: 'Exclusivity', value: renderValue(analysis.rightsAndOwnership.exclusivity) });
 
                   return (
                     <TooltipProvider>
