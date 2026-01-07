@@ -342,11 +342,12 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
             transition={{ duration: 0.3, delay: 0.2 }}
           />
 
-          {/* Contracts Section */}
+          {/* Contracts Section - hidden when collapsed */}
           <motion.div
             initial={{ opacity: 0, x: -10 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.3, delay: 0.25 }}
+            className="group-data-[collapsible=icon]:hidden"
           >
             <SidebarGroup className="p-0 pb-4">
               <SidebarGroupLabel

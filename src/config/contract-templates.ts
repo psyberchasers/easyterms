@@ -724,12 +724,6 @@ export const generateContractText = (
   contractText += `and\n`;
   contractText += `${party2DisplayName} ("${template.parties.party2}")\n\n`;
 
-  // Add key terms summary
-  const keyTermsSummary = generateKeyTermsSummary(template, selectedClauses, clauseValues);
-  if (keyTermsSummary) {
-    contractText += keyTermsSummary;
-  }
-
   contractText += `RECITALS\n\n`;
   contractText += `WHEREAS, ${template.parties.party1} and ${template.parties.party2} desire to enter into this Agreement upon the terms and conditions set forth herein.\n\n`;
   contractText += `NOW, THEREFORE, in consideration of the mutual covenants and agreements set forth herein, the parties agree as follows:\n\n`;
