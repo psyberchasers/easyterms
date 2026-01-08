@@ -1,19 +1,29 @@
 "use client";
 
-import { ArrowUp, BookOpen, Upload, FileText, AlertTriangle, CheckCircle2 } from "lucide-react";
+import { ArrowUp, BookOpen, Upload, FileText, AlertTriangle, CheckCircle2, X, Paperclip } from "lucide-react";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { AiCloudIcon, CloudUploadIcon } from "@hugeicons-pro/core-stroke-rounded";
+import { AiCloudIcon, CloudUploadIcon, AttachmentIcon } from "@hugeicons-pro/core-stroke-rounded";
 import {
   AnimatePresence,
   motion,
   MotionConfig,
 } from "motion/react";
-import { JSX, useMemo, useCallback } from "react";
+import { JSX, useMemo, useCallback, useEffect } from "react";
 import { useLayoutEffect, useRef, useState } from "react";
 import React from "react";
 
 import { cn } from "@/lib/utils";
 import { ContractAnalysis } from "@/types/contract";
+import { createClient } from "@/lib/supabase/client";
+
+// Contract type for attached contracts
+interface AttachableContract {
+  id: string;
+  title: string;
+  overall_risk: "high" | "medium" | "low" | null;
+  contract_type: string | null;
+  analysis: ContractAnalysis | null;
+}
 
 // Animation constants
 const ANIMATION_DURATION = 0.1;
@@ -246,6 +256,117 @@ const ChatUI = () => {
   // Current contract analysis context
   const [currentAnalysis, setCurrentAnalysis] = useState<ContractAnalysis | null>(null);
 
+  // Contract attachment state
+  const [availableContracts, setAvailableContracts] = useState<AttachableContract[]>([]);
+  const [attachedContracts, setAttachedContracts] = useState<AttachableContract[]>([]);
+  const [showContractPicker, setShowContractPicker] = useState(false);
+  const [contractSearch, setContractSearch] = useState("");
+  const [showAtMention, setShowAtMention] = useState(false);
+  const [atMentionIndex, setAtMentionIndex] = useState(-1);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const contractPickerRef = useRef<HTMLDivElement>(null);
+  const supabase = createClient();
+
+  // Fetch user's contracts
+  useEffect(() => {
+    const fetchContracts = async () => {
+      const { data, error } = await supabase
+        .from("contracts")
+        .select("id, title, overall_risk, contract_type, analysis")
+        .order("created_at", { ascending: false })
+        .limit(20);
+
+      if (!error && data) {
+        setAvailableContracts(data as AttachableContract[]);
+      }
+    };
+
+    fetchContracts();
+
+    // Subscribe to realtime changes
+    const channel = supabase
+      .channel("chat-contracts")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "contracts" },
+        () => {
+          fetchContracts();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [supabase]);
+
+  // Handle @ mention detection
+  const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const value = e.target.value;
+    setUserInput(value);
+
+    // Check for @ trigger
+    const cursorPos = e.target.selectionStart;
+    const textBeforeCursor = value.substring(0, cursorPos);
+    const lastAtIndex = textBeforeCursor.lastIndexOf("@");
+
+    if (lastAtIndex !== -1) {
+      const textAfterAt = textBeforeCursor.substring(lastAtIndex + 1);
+      // Only show if @ is at start or after whitespace, and no space after @
+      const charBeforeAt = lastAtIndex > 0 ? textBeforeCursor[lastAtIndex - 1] : " ";
+      if ((charBeforeAt === " " || charBeforeAt === "\n" || lastAtIndex === 0) && !textAfterAt.includes(" ")) {
+        setShowAtMention(true);
+        setContractSearch(textAfterAt.toLowerCase());
+        setAtMentionIndex(lastAtIndex);
+        return;
+      }
+    }
+    setShowAtMention(false);
+    setAtMentionIndex(-1);
+  };
+
+  // Filter contracts for @ mention dropdown
+  const filteredContracts = useMemo(() => {
+    return availableContracts
+      .filter(c => !attachedContracts.some(ac => ac.id === c.id))
+      .filter(c => c.title.toLowerCase().includes(contractSearch));
+  }, [availableContracts, attachedContracts, contractSearch]);
+
+  // Add contract from @ mention
+  const addContractFromMention = (contract: AttachableContract) => {
+    setAttachedContracts(prev => [...prev, contract]);
+    // Remove @ and search text from input
+    const newInput = userInput.substring(0, atMentionIndex) + userInput.substring(textareaRef.current?.selectionStart || atMentionIndex);
+    setUserInput(newInput);
+    setShowAtMention(false);
+    setAtMentionIndex(-1);
+    textareaRef.current?.focus();
+  };
+
+  // Add contract from picker button
+  const addContractFromPicker = (contract: AttachableContract) => {
+    if (!attachedContracts.some(c => c.id === contract.id)) {
+      setAttachedContracts(prev => [...prev, contract]);
+    }
+    setShowContractPicker(false);
+  };
+
+  // Remove attached contract
+  const removeAttachedContract = (contractId: string) => {
+    setAttachedContracts(prev => prev.filter(c => c.id !== contractId));
+  };
+
+  // Close dropdowns when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (contractPickerRef.current && !contractPickerRef.current.contains(e.target as Node)) {
+        setShowContractPicker(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
   // Handle file analysis
   const handleFileAnalysis = useCallback(async (file: File) => {
     // Add user message showing file upload
@@ -378,6 +499,15 @@ const ChatUI = () => {
           content: m.message,
         }));
 
+      // Build attached contracts context
+      const attachedAnalyses = attachedContracts
+        .filter(c => c.analysis)
+        .map(c => ({
+          id: c.id,
+          title: c.title,
+          analysis: c.analysis,
+        }));
+
       const response = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -385,6 +515,7 @@ const ChatUI = () => {
           message: currentInput,
           analysis: currentAnalysis,
           history,
+          attachedContracts: attachedAnalyses,
         }),
       });
 
@@ -575,9 +706,39 @@ const ChatUI = () => {
           )}
           <div className="bg-muted rounded-2xl border border-border">
             <div className="bg-background outline-border relative rounded-2xl outline outline-border">
+              {/* Attached Contracts Chips */}
+              {attachedContracts.length > 0 && (
+                <div className="flex flex-wrap gap-2 px-4 pt-3 pb-1">
+                  {attachedContracts.map((contract) => {
+                    const riskColor = contract.overall_risk === "high" ? "bg-red-500" :
+                                     contract.overall_risk === "medium" ? "bg-amber-500" :
+                                     contract.overall_risk === "low" ? "bg-emerald-500" : "bg-muted-foreground/50";
+                    return (
+                      <motion.div
+                        key={contract.id}
+                        initial={{ opacity: 0, scale: 0.9 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.9 }}
+                        className="flex items-center gap-1.5 pl-2 pr-1 py-1 rounded-lg bg-purple-500/10 border border-purple-500/20 text-xs"
+                      >
+                        <span className={`w-1.5 h-1.5 rounded-full ${riskColor}`} />
+                        <span className="text-purple-400 font-medium max-w-[150px] truncate">{contract.title}</span>
+                        <button
+                          onClick={() => removeAttachedContract(contract.id)}
+                          className="p-0.5 hover:bg-purple-500/20 rounded transition-colors"
+                        >
+                          <X className="w-3 h-3 text-purple-400/70" />
+                        </button>
+                      </motion.div>
+                    );
+                  })}
+                </div>
+              )}
+
               {/* Text Input Area */}
               <div className="relative">
                 <textarea
+                  ref={textareaRef}
                   value={userInput}
                   autoFocus
                   placeholder=""
@@ -587,16 +748,56 @@ const ChatUI = () => {
                       e.preventDefault();
                       handleMessageSubmit();
                     }
+                    // Close @ mention on Escape
+                    if (e.key === "Escape" && showAtMention) {
+                      setShowAtMention(false);
+                    }
                   }}
-                  onChange={(e) => {
-                    setUserInput(e.target.value);
-                  }}
+                  onChange={handleInputChange}
                 />
                 {!userInput && (
                   <div className="pointer-events-none absolute left-0 top-0 h-full w-full p-4">
                     <AnimatedPlaceholder isDeepMindMode={isDeepMindMode} />
                   </div>
                 )}
+
+                {/* @ Mention Dropdown */}
+                <AnimatePresence>
+                  {showAtMention && filteredContracts.length > 0 && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: 10 }}
+                      className="absolute left-4 bottom-full mb-2 w-72 max-h-48 overflow-y-auto bg-background border border-border rounded-xl shadow-lg z-50"
+                    >
+                      <div className="p-2">
+                        <p className="text-[10px] uppercase tracking-wider text-muted-foreground/60 px-2 py-1.5">
+                          Reference a contract
+                        </p>
+                        {filteredContracts.slice(0, 5).map((contract) => {
+                          const riskColor = contract.overall_risk === "high" ? "bg-red-500" :
+                                           contract.overall_risk === "medium" ? "bg-amber-500" :
+                                           contract.overall_risk === "low" ? "bg-emerald-500" : "bg-muted-foreground/50";
+                          return (
+                            <button
+                              key={contract.id}
+                              onClick={() => addContractFromMention(contract)}
+                              className="w-full flex items-center gap-2 px-2 py-2 rounded-lg hover:bg-muted transition-colors text-left"
+                            >
+                              <span className={`w-2 h-2 rounded-full ${riskColor} shrink-0`} />
+                              <div className="min-w-0 flex-1">
+                                <p className="text-sm font-medium truncate">{contract.title}</p>
+                                {contract.contract_type && (
+                                  <p className="text-[11px] text-muted-foreground truncate">{contract.contract_type}</p>
+                                )}
+                              </div>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
 
               <button
@@ -611,13 +812,84 @@ const ChatUI = () => {
               </button>
             </div>
             <div className="flex h-10 items-center justify-between px-1.5">
-              <button
-                onClick={() => fileInputRef.current?.click()}
-                className="text-muted-foreground hover:bg-background/50 hover:text-foreground flex items-center gap-2 rounded-lg px-2 py-1.5 transition-all duration-100 active:scale-95"
-              >
-                <Upload className="size-4" />
-                <span className="text-xs font-medium">Upload Contract</span>
-              </button>
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={() => fileInputRef.current?.click()}
+                  className="text-muted-foreground hover:bg-background/50 hover:text-foreground flex items-center gap-2 rounded-lg px-2 py-1.5 transition-all duration-100 active:scale-95"
+                >
+                  <Upload className="size-4" />
+                  <span className="text-xs font-medium">Upload</span>
+                </button>
+                <div className="relative" ref={contractPickerRef}>
+                  <button
+                    onClick={() => setShowContractPicker(!showContractPicker)}
+                    className={cn(
+                      "text-muted-foreground hover:bg-background/50 hover:text-foreground flex items-center gap-2 rounded-lg px-2 py-1.5 transition-all duration-100 active:scale-95",
+                      showContractPicker && "bg-background/50 text-foreground"
+                    )}
+                  >
+                    <Paperclip className="size-4" />
+                    <span className="text-xs font-medium">Attach</span>
+                    {attachedContracts.length > 0 && (
+                      <span className="flex items-center justify-center min-w-[18px] h-[18px] rounded-full bg-purple-500 text-white text-[10px] font-bold">
+                        {attachedContracts.length}
+                      </span>
+                    )}
+                  </button>
+
+                  {/* Contract Picker Dropdown */}
+                  <AnimatePresence>
+                    {showContractPicker && (
+                      <motion.div
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: 10 }}
+                        className="absolute left-0 bottom-full mb-2 w-80 max-h-64 overflow-y-auto bg-background border border-border rounded-xl shadow-lg z-50"
+                      >
+                        <div className="p-2">
+                          <p className="text-[10px] uppercase tracking-wider text-muted-foreground/60 px-2 py-1.5">
+                            Your Contracts
+                          </p>
+                          {availableContracts.length === 0 ? (
+                            <p className="text-sm text-muted-foreground px-2 py-3">
+                              No contracts yet. Upload one to get started.
+                            </p>
+                          ) : (
+                            availableContracts.map((contract) => {
+                              const isAttached = attachedContracts.some(c => c.id === contract.id);
+                              const riskColor = contract.overall_risk === "high" ? "bg-red-500" :
+                                               contract.overall_risk === "medium" ? "bg-amber-500" :
+                                               contract.overall_risk === "low" ? "bg-emerald-500" : "bg-muted-foreground/50";
+                              return (
+                                <button
+                                  key={contract.id}
+                                  onClick={() => addContractFromPicker(contract)}
+                                  disabled={isAttached}
+                                  className={cn(
+                                    "w-full flex items-center gap-2 px-2 py-2 rounded-lg transition-colors text-left",
+                                    isAttached ? "opacity-50 cursor-not-allowed" : "hover:bg-muted"
+                                  )}
+                                >
+                                  <span className={`w-2 h-2 rounded-full ${riskColor} shrink-0`} />
+                                  <div className="min-w-0 flex-1">
+                                    <p className="text-sm font-medium truncate">{contract.title}</p>
+                                    {contract.contract_type && (
+                                      <p className="text-[11px] text-muted-foreground truncate">{contract.contract_type}</p>
+                                    )}
+                                  </div>
+                                  {isAttached && (
+                                    <span className="text-[10px] text-purple-400 font-medium">Added</span>
+                                  )}
+                                </button>
+                              );
+                            })
+                          )}
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+              </div>
               <p className="text-muted-foreground/50 pr-2 text-xs">
                 Powered by EasyTerms
               </p>
