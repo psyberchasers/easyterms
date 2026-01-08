@@ -2046,22 +2046,29 @@ export default function UploadContractPage() {
         </main>
       </Tabs>
 
-      {/* Document Scanner Dialog */}
-      <Dialog open={showScanner} onOpenChange={setShowScanner}>
-        <DialogContent className="sm:max-w-md p-0">
-          <DialogHeader className="p-6 pb-0">
-            <DialogTitle>Scan Document</DialogTitle>
-            <DialogDescription>
-              Position your contract pages in the camera view to scan them as a PDF.
-            </DialogDescription>
-          </DialogHeader>
-          <DocumentScanner
-            onScanComplete={handleScanComplete}
-            onClose={() => setShowScanner(false)}
-            className="min-h-[300px]"
-          />
-        </DialogContent>
-      </Dialog>
+      {/* Document Scanner Dialog - Simplified for testing */}
+      {showScanner && (
+        <div
+          className="fixed inset-0 z-[9999] bg-black/50 flex items-center justify-center"
+          onClick={() => setShowScanner(false)}
+        >
+          <div
+            className="bg-background p-6 rounded-lg max-w-md mx-4"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h2 className="text-lg font-semibold mb-2">Scan Document</h2>
+            <p className="text-sm text-muted-foreground mb-4">
+              Scanner dialog is working! The DocumentScanner component would go here.
+            </p>
+            <button
+              className="px-4 py-2 bg-purple-500 text-white rounded-lg"
+              onClick={() => setShowScanner(false)}
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      )}
     </motion.div>
   );
 }
