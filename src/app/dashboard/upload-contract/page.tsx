@@ -775,7 +775,7 @@ export default function UploadContractPage() {
                   </div>
                 </motion.div>
 
-                <div className="flex-1 flex items-center justify-center">
+                <div className="flex-1 flex flex-col items-center justify-center gap-4 pt-4 md:pt-0">
                 <motion.div
                   initial={{ scale: 0.95 }}
                   animate={{ scale: 1 }}
@@ -785,7 +785,7 @@ export default function UploadContractPage() {
                   onClick={() => fileInputRef.current?.click()}
                   onMouseEnter={() => setIsHovering(true)}
                   onMouseLeave={() => setIsHovering(false)}
-                  className="w-full max-w-4xl p-32 text-center transition-all cursor-pointer rounded-xl"
+                  className="w-full max-w-4xl p-12 md:p-32 text-center transition-all cursor-pointer rounded-xl"
                   style={{
                     border: `1.5px dashed ${isHovering ? '#8b5cf6' : 'var(--border)'}`,
                     backgroundColor: isHovering ? 'rgba(139, 92, 246, 0.05)' : 'transparent',
@@ -821,23 +821,21 @@ export default function UploadContractPage() {
                         PDF, DOC, DOCX, TXT up to 200MB
                       </p>
                     </div>
-                    {/* Scan Document Button - Mobile Only */}
-                    {isMobile && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="mt-4 rounded-lg"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setShowScanner(true);
-                        }}
-                      >
-                        <Camera className="w-4 h-4 mr-2" />
-                        Scan Document
-                      </Button>
-                    )}
                   </div>
                 </motion.div>
+
+                {/* Scan Document Button - Mobile Only - Outside upload area */}
+                {isMobile && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="rounded-lg"
+                    onClick={() => setShowScanner(true)}
+                  >
+                    <Camera className="w-4 h-4 mr-2" />
+                    Scan Document
+                  </Button>
+                )}
                 </div>
               </motion.div>
             )}
