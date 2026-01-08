@@ -159,7 +159,8 @@ const ExpandedTemplateCard = ({
     <motion.div
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      className="border border-border rounded-2xl p-5 hover:border-purple-500/30 transition-all"
+      onClick={onUse}
+      className="border border-border rounded-2xl p-5 hover:border-purple-500/50 hover:bg-purple-500/5 transition-all cursor-pointer"
     >
       <div className="flex items-start gap-3 mb-4">
         <div className="w-12 h-12 rounded-xl bg-purple-500/10 flex items-center justify-center shrink-0">
@@ -177,7 +178,7 @@ const ExpandedTemplateCard = ({
         {template.description}
       </p>
 
-      <div className="mb-4">
+      <div>
         <h4 className="text-sm font-medium mb-2">Included Clauses</h4>
         <div className="flex flex-wrap gap-1.5">
           {template.defaultClauses.slice(0, 8).map((clauseId) => {
@@ -195,14 +196,6 @@ const ExpandedTemplateCard = ({
           )}
         </div>
       </div>
-
-      <Button
-        variant="outline"
-        className="w-full border-2 border-purple-500 bg-transparent hover:bg-purple-500/10 text-purple-400 hover:text-purple-300"
-        onClick={onUse}
-      >
-        Use This Template
-      </Button>
     </motion.div>
   );
 };
