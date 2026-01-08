@@ -1115,18 +1115,7 @@ export default function TemplatesPage() {
 
           {/* Step 3: Customize */}
           {builderStep === 3 && (
-            <motion.div
-              layout
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{
-                opacity: { duration: 0.3 },
-                y: { duration: 0.3 },
-                layout: { duration: 0.3, ease: [0.4, 0, 0.2, 1] }
-              }}
-              className="rounded-xl overflow-hidden flex flex-col border border-dashed border-border"
-              style={{ backgroundColor: "var(--background)" }}
-            >
+            <div className="rounded-xl overflow-hidden flex flex-col border border-dashed border-border bg-background">
               {/* Header */}
               <div className="px-5 py-4">
                 <div className="flex items-center justify-between">
@@ -1275,7 +1264,7 @@ export default function TemplatesPage() {
                   <ChevronRight className="w-4 h-4 ml-2" />
                 </Button>
               </div>
-            </motion.div>
+            </div>
           )}
 
           {/* Step 4: Review & Export */}
