@@ -178,23 +178,20 @@ const ExpandedTemplateCard = ({
         {template.description}
       </p>
 
-      <div>
-        <h4 className="text-sm font-medium mb-2">Included Clauses</h4>
-        <div className="flex flex-wrap gap-1.5">
-          {template.defaultClauses.slice(0, 8).map((clauseId) => {
-            const clause = getClauseById(clauseId);
-            return clause ? (
-              <Badge key={clauseId} variant="secondary" className="text-xs">
-                {clause.name}
-              </Badge>
-            ) : null;
-          })}
-          {template.defaultClauses.length > 8 && (
-            <Badge variant="secondary" className="text-xs text-muted-foreground">
-              +{template.defaultClauses.length - 8} more
+      <div className="flex flex-wrap gap-1.5">
+        {template.defaultClauses.slice(0, 8).map((clauseId) => {
+          const clause = getClauseById(clauseId);
+          return clause ? (
+            <Badge key={clauseId} variant="secondary" className="text-xs">
+              {clause.name}
             </Badge>
-          )}
-        </div>
+          ) : null;
+        })}
+        {template.defaultClauses.length > 8 && (
+          <Badge variant="secondary" className="text-xs text-muted-foreground">
+            +{template.defaultClauses.length - 8} more
+          </Badge>
+        )}
       </div>
     </motion.div>
   );
@@ -1004,14 +1001,24 @@ export default function TemplatesPage() {
 
       {/* Step 1: Choose Template */}
       {builderStep === 1 && (
-        <div className="grid md:grid-cols-2 gap-4">
-          {contractTemplates.map((template) => (
-            <ExpandedTemplateCard
-              key={template.id}
-              template={template}
-              onUse={() => startWithTemplate(template)}
-            />
-          ))}
+        <div className="space-y-6">
+          {/* Info notice */}
+          <div className="rounded-2xl border border-purple-500/30 bg-purple-500/5 px-5 py-4">
+            <p className="text-sm text-muted-foreground">
+              Each template comes with predefined clauses tailored to that contract type. You can add, remove, or customize any clause in the next step to perfectly fit your needs.
+            </p>
+          </div>
+
+          {/* Template cards */}
+          <div className="grid md:grid-cols-2 gap-4">
+            {contractTemplates.map((template) => (
+              <ExpandedTemplateCard
+                key={template.id}
+                template={template}
+                onUse={() => startWithTemplate(template)}
+              />
+            ))}
+          </div>
         </div>
       )}
 
