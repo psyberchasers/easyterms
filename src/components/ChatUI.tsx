@@ -179,6 +179,7 @@ const FormattedMessage = ({ content }: { content: string }) => {
   const elements: JSX.Element[] = [];
   let currentParagraph: string[] = [];
   let currentList: { type: 'ul' | 'ol'; items: string[] } | null = null;
+  let lastWasListItem = false;
 
   const flushParagraph = () => {
     if (currentParagraph.length > 0) {
@@ -196,7 +197,7 @@ const FormattedMessage = ({ content }: { content: string }) => {
     if (currentList) {
       if (currentList.type === 'ul') {
         elements.push(
-          <ul key={elements.length} className="space-y-1.5">
+          <ul key={elements.length} className="space-y-2">
             {currentList.items.map((item, i) => (
               <li key={i} className="text-sm text-foreground/80 flex items-start gap-2">
                 <span className="w-1.5 h-1.5 rounded-full bg-purple-400 mt-2 shrink-0" />
@@ -207,10 +208,11 @@ const FormattedMessage = ({ content }: { content: string }) => {
         );
       } else {
         elements.push(
-          <ol key={elements.length} className="space-y-1.5 list-decimal list-inside">
+          <ol key={elements.length} className="space-y-2">
             {currentList.items.map((item, i) => (
-              <li key={i} className="text-sm text-foreground/80">
-                {renderWithBold(item)}
+              <li key={i} className="text-sm text-foreground/80 flex items-start gap-2">
+                <span className="text-purple-400 font-medium w-5 shrink-0">{i + 1}.</span>
+                <span>{renderWithBold(item)}</span>
               </li>
             ))}
           </ol>
@@ -223,10 +225,13 @@ const FormattedMessage = ({ content }: { content: string }) => {
   for (const line of lines) {
     const trimmedLine = line.trim();
 
-    // Empty line - flush current content
+    // Empty line - only flush if not in a list (to keep list items together)
     if (!trimmedLine) {
-      flushList();
-      flushParagraph();
+      if (!lastWasListItem) {
+        flushList();
+        flushParagraph();
+      }
+      lastWasListItem = false;
       continue;
     }
 
@@ -240,6 +245,7 @@ const FormattedMessage = ({ content }: { content: string }) => {
           {renderWithBold(headerMatch[1])}
         </p>
       );
+      lastWasListItem = false;
       continue;
     }
 
@@ -252,11 +258,12 @@ const FormattedMessage = ({ content }: { content: string }) => {
         currentList = { type: 'ul', items: [] };
       }
       currentList.items.push(bulletMatch[1]);
+      lastWasListItem = true;
       continue;
     }
 
     // Numbered list item
-    const numberedMatch = trimmedLine.match(/^\d+\.\s+(.+)$/);
+    const numberedMatch = trimmedLine.match(/^\d+\.\s*(.+)$/);
     if (numberedMatch) {
       flushParagraph();
       if (currentList?.type !== 'ol') {
@@ -264,12 +271,14 @@ const FormattedMessage = ({ content }: { content: string }) => {
         currentList = { type: 'ol', items: [] };
       }
       currentList.items.push(numberedMatch[1]);
+      lastWasListItem = true;
       continue;
     }
 
     // Regular text - add to current paragraph
     flushList();
     currentParagraph.push(trimmedLine);
+    lastWasListItem = false;
   }
 
   // Flush remaining content
@@ -535,6 +544,11 @@ const ChatUI = () => {
     };
     setChatMessages((prev) => [...prev, userMessage]);
 
+    // Scroll to bottom immediately after sending
+    setTimeout(() => {
+      messageEndRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
+    }, 50);
+
     // Show thinking state
     setIsThinking(true);
 
@@ -593,7 +607,7 @@ const ChatUI = () => {
     }
   };
 
-  // Auto-scroll to latest message when new messages are added
+  // Auto-scroll to latest message when new messages are added or thinking
   useLayoutEffect(() => {
     // Smooth scroll to the bottom of messages
     requestAnimationFrame(() => {
@@ -602,7 +616,7 @@ const ChatUI = () => {
         behavior: "smooth",
       });
     });
-  }, [chatMessages]);
+  }, [chatMessages, isThinking]);
 
   return (
     <MotionConfig
@@ -679,8 +693,8 @@ const ChatUI = () => {
                 "my-2 w-fit break-words rounded-2xl",
                 message.isFromUser
                   ? "self-end bg-purple-500 text-white max-w-xs px-4 py-3"
-                  : "self-start bg-muted max-w-md px-4 py-3",
-                message.type === "analysis" && "max-w-xl !p-0"
+                  : "self-start bg-muted max-w-2xl px-4 py-3",
+                message.type === "analysis" && "max-w-2xl !p-0"
               )}
             >
               {message.type === "analysis" && message.analysis ? (
