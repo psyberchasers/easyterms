@@ -21,6 +21,9 @@ const LICENSE_KEY =
   "psb2NhbGhvc3R8ZWFzeXRlcm1zLmFp" +
   "CjE3Njg1MjE1OTkKODM4ODYwNwo4\n";
 
+// Domains covered by the license
+const LICENSED_DOMAINS = ["localhost", "easyterms.ai"];
+
 interface DocumentScannerProps {
   onScanComplete: (pdfBlob: Blob, fileName: string) => void;
   onClose: () => void;
@@ -36,6 +39,7 @@ export function DocumentScanner({
   const [isInitializing, setIsInitializing] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [scanbotSDK, setScanbotSDK] = useState<any>(null);
+  const [trialMode, setTrialMode] = useState(false);
 
   // Initialize Scanbot SDK
   useEffect(() => {
@@ -43,13 +47,33 @@ export function DocumentScanner({
 
     const initSDK = async () => {
       try {
+        console.log("[DocumentScanner] Starting SDK initialization...");
+
         // Dynamic import for client-side only
         const ScanbotSDK = (await import("scanbot-web-sdk/ui")).default;
+        console.log("[DocumentScanner] SDK module loaded");
+
+        // Check if current domain is covered by license
+        const currentHost = window.location.hostname;
+        const isLicensedDomain = LICENSED_DOMAINS.some(d => currentHost.includes(d));
+
+        console.log("[DocumentScanner] Current host:", currentHost);
+        console.log("[DocumentScanner] Is licensed domain:", isLicensedDomain);
+
+        // Use license key for licensed domains, empty string (trial mode) for others
+        const licenseToUse = isLicensedDomain ? LICENSE_KEY : "";
+
+        if (!isLicensedDomain) {
+          console.log("[DocumentScanner] Using 60-second trial mode for unlicensed domain");
+          setTrialMode(true);
+        }
 
         await ScanbotSDK.initialize({
-          licenseKey: LICENSE_KEY,
+          licenseKey: licenseToUse,
           enginePath: "/wasm/",
         });
+
+        console.log("[DocumentScanner] SDK initialized successfully");
 
         if (mounted) {
           setScanbotSDK(ScanbotSDK);
@@ -57,9 +81,9 @@ export function DocumentScanner({
           setIsInitializing(false);
         }
       } catch (err) {
-        console.error("Failed to initialize Scanbot SDK:", err);
+        console.error("[DocumentScanner] Failed to initialize Scanbot SDK:", err);
         if (mounted) {
-          setError("Failed to initialize document scanner. Please try again.");
+          setError(`Failed to initialize scanner: ${err instanceof Error ? err.message : 'Unknown error'}`);
           setIsInitializing(false);
         }
       }
@@ -74,9 +98,18 @@ export function DocumentScanner({
 
   // Launch the document scanner
   const startScanning = useCallback(async () => {
-    if (!scanbotSDK || !isInitialized) return;
+    console.log("[DocumentScanner] startScanning called");
+    console.log("[DocumentScanner] scanbotSDK:", !!scanbotSDK);
+    console.log("[DocumentScanner] isInitialized:", isInitialized);
+
+    if (!scanbotSDK || !isInitialized) {
+      console.log("[DocumentScanner] SDK not ready, aborting scan");
+      return;
+    }
 
     try {
+      console.log("[DocumentScanner] Creating scanner config...");
+
       // Configure the document scanner
       const config = new scanbotSDK.UI.Config.DocumentScanningFlow();
 
@@ -88,10 +121,16 @@ export function DocumentScanner({
         sbColorOnSecondary: "#ffffff",
       };
 
+      console.log("[DocumentScanner] Launching scanner UI...");
+
       // Launch the scanner
       const result = await scanbotSDK.UI.createDocumentScanner(config);
 
+      console.log("[DocumentScanner] Scanner result:", result);
+
       if (result && result.document) {
+        console.log("[DocumentScanner] Document captured, generating PDF...");
+
         // Generate PDF from scanned document
         const pdfConfig = {
           pageSize: "A4",
@@ -104,15 +143,18 @@ export function DocumentScanner({
         );
 
         if (pdfResult) {
+          console.log("[DocumentScanner] PDF generated successfully");
           // Convert to Blob
           const pdfBlob = new Blob([pdfResult], { type: "application/pdf" });
           const fileName = `scanned-contract-${Date.now()}.pdf`;
           onScanComplete(pdfBlob, fileName);
         }
+      } else {
+        console.log("[DocumentScanner] No document in result, user may have cancelled");
       }
     } catch (err) {
-      console.error("Error during document scanning:", err);
-      setError("Failed to scan document. Please try again.");
+      console.error("[DocumentScanner] Error during document scanning:", err);
+      setError(`Failed to scan document: ${err instanceof Error ? err.message : 'Unknown error'}`);
     }
   }, [scanbotSDK, isInitialized, onScanComplete]);
 
@@ -159,6 +201,11 @@ export function DocumentScanner({
       <p className="text-sm text-muted-foreground text-center">
         Position your contract document in the camera view
       </p>
+      {trialMode && (
+        <p className="text-xs text-amber-500 text-center">
+          Trial mode: 60 second limit per session
+        </p>
+      )}
       <div className="flex gap-2">
         <Button variant="outline" onClick={onClose}>
           Cancel
