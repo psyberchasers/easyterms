@@ -8,13 +8,14 @@ import { cn } from "@/lib/utils";
 import {
   FileText,
   Loader2,
-  Share2,
   Eye,
   MessageCircle,
   PenTool,
   Clock,
   CheckCircle2,
 } from "lucide-react";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { FolderShared02Icon } from "@hugeicons-pro/core-stroke-rounded";
 import { MusicLoader } from "@/components/MusicLoader";
 
 interface SharedContract {
@@ -156,9 +157,9 @@ export default function SharedPage() {
       </div>
 
       {shares.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-20 text-center">
+        <div className="flex flex-col items-center justify-center py-20 text-center rounded-2xl bg-muted/50">
           <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mb-4">
-            <Share2 className="w-8 h-8 text-muted-foreground/50" />
+            <HugeiconsIcon icon={FolderShared02Icon} size={32} className="text-muted-foreground/50" />
           </div>
           <h2 className="text-lg font-medium text-foreground mb-2">No shared contracts</h2>
           <p className="text-sm text-muted-foreground max-w-md">

@@ -531,7 +531,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                         className="h-auto py-1.5 px-3 text-[13px] font-medium text-sidebar-foreground"
                       >
                         <Link href={item.href}>
-                          <HugeiconsIcon icon={item.icon} size={16} />
+                          <HugeiconsIcon icon={item.icon} size={16} className="text-muted-foreground" />
                           <span>{item.title}</span>
                         </Link>
                       </SidebarMenuButton>

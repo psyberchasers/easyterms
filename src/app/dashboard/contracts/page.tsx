@@ -15,7 +15,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { MoreHorizontal, Star, StarOff, Trash2, Plus } from "lucide-react";
+import { MoreHorizontal, Star, StarOff, Trash2, Plus, Check } from "lucide-react";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { ContractsIcon, PlusSignIcon, PlayIcon, FilterIcon, ViewIcon } from "@hugeicons-pro/core-stroke-rounded";
 import { cn } from "@/lib/utils";
@@ -29,6 +29,7 @@ export default function ContractsPage() {
   const [loading, setLoading] = useState(false);
   const [initialLoad, setInitialLoad] = useState(true);
   const [filter, setFilter] = useState<"all" | "high-risk" | "medium-risk" | "low-risk">("all");
+  const [selectedContracts, setSelectedContracts] = useState<Set<string>>(new Set());
   const [deleteModal, setDeleteModal] = useState<{ open: boolean; contract: Contract | null }>({
     open: false,
     contract: null,
@@ -113,6 +114,29 @@ export default function ContractsPage() {
     const analysis = contract.analysis as { industry?: string; category?: string } | null;
     return analysis?.industry || analysis?.category || "—";
   };
+
+  const toggleSelectContract = (contractId: string) => {
+    setSelectedContracts((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(contractId)) {
+        newSet.delete(contractId);
+      } else {
+        newSet.add(contractId);
+      }
+      return newSet;
+    });
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedContracts.size === filteredContracts.length) {
+      setSelectedContracts(new Set());
+    } else {
+      setSelectedContracts(new Set(filteredContracts.map((c) => c.id)));
+    }
+  };
+
+  const isAllSelected = filteredContracts.length > 0 && selectedContracts.size === filteredContracts.length;
+  const isSomeSelected = selectedContracts.size > 0 && selectedContracts.size < filteredContracts.length;
 
   if (initialLoad && loading) {
     return (
@@ -215,7 +239,7 @@ export default function ContractsPage() {
           <input
             type="text"
             placeholder="Search contracts"
-            className="px-3 py-1.5 text-[12px] border border-border rounded-lg w-48 bg-background text-foreground placeholder:text-muted-foreground"
+            className="px-3 py-1.5 text-[12px] border border-border rounded-full w-48 bg-background text-foreground placeholder:text-muted-foreground"
           />
         </div>
       </motion.div>
@@ -226,12 +250,29 @@ export default function ContractsPage() {
         <motion.div
           className="grid px-4 py-2.5 text-[11px] font-semibold uppercase tracking-wider border-b border-border sticky top-0 w-full bg-muted/50 text-muted-foreground/50"
           style={{
-            gridTemplateColumns: '1fr 200px 120px 150px 120px 100px 50px 50px'
+            gridTemplateColumns: '40px 1fr 200px 120px 150px 120px 100px 50px 50px'
           }}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.3, delay: 0.1 }}
         >
+          <div className="flex items-center justify-center">
+            <button
+              onClick={toggleSelectAll}
+              className={cn(
+                "w-4 h-4 rounded border flex items-center justify-center transition-colors",
+                isAllSelected
+                  ? "bg-purple-500 border-purple-500"
+                  : isSomeSelected
+                  ? "bg-purple-500/50 border-purple-500"
+                  : "border-muted-foreground/30 hover:border-muted-foreground/50"
+              )}
+            >
+              {(isAllSelected || isSomeSelected) && (
+                <Check className="w-3 h-3 text-white" />
+              )}
+            </button>
+          </div>
           <div>Contract</div>
           <div>Type</div>
           <div>Category</div>
@@ -246,16 +287,36 @@ export default function ContractsPage() {
 
         {/* Table Body */}
         <div>
-          {filteredContracts.map((contract, index) => (
+          {filteredContracts.map((contract, index) => {
+            const isSelected = selectedContracts.has(contract.id);
+            return (
             <motion.div
               key={contract.id}
-              className="grid px-4 py-3 items-center border-b border-border hover:bg-muted/50 transition-colors cursor-pointer group"
-              style={{ gridTemplateColumns: '1fr 200px 120px 150px 120px 100px 50px 50px' }}
+              className={cn(
+                "grid px-4 py-3 items-center border-b border-border hover:bg-muted/50 transition-colors cursor-pointer group",
+                isSelected && "bg-purple-500/5"
+              )}
+              style={{ gridTemplateColumns: '40px 1fr 200px 120px 150px 120px 100px 50px 50px' }}
               onClick={() => router.push(`/dashboard/contracts/${contract.id}`)}
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3, delay: 0.15 + index * 0.05 }}
             >
+              {/* Checkbox */}
+              <div className="flex items-center justify-center" onClick={(e) => e.stopPropagation()}>
+                <button
+                  onClick={() => toggleSelectContract(contract.id)}
+                  className={cn(
+                    "w-4 h-4 rounded border flex items-center justify-center transition-colors",
+                    isSelected
+                      ? "bg-purple-500 border-purple-500"
+                      : "border-muted-foreground/30 hover:border-muted-foreground/50"
+                  )}
+                >
+                  {isSelected && <Check className="w-3 h-3 text-white" />}
+                </button>
+              </div>
+
               {/* Contract Name */}
               <div className="flex items-center gap-2 min-w-0 pr-4">
                 <span className="text-[13px] font-medium truncate text-foreground">
@@ -376,7 +437,8 @@ export default function ContractsPage() {
                 </DropdownMenu>
               </div>
             </motion.div>
-          ))}
+          );
+          })}
         </div>
 
         {/* Empty filtered state */}
