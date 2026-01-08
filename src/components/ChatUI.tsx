@@ -609,13 +609,20 @@ const ChatUI = () => {
 
   // Auto-scroll to latest message when new messages are added or thinking
   useLayoutEffect(() => {
-    // Smooth scroll to the bottom of messages
-    requestAnimationFrame(() => {
+    // Delay scroll slightly to ensure DOM is updated
+    const scrollToBottom = () => {
       messageEndRef.current?.scrollIntoView({
         block: "end",
         behavior: "smooth",
       });
-    });
+    };
+
+    // Immediate scroll attempt
+    scrollToBottom();
+
+    // Delayed scroll to catch animations
+    const timer = setTimeout(scrollToBottom, 100);
+    return () => clearTimeout(timer);
   }, [chatMessages, isThinking]);
 
   return (
@@ -729,7 +736,6 @@ const ChatUI = () => {
                 opacity: 1,
                 y: 0,
               }}
-              transition={{ delay: 0.25 }}
               className="bg-muted/50 my-2 w-fit max-w-xs self-start rounded-2xl px-4 py-2"
             >
               <TextShimmer>{thinkingMessage}</TextShimmer>
