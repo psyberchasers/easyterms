@@ -171,7 +171,7 @@ export function ContractAnalysisView({
   originalFile,
 }: ContractAnalysisViewProps) {
   // UI state
-  const [showDocument, setShowDocument] = useState(true);
+  const [showDocument, setShowDocument] = useState(false);
   const [highlightedClause, setHighlightedClause] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState("overview");
   const [expandedTerm, setExpandedTerm] = useState<number | null>(0);
@@ -194,6 +194,13 @@ export function ContractAnalysisView({
 
   // Refs
   const versionInputRef = useRef<HTMLInputElement>(null);
+
+  // Show PDF by default on desktop only
+  useEffect(() => {
+    if (typeof window !== "undefined" && window.innerWidth >= 768) {
+      setShowDocument(true);
+    }
+  }, []);
 
   // Handle clause click to highlight in PDF
   const handleClauseClick = useCallback((text: string | undefined) => {
@@ -285,11 +292,13 @@ export function ContractAnalysisView({
       transition={{ duration: 0.5, ease: [0.4, 0, 0.2, 1] }}
       className="flex h-full bg-card"
     >
-      {/* Document Side Panel */}
+      {/* Document Side Panel - Full screen overlay on mobile, side panel on desktop */}
       <div
         className={cn(
-          "h-full flex flex-col bg-background transition-all duration-300 ease-in-out",
-          showDocument ? "w-1/2 max-w-2xl border-r border-border" : "w-0"
+          "flex flex-col bg-background transition-all duration-300 ease-in-out",
+          showDocument
+            ? "fixed inset-0 z-50 md:relative md:inset-auto md:z-auto md:w-1/2 md:max-w-2xl md:h-full md:border-r md:border-border"
+            : "w-0 h-full hidden md:block"
         )}
       >
         {showDocument && (
