@@ -239,7 +239,8 @@ export default function ContractsPage() {
           <input
             type="text"
             placeholder="Search contracts"
-            className="px-3 py-1.5 text-[12px] border border-border rounded-full w-48 bg-background text-foreground placeholder:text-muted-foreground"
+            data-rounded="true"
+            className="px-4 py-1.5 text-[12px] border border-border rounded-full w-52 bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-purple-500/30"
           />
         </div>
       </motion.div>
