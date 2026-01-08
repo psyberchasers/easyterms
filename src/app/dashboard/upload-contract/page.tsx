@@ -830,12 +830,7 @@ export default function UploadContractPage() {
                     type="button"
                     className="flex items-center gap-2 px-4 py-2 rounded-lg border border-border bg-background text-foreground text-sm font-medium hover:bg-muted transition-colors"
                     style={{ touchAction: 'manipulation' }}
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      // Small delay to prevent event bubbling to modal backdrop
-                      setTimeout(() => setShowScanner(true), 50);
-                    }}
+                    onClick={() => setShowScanner(true)}
                   >
                     <Camera className="w-4 h-4" />
                     Scan Document
@@ -1065,6 +1060,7 @@ export default function UploadContractPage() {
   ];
 
   return (
+    <>
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
@@ -2045,34 +2041,36 @@ export default function UploadContractPage() {
         </main>
       </Tabs>
 
-      {/* Document Scanner Modal */}
-      {showScanner && (
-        <div
-          className="fixed inset-0 z-[9999] bg-black/50 flex items-center justify-center p-4"
-          onClick={(e) => {
-            // Only close if clicking the backdrop itself, not children
-            if (e.target === e.currentTarget) {
-              setShowScanner(false);
-            }
-          }}
-        >
-          <div
-            className="bg-background rounded-xl w-full max-w-md max-h-[90vh] overflow-auto"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="p-4 border-b border-border">
-              <h2 className="text-lg font-semibold">Scan Document</h2>
-              <p className="text-sm text-muted-foreground">
-                Take photos of your contract pages
-              </p>
-            </div>
-            <DocumentScanner
-              onScanComplete={handleScanComplete}
-              onClose={() => setShowScanner(false)}
-            />
-          </div>
-        </div>
-      )}
     </motion.div>
+
+    {/* Document Scanner Modal - OUTSIDE motion.div to avoid transform breaking fixed positioning */}
+    {showScanner && (
+      <div
+        className="fixed inset-0 z-[9999] bg-black/50 flex items-center justify-center p-4"
+        onClick={(e) => {
+          // Only close if clicking the backdrop itself, not children
+          if (e.target === e.currentTarget) {
+            setShowScanner(false);
+          }
+        }}
+      >
+        <div
+          className="bg-background rounded-xl w-full max-w-md max-h-[90vh] overflow-auto"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className="p-4 border-b border-border">
+            <h2 className="text-lg font-semibold">Scan Document</h2>
+            <p className="text-sm text-muted-foreground">
+              Take photos of your contract pages
+            </p>
+          </div>
+          <DocumentScanner
+            onScanComplete={handleScanComplete}
+            onClose={() => setShowScanner(false)}
+          />
+        </div>
+      </div>
+    )}
+    </>
   );
 }
