@@ -209,16 +209,34 @@ function DashboardHeader({
 
   return (
     <header
-      className="fixed top-0 right-0 z-50 flex h-12 items-center gap-2 border-b border-border bg-background px-4 transition-[left] duration-400 ease-[cubic-bezier(0.75,0,0.25,1)]"
-      style={{
-        left: isCollapsed ? 'var(--sidebar-width-icon, 3rem)' : 'var(--sidebar-width, 16rem)'
-      }}
+      className={cn(
+        "fixed top-0 right-0 z-50 flex h-12 items-center gap-1 sm:gap-2 border-b border-border bg-background px-2 sm:px-4 transition-[left] duration-400 ease-[cubic-bezier(0.75,0,0.25,1)]",
+        "left-0 md:left-[var(--sidebar-width-icon,3rem)]",
+        !isCollapsed && "md:left-[var(--sidebar-width,16rem)]"
+      )}
     >
-      {getHeaderContent()}
+      {/* Mobile: Show logo, Desktop: Show page title */}
+      <div className="md:hidden">
+        <Link href="/dashboard">
+          <img src="/darkModeS.svg" alt="EasyTerms" className="h-6" />
+        </Link>
+      </div>
+      <div className="hidden md:flex items-center gap-2">
+        {getHeaderContent()}
+      </div>
       <div className="flex-1" />
 
       {/* Actions */}
-      <SidebarToggleButton />
+      <div className="hidden md:block">
+        <SidebarToggleButton />
+      </div>
+
+      {/* Chat icon - mobile only */}
+      <Link href="/dashboard/chat" className="md:hidden">
+        <button className="h-8 w-8 flex items-center justify-center border border-border hover:bg-muted transition-colors rounded-md">
+          <HugeiconsIcon icon={ChatSparkIcon} size={14} className="text-muted-foreground" />
+        </button>
+      </Link>
 
       {/* Notifications Bell */}
       <DropdownMenu open={notificationsOpen} onOpenChange={setNotificationsOpen}>
@@ -306,30 +324,37 @@ function DashboardHeader({
         </DropdownMenuContent>
       </DropdownMenu>
 
+      {/* Search - icon only on mobile */}
       <button
         onClick={onSearchClick}
-        className="h-8 px-3 flex items-center gap-2 border border-border hover:bg-muted transition-colors rounded-md text-[13px] font-semibold text-muted-foreground"
+        className="h-8 w-8 sm:w-auto sm:px-3 flex items-center justify-center sm:justify-start gap-2 border border-border hover:bg-muted transition-colors rounded-md text-[13px] font-semibold text-muted-foreground"
       >
         <HugeiconsIcon icon={AiSearch02Icon} size={14} />
-        <span>Search</span>
+        <span className="hidden sm:inline">Search</span>
       </button>
+
+      {/* Settings - hidden on mobile */}
       <button
         disabled
-        className="h-8 px-3 flex items-center gap-2 border border-border rounded-md text-[13px] font-semibold text-muted-foreground/40 cursor-not-allowed"
+        className="hidden sm:flex h-8 px-3 items-center gap-2 border border-border rounded-md text-[13px] font-semibold text-muted-foreground/40 cursor-not-allowed"
       >
         <HugeiconsIcon icon={Settings03Icon} size={14} />
         <span>Settings</span>
       </button>
+
+      {/* Upload - icon only on mobile */}
       <Link href="/dashboard/upload-contract">
-        <button className="h-8 px-3 flex items-center gap-2 transition-colors rounded-md text-[13px] font-semibold text-white bg-purple-500 hover:bg-purple-600">
+        <button className="h-8 w-8 sm:w-auto sm:px-3 flex items-center justify-center sm:justify-start gap-2 transition-colors rounded-md text-[13px] font-semibold text-white bg-purple-500 hover:bg-purple-600">
           <HugeiconsIcon icon={FileUploadIcon} size={14} />
-          <span>Upload</span>
+          <span className="hidden sm:inline">Upload</span>
         </button>
       </Link>
+
+      {/* Theme toggle - hidden on mobile */}
       <button
         onClick={toggleTheme}
         disabled
-        className="h-8 w-8 flex items-center justify-center border border-border hover:bg-muted transition-colors rounded-md opacity-50 cursor-not-allowed"
+        className="hidden sm:flex h-8 w-8 items-center justify-center border border-border hover:bg-muted transition-colors rounded-md opacity-50 cursor-not-allowed"
         title="Theme toggle temporarily disabled"
       >
         {theme === "dark" ? (
@@ -494,7 +519,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
 
   return (
     <SidebarProvider defaultOpen={true}>
-      <Sidebar collapsible="icon" className="border-border">
+      <Sidebar collapsible="icon" className="border-border hidden md:flex">
         {/* Header - matches h-12 (48px) of main header with border-b */}
         <motion.div
           className="flex items-center px-3 h-12 border-b border-sidebar-border group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-2"

@@ -49,6 +49,7 @@ import {
   ArrowDownRight,
   ChevronDown,
   ChevronRight,
+  Share2,
 } from "lucide-react";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { HelpSquareIcon, Alert02Icon } from "@hugeicons-pro/core-duotone-rounded";
@@ -105,7 +106,7 @@ export default function ContractDetailPage() {
   const [highlightedText, setHighlightedText] = useState<string>("");
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
   const [loadingPdf, setLoadingPdf] = useState(false);
-  const [showDocument, setShowDocument] = useState(true);
+  const [showDocument, setShowDocument] = useState(false);
   const [downloading, setDownloading] = useState(false);
   const [activeTab, setActiveTab] = useState("overview");
 
@@ -148,6 +149,13 @@ export default function ContractDetailPage() {
       fetchContract();
     }
   }, [user, authLoading, contractId]);
+
+  // Show PDF panel on desktop by default, hide on mobile
+  useEffect(() => {
+    if (typeof window !== 'undefined' && window.innerWidth >= 768) {
+      setShowDocument(true);
+    }
+  }, []);
 
   const fetchContract = async () => {
     const { data, error } = await supabase
@@ -551,12 +559,13 @@ export default function ContractDetailPage() {
   return (
     <div className="flex flex-col h-screen bg-background overflow-hidden">
       {/* Clean Header - Fixed */}
-      <header className="shrink-0 h-14 px-4 border-b border-border bg-background flex items-center justify-between sticky top-0 z-20">
-        <div className="flex items-center gap-3">
-          <Link href="/dashboard" className="flex items-center justify-center w-8 h-8 rounded-lg border border-border hover:bg-muted transition-colors">
+      <header className="shrink-0 h-12 md:h-14 px-3 md:px-4 border-b border-border bg-background flex items-center justify-between sticky top-0 z-20">
+        <div className="flex items-center gap-2 md:gap-3 min-w-0">
+          <Link href="/dashboard" className="flex items-center justify-center w-8 h-8 rounded-lg border border-border hover:bg-muted transition-colors shrink-0">
             <ArrowLeft className="w-4 h-4 text-muted-foreground" />
           </Link>
-          <div className="flex items-center gap-2 text-sm">
+          {/* Desktop: full breadcrumb, Mobile: just title */}
+          <div className="hidden md:flex items-center gap-2 text-sm">
             <Link href="/dashboard" className="text-muted-foreground hover:text-foreground transition-colors">
               Dashboard
             </Link>
@@ -565,9 +574,14 @@ export default function ContractDetailPage() {
               {contract.title || analysis?.contractType || "Contract"}
             </span>
           </div>
+          {/* Mobile: simple title */}
+          <span className="md:hidden text-sm font-medium text-foreground truncate">
+            {contract.title || analysis?.contractType || "Contract"}
+          </span>
+          {/* Risk badge - desktop only */}
           {analysis?.overallRiskAssessment && (
             <span className={cn(
-              "text-xs px-2 py-1 rounded-md font-medium",
+              "hidden md:inline-flex text-xs px-2 py-1 rounded-md font-medium",
               analysis.overallRiskAssessment === "low" ? "bg-green-500/10 text-green-500" :
               analysis.overallRiskAssessment === "medium" ? "bg-amber-500/10 text-amber-500" :
               "bg-red-500/10 text-red-500"
@@ -576,7 +590,8 @@ export default function ContractDetailPage() {
             </span>
           )}
         </div>
-        <div className="flex items-center gap-2">
+        {/* Desktop buttons */}
+        <div className="hidden md:flex items-center gap-2">
           <input
             ref={versionInputRef}
             type="file"
@@ -632,16 +647,22 @@ export default function ContractDetailPage() {
 
       {/* Main Content Area - 2 columns */}
       <div className="flex flex-1 overflow-hidden">
-        {/* Left: Document Panel */}
+        {/* Left: Document Panel - Desktop: side panel, Mobile: full-screen overlay */}
         <div
           className={cn(
-            "h-full flex flex-col bg-card border-r border-border transition-all duration-300 ease-in-out overflow-hidden",
-            showDocument ? "w-2/5 min-w-[400px]" : "w-0"
+            "flex flex-col bg-card border-r border-border transition-all duration-300 ease-in-out overflow-hidden",
+            // Mobile: fixed full-screen overlay
+            "fixed inset-0 z-50 md:relative md:inset-auto md:z-auto",
+            // Desktop: side panel behavior
+            "md:h-full",
+            showDocument
+              ? "opacity-100 visible md:w-2/5 md:min-w-[400px]"
+              : "opacity-0 invisible md:w-0 md:opacity-100 md:visible"
           )}
         >
           {showDocument && (
             <>
-              <div className="shrink-0 h-10 px-3 border-b border-border bg-card flex items-center justify-between">
+              <div className="shrink-0 h-12 md:h-10 px-4 md:px-3 border-b border-border bg-card flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <FileText className="w-3.5 h-3.5 text-muted-foreground" />
                   <span className="text-xs text-muted-foreground truncate max-w-[200px]">{contract.title}</span>
@@ -659,6 +680,13 @@ export default function ContractDetailPage() {
                     </Select>
                   )}
                 </div>
+                {/* Close button - visible on mobile */}
+                <button
+                  onClick={() => { setShowDocument(false); setHighlightedText(""); }}
+                  className="md:hidden w-8 h-8 flex items-center justify-center hover:bg-muted transition-colors rounded-md border border-border"
+                >
+                  <X className="w-4 h-4 text-muted-foreground" />
+                </button>
               </div>
               <div className="flex-1 overflow-hidden">
                 {pdfUrl && contract.file_type === "application/pdf" ? (
@@ -681,8 +709,8 @@ export default function ContractDetailPage() {
             <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col overflow-hidden">
               {/* Title and Tabs */}
               <div className="shrink-0" style={{ backgroundColor: '#fcfcfc' }}>
-                {/* Title with toggle */}
-                <div className="px-8 pt-8 pb-6 flex items-start justify-between">
+                {/* Desktop: Title with toggle */}
+                <div className="hidden md:flex px-8 pt-8 pb-6 items-start justify-between">
                   <h1 className="text-2xl font-semibold" style={{ color: '#1d1b1a' }}>{contract.title || analysis.contractType || "Contract"}</h1>
                   <button
                     onClick={() => { setShowDocument(!showDocument); if (showDocument) setHighlightedText(""); }}
@@ -694,9 +722,71 @@ export default function ContractDetailPage() {
                   </button>
                 </div>
 
+                {/* Mobile: Action buttons row */}
+                <div className="md:hidden px-4 pt-4 pb-3">
+                  {/* Risk badge */}
+                  {analysis?.overallRiskAssessment && (
+                    <div className="mb-3">
+                      <span className={cn(
+                        "text-xs px-2.5 py-1 rounded-md font-medium",
+                        analysis.overallRiskAssessment === "low" ? "bg-green-500/10 text-green-500" :
+                        analysis.overallRiskAssessment === "medium" ? "bg-amber-500/10 text-amber-500" :
+                        "bg-red-500/10 text-red-500"
+                      )}>
+                        {analysis.overallRiskAssessment.charAt(0).toUpperCase() + analysis.overallRiskAssessment.slice(1)} Risk
+                      </span>
+                    </div>
+                  )}
+                  {/* Action buttons */}
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <button
+                      onClick={() => { setShowDocument(!showDocument); if (showDocument) setHighlightedText(""); }}
+                      className="text-xs px-3 py-1.5 rounded-full flex items-center gap-1.5 transition-all"
+                      style={{ backgroundColor: '#f3f1f0', color: '#797875' }}
+                    >
+                      <FileText className="w-3.5 h-3.5" />
+                      {showDocument ? 'Hide PDF' : 'Show PDF'}
+                    </button>
+                    <button
+                      onClick={handleDownloadReport}
+                      disabled={downloading}
+                      className="text-xs px-3 py-1.5 rounded-full flex items-center gap-1.5 transition-all disabled:opacity-50"
+                      style={{ backgroundColor: '#f3f1f0', color: '#797875' }}
+                    >
+                      {downloading ? (
+                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      ) : (
+                        <Download className="w-3.5 h-3.5" />
+                      )}
+                      Export
+                    </button>
+                    <button
+                      onClick={async () => {
+                        if (navigator.share) {
+                          try {
+                            await navigator.share({
+                              title: contract.title || 'Contract',
+                              url: window.location.href,
+                            });
+                          } catch (err) {
+                            // User cancelled or share failed
+                          }
+                        } else {
+                          navigator.clipboard.writeText(window.location.href);
+                        }
+                      }}
+                      className="text-xs px-3 py-1.5 rounded-full flex items-center gap-1.5 transition-all"
+                      style={{ backgroundColor: '#f3f1f0', color: '#797875' }}
+                    >
+                      <Share2 className="w-3.5 h-3.5" />
+                      Share
+                    </button>
+                  </div>
+                </div>
+
                 {/* Tabs Header */}
-                <div className="px-8 pb-0 border-b" style={{ borderColor: '#e5e5e5' }}>
-                  <div className="flex gap-6">
+                <div className="px-4 md:px-8 pb-0 border-b overflow-x-auto" style={{ borderColor: '#e5e5e5' }}>
+                  <div className="flex gap-4 md:gap-6 min-w-max">
                     {[
                       { id: "overview", label: "Overview" },
                       { id: "terms", label: "Key Terms" },

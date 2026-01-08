@@ -385,16 +385,16 @@ export function Navbar({ showNewAnalysis = true, showBorder = false, showSearch 
             <>
               <Link
                 href="/login"
-                className="h-8 px-3 text-[13px] font-semibold text-muted-foreground hover:bg-muted border border-border rounded-md flex items-center gap-2 transition-colors"
+                className="h-8 px-4 text-[13px] font-semibold text-muted-foreground hover:bg-muted border border-border rounded-md flex items-center gap-2 transition-colors whitespace-nowrap"
               >
-                <HugeiconsIcon icon={Login01Icon} size={14} />
+                <HugeiconsIcon icon={Login01Icon} size={14} className="hidden sm:block" />
                 Log In
               </Link>
               <Link
                 href="/login?mode=signup"
-                className="h-8 px-3 text-[13px] font-semibold bg-purple-500 hover:bg-purple-600 text-white rounded-md flex items-center gap-2 transition-colors"
+                className="h-8 px-4 text-[13px] font-semibold bg-purple-500 hover:bg-purple-600 text-white rounded-md flex items-center gap-2 transition-colors whitespace-nowrap"
               >
-                <HugeiconsIcon icon={AiUserIcon} size={14} />
+                <HugeiconsIcon icon={AiUserIcon} size={14} className="hidden sm:block" />
                 Sign Up
               </Link>
             </>

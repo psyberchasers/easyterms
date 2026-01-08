@@ -342,7 +342,7 @@ export function ContractAnalysisView({
         {/* Sticky Header - Row 1: Title */}
         <div className="sticky top-0 z-20 bg-card shrink-0">
           <div className={cn(
-            "px-6 h-12 flex items-center justify-between border-b border-border",
+            "px-6 py-3 md:py-0 md:h-12 flex flex-col md:flex-row md:items-center md:justify-between border-b border-border gap-2 md:gap-0",
             !showDocument && "max-w-4xl mx-auto"
           )}>
             {/* Left: Title + Risk Assessment */}
@@ -363,7 +363,7 @@ export function ContractAnalysisView({
             </div>
 
             {/* Right: Actions */}
-            <div className="flex items-center gap-1.5 shrink-0">
+            <div className="flex items-center gap-1.5 shrink-0 flex-wrap">
               <button
                 onClick={() => setShowDocument(!showDocument)}
                 className="h-7 px-2 text-[11px] text-muted-foreground hover:text-foreground border border-border hover:bg-muted flex items-center gap-1.5 transition-colors rounded-md"

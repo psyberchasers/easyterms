@@ -212,7 +212,7 @@ export default function UploadContractPage() {
   const [originalFile, setOriginalFile] = useState<File | null>(null);
 
   // UI state
-  const [showDocument, setShowDocument] = useState(true);
+  const [showDocument, setShowDocument] = useState(false);
   const [pdfReady, setPdfReady] = useState(false);
   const [highlightedClause, setHighlightedClause] = useState<string | null>(null);
   const [isHovering, setIsHovering] = useState(false);
@@ -240,6 +240,13 @@ export default function UploadContractPage() {
 
   // Loading phrase animation
   const [phraseIndex, setPhraseIndex] = useState(0);
+
+  // Show PDF panel on desktop by default, hide on mobile
+  useEffect(() => {
+    if (typeof window !== 'undefined' && window.innerWidth >= 768) {
+      setShowDocument(true);
+    }
+  }, []);
 
   useEffect(() => {
     if (status === "uploading" || status === "analyzing") {
@@ -670,7 +677,7 @@ export default function UploadContractPage() {
   // ============================================
   if (status === "idle") {
     return (
-      <div className="h-full flex bg-card overflow-hidden">
+      <div className="h-full flex flex-col md:flex-row bg-card overflow-hidden">
         {/* Recipient Side */}
         <motion.div
           initial={{ opacity: 0, x: -20 }}
@@ -684,8 +691,8 @@ export default function UploadContractPage() {
           onMouseEnter={() => !selectedRole && downloadIconRef.current?.startAnimation()}
           onMouseLeave={() => downloadIconRef.current?.stopAnimation()}
           className={cn(
-            "flex flex-col items-center justify-center transition-all relative overflow-hidden",
-            !selectedRole && "cursor-pointer hover:bg-muted/50 border-r border-dashed border-foreground/10 group"
+            "flex flex-col items-center justify-center transition-all relative overflow-hidden min-h-[45vh] md:min-h-0",
+            !selectedRole && "cursor-pointer hover:bg-muted/50 border-b md:border-b-0 md:border-r border-dashed border-foreground/10 group"
           )}
           style={{ flex: selectedRole === "recipient" ? 1 : selectedRole === "sender" ? 0 : 1 }}
         >
@@ -811,7 +818,7 @@ export default function UploadContractPage() {
             flex: selectedRole === "sender" ? 1 : selectedRole === "recipient" ? 0 : 1
           }}
           transition={{ duration: 0.4, ease: [0.4, 0, 0.2, 1], delay: 0.1 }}
-          className="flex flex-col items-center justify-center bg-muted/30 cursor-not-allowed relative overflow-hidden"
+          className="flex flex-col items-center justify-center bg-muted/30 cursor-not-allowed relative overflow-hidden min-h-[45vh] md:min-h-0"
           style={{ flex: selectedRole === "sender" ? 1 : selectedRole === "recipient" ? 0 : 1 }}
         >
           {/* Coming Soon Overlay */}
@@ -1026,11 +1033,17 @@ export default function UploadContractPage() {
       transition={{ duration: 0.5, ease: [0.4, 0, 0.2, 1] }}
       className="flex h-full bg-card"
     >
-      {/* Document Side Panel */}
+      {/* Document Side Panel - Desktop: side panel, Mobile: full-screen overlay */}
       <div
         className={cn(
-          "h-full flex flex-col bg-background transition-all duration-300 ease-in-out",
-          showDocument ? "w-1/2 max-w-2xl border-r border-border" : "w-0"
+          "flex flex-col bg-background transition-all duration-300 ease-in-out",
+          // Mobile: fixed full-screen overlay
+          "fixed inset-0 z-50 md:relative md:inset-auto md:z-auto",
+          // Desktop: side panel behavior
+          "md:h-full",
+          showDocument
+            ? "opacity-100 visible md:w-1/2 md:max-w-2xl md:border-r md:border-border"
+            : "opacity-0 invisible md:w-0 md:opacity-100 md:visible"
         )}
       >
         {showDocument && (
@@ -1054,7 +1067,7 @@ export default function UploadContractPage() {
                 )}
                 <button
                   onClick={() => { setShowDocument(false); setHighlightedClause(null); }}
-                  className="w-7 h-7 flex items-center justify-center hover:bg-muted transition-colors"
+                  className="w-8 h-8 md:w-7 md:h-7 flex items-center justify-center hover:bg-muted transition-colors rounded-md border border-border md:border-0"
                 >
                   <X className="w-4 h-4 text-muted-foreground" />
                 </button>
