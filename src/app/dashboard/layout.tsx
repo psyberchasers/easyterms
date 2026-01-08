@@ -47,6 +47,7 @@ import {
   ChatSparkIcon,
   CreditCardIcon,
   GitCompareIcon,
+  Share01Icon,
 } from "@hugeicons-pro/core-stroke-rounded";
 import { MusicLoader } from "@/components/MusicLoader";
 import { useTheme } from "@/components/providers/ThemeProvider";
@@ -124,6 +125,7 @@ function DashboardHeader({
   const isChatPage = pathname.startsWith("/dashboard/chat");
   const isTemplatesPage = pathname.startsWith("/dashboard/templates");
   const isComparePage = pathname.startsWith("/dashboard/compare");
+  const isSharedPage = pathname.startsWith("/dashboard/shared");
   const isRecipientPage = pathname.includes("/recipient");
   const isSenderPage = pathname.includes("/sender");
 
@@ -189,6 +191,14 @@ function DashboardHeader({
         </>
       );
     }
+    if (isSharedPage) {
+      return (
+        <>
+          <HugeiconsIcon icon={Share01Icon} size={16} className="text-muted-foreground" />
+          <span className="text-sm font-medium text-muted-foreground">Shared</span>
+        </>
+      );
+    }
     return (
       <>
         <HugeiconsIcon icon={Home01Icon} size={16} className="text-muted-foreground" />
@@ -209,13 +219,6 @@ function DashboardHeader({
 
       {/* Actions */}
       <SidebarToggleButton />
-      <button
-        onClick={onSearchClick}
-        className="h-8 px-3 flex items-center gap-2 border border-border hover:bg-muted transition-colors rounded-md text-[13px] font-semibold text-muted-foreground"
-      >
-        <HugeiconsIcon icon={AiSearch02Icon} size={14} />
-        <span>Search</span>
-      </button>
 
       {/* Notifications Bell */}
       <DropdownMenu open={notificationsOpen} onOpenChange={setNotificationsOpen}>
@@ -303,6 +306,13 @@ function DashboardHeader({
         </DropdownMenuContent>
       </DropdownMenu>
 
+      <button
+        onClick={onSearchClick}
+        className="h-8 px-3 flex items-center gap-2 border border-border hover:bg-muted transition-colors rounded-md text-[13px] font-semibold text-muted-foreground"
+      >
+        <HugeiconsIcon icon={AiSearch02Icon} size={14} />
+        <span>Search</span>
+      </button>
       <button
         disabled
         className="h-8 px-3 flex items-center gap-2 border border-border rounded-md text-[13px] font-semibold text-muted-foreground/40 cursor-not-allowed"
@@ -476,6 +486,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
     { title: "Home", icon: Home01Icon, href: "/dashboard" },
     { title: "Chat", icon: ChatSparkIcon, href: "/dashboard/chat" },
     { title: "Contracts", icon: ContractsIcon, href: "/dashboard/contracts" },
+    { title: "Shared", icon: Share01Icon, href: "/dashboard/shared" },
     { title: "Upload Contract", icon: FileUploadIcon, href: "/dashboard/upload-contract" },
     { title: "Compare", icon: GitCompareIcon, href: "/dashboard/compare" },
     { title: "Templates", icon: GridViewIcon, href: "/dashboard/templates" },
