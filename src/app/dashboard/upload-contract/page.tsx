@@ -826,20 +826,25 @@ export default function UploadContractPage() {
 
                 {/* Scan Document Button - Mobile Only - Outside upload area */}
                 {isMobile && (
-                  <Button
-                    variant="outline"
-                    size="default"
-                    className="rounded-lg z-10 relative"
+                  <button
+                    type="button"
+                    className="flex items-center gap-2 px-4 py-2 rounded-lg border border-border bg-background text-foreground text-sm font-medium z-50 relative"
+                    style={{ touchAction: 'manipulation' }}
+                    onTouchEnd={(e) => {
+                      e.preventDefault();
+                      console.log("[ScanButton] Touch!");
+                      setShowScanner(true);
+                    }}
                     onClick={(e) => {
                       e.preventDefault();
                       e.stopPropagation();
-                      console.log("[ScanButton] Clicked!");
+                      console.log("[ScanButton] Click!");
                       setShowScanner(true);
                     }}
                   >
-                    <Camera className="w-4 h-4 mr-2" />
+                    <Camera className="w-4 h-4" />
                     Scan Document
-                  </Button>
+                  </button>
                 )}
                 </div>
               </motion.div>
