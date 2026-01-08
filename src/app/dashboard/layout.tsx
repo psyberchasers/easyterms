@@ -210,7 +210,7 @@ function DashboardHeader({
   return (
     <header
       className={cn(
-        "fixed top-0 right-0 z-50 flex h-10 items-center gap-1.5 sm:gap-2 border-b border-border bg-background px-4 sm:px-4 transition-[left] duration-400 ease-[cubic-bezier(0.75,0,0.25,1)]",
+        "fixed top-0 right-0 z-50 flex h-12 items-center gap-1.5 sm:gap-2 border-b border-border bg-background px-4 sm:px-4 transition-[left] duration-400 ease-[cubic-bezier(0.75,0,0.25,1)]",
         "left-0 md:left-[var(--sidebar-width-icon,3rem)]",
         !isCollapsed && "md:left-[var(--sidebar-width,16rem)]"
       )}
@@ -520,9 +520,9 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   return (
     <SidebarProvider defaultOpen={true}>
       <Sidebar collapsible="icon" className="border-border hidden md:flex">
-        {/* Header - matches h-10 (40px) of main header with border-b */}
+        {/* Header - matches h-12 (48px) of main header with border-b */}
         <motion.div
-          className="flex items-center px-3 h-10 border-b border-sidebar-border group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-2"
+          className="flex items-center px-3 h-12 border-b border-sidebar-border group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-2"
           initial={{ opacity: 0, x: -10 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.3, delay: 0 }}
@@ -709,7 +709,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
         />
 
         {/* Main content - offset for fixed header */}
-        <main className="flex-1 overflow-auto pt-10">
+        <main className="flex-1 overflow-auto pt-12">
           {children}
         </main>
       </SidebarInset>
