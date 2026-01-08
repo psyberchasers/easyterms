@@ -234,7 +234,7 @@ export function Navbar({ showNewAnalysis = true, showBorder = false, showSearch 
               {showNewAnalysis && (
                 <Link
                   href="/analyze"
-                  className="h-8 px-5 text-[13px] font-semibold bg-purple-500 hover:bg-purple-600 text-white rounded-md flex items-center gap-2 transition-colors"
+                  className="h-8 px-6 text-[13px] font-semibold bg-purple-500 hover:bg-purple-600 text-white rounded-md flex items-center gap-2 transition-colors whitespace-nowrap"
                 >
                   <HugeiconsIcon icon={AiSheetsIcon} size={14} />
                   New Analysis
