@@ -824,20 +824,21 @@ export default function UploadContractPage() {
                   </div>
                 </motion.div>
 
-                {/* Scan Document Button - Always show for now */}
-                <button
-                  type="button"
-                  className="flex items-center gap-2 px-4 py-2 rounded-lg bg-red-500 text-white text-sm font-bold"
-                  style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
-                  onPointerDown={(e) => {
-                    e.stopPropagation();
-                    alert("BUTTON TAPPED - setting showScanner to true");
-                    setShowScanner(true);
-                  }}
-                >
-                  <Camera className="w-4 h-4" />
-                  TAP ME - SCAN
-                </button>
+                {/* Scan Document Button - Mobile Only */}
+                {isMobile && (
+                  <button
+                    type="button"
+                    className="flex items-center gap-2 px-4 py-2 rounded-lg border border-border bg-background text-foreground text-sm font-medium hover:bg-muted transition-colors"
+                    style={{ touchAction: 'manipulation' }}
+                    onPointerDown={(e) => {
+                      e.stopPropagation();
+                      setShowScanner(true);
+                    }}
+                  >
+                    <Camera className="w-4 h-4" />
+                    Scan Document
+                  </button>
+                )}
                 </div>
               </motion.div>
             )}
@@ -2042,51 +2043,26 @@ export default function UploadContractPage() {
         </main>
       </Tabs>
 
-      {/* Document Scanner Dialog - Simplified for testing */}
+      {/* Document Scanner Modal */}
       {showScanner && (
         <div
-          style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: 'rgba(255, 0, 0, 0.9)',
-            zIndex: 99999,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
+          className="fixed inset-0 z-[9999] bg-black/50 flex items-center justify-center p-4"
           onClick={() => setShowScanner(false)}
         >
           <div
-            style={{
-              backgroundColor: 'white',
-              padding: '24px',
-              borderRadius: '12px',
-              maxWidth: '90%',
-            }}
+            className="bg-background rounded-xl w-full max-w-md max-h-[90vh] overflow-auto"
             onClick={(e) => e.stopPropagation()}
           >
-            <h2 style={{ fontSize: '18px', fontWeight: 'bold', marginBottom: '8px', color: 'black' }}>
-              MODAL IS WORKING!
-            </h2>
-            <p style={{ fontSize: '14px', color: '#666', marginBottom: '16px' }}>
-              If you see this, the modal works. Tap Close or the red area.
-            </p>
-            <button
-              style={{
-                padding: '12px 24px',
-                backgroundColor: '#a855f7',
-                color: 'white',
-                borderRadius: '8px',
-                border: 'none',
-                fontSize: '16px',
-              }}
-              onClick={() => setShowScanner(false)}
-            >
-              Close
-            </button>
+            <div className="p-4 border-b border-border">
+              <h2 className="text-lg font-semibold">Scan Document</h2>
+              <p className="text-sm text-muted-foreground">
+                Take photos of your contract pages
+              </p>
+            </div>
+            <DocumentScanner
+              onScanComplete={handleScanComplete}
+              onClose={() => setShowScanner(false)}
+            />
           </div>
         </div>
       )}

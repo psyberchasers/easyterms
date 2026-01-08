@@ -1,28 +1,10 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
-import { Loader2, Camera, FileText, X } from "lucide-react";
+import { Camera, Plus, Trash2, FileText, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
-
-const LICENSE_KEY =
-  "U/xLAB01alTT1BqldY8IU+vHhk6uOf" +
-  "Dx8y7BLVNh3Btt5nCuA7c6Du10mqlF" +
-  "Cck3eAxELWJWOBzezzOXFVe2f41D5k" +
-  "4jnrlY9VepJhEQEE+t2cRVby2+4HJh" +
-  "BEg+GXv4z1lHrPUuuR6XaFnB2N4Q95" +
-  "hX6QH/9vxfg491qs/iBcLhChjxFMGY" +
-  "5NTXStkLqhc8Ayk1UKZu1S4BNdr4fM" +
-  "VkYVlENP2utVP90A6mx1IvWE7K1fqz" +
-  "QuoN6F/zx3Aao9ke+KfXJmTtxjRzza" +
-  "ZeQ39ikVwTcIKsI0mNUNu7wOnbqi4x" +
-  "ffsvplxXr8OjI8LrZsZy9cZnxD7vRi" +
-  "4T6hnoErKbzA==\nU2NhbmJvdFNESw" +
-  "psb2NhbGhvc3R8ZWFzeXRlcm1zLmFp" +
-  "CjE3Njg1MjE1OTkKODM4ODYwNwo4\n";
-
-// Domains covered by the license
-const LICENSED_DOMAINS = ["localhost", "easyterms.ai"];
+import { jsPDF } from "jspdf";
 
 interface DocumentScannerProps {
   onScanComplete: (pdfBlob: Blob, fileName: string) => void;
@@ -35,185 +17,183 @@ export function DocumentScanner({
   onClose,
   className,
 }: DocumentScannerProps) {
-  const [isInitialized, setIsInitialized] = useState(false);
-  const [isInitializing, setIsInitializing] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [scanbotSDK, setScanbotSDK] = useState<any>(null);
-  const [trialMode, setTrialMode] = useState(false);
+  const [pages, setPages] = useState<string[]>([]);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Initialize Scanbot SDK
-  useEffect(() => {
-    let mounted = true;
+  // Handle camera capture
+  const handleCapture = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
 
-    const initSDK = async () => {
-      try {
-        console.log("[DocumentScanner] Starting SDK initialization...");
-
-        // Dynamic import for client-side only
-        const ScanbotSDK = (await import("scanbot-web-sdk/ui")).default;
-        console.log("[DocumentScanner] SDK module loaded");
-
-        // Check if current domain is covered by license
-        const currentHost = window.location.hostname;
-        const isLicensedDomain = LICENSED_DOMAINS.some(d => currentHost.includes(d));
-
-        console.log("[DocumentScanner] Current host:", currentHost);
-        console.log("[DocumentScanner] Is licensed domain:", isLicensedDomain);
-
-        // Use license key for licensed domains, empty string (trial mode) for others
-        const licenseToUse = isLicensedDomain ? LICENSE_KEY : "";
-
-        if (!isLicensedDomain) {
-          console.log("[DocumentScanner] Using 60-second trial mode for unlicensed domain");
-          setTrialMode(true);
-        }
-
-        await ScanbotSDK.initialize({
-          licenseKey: licenseToUse,
-          enginePath: "/wasm/",
-        });
-
-        console.log("[DocumentScanner] SDK initialized successfully");
-
-        if (mounted) {
-          setScanbotSDK(ScanbotSDK);
-          setIsInitialized(true);
-          setIsInitializing(false);
-        }
-      } catch (err) {
-        console.error("[DocumentScanner] Failed to initialize Scanbot SDK:", err);
-        if (mounted) {
-          setError(`Failed to initialize scanner: ${err instanceof Error ? err.message : 'Unknown error'}`);
-          setIsInitializing(false);
-        }
-      }
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const imageData = event.target?.result as string;
+      setPages((prev) => [...prev, imageData]);
     };
+    reader.readAsDataURL(file);
 
-    initSDK();
+    // Reset input so same file can be selected again
+    e.target.value = "";
+  };
 
-    return () => {
-      mounted = false;
-    };
-  }, []);
+  // Remove a page
+  const removePage = (index: number) => {
+    setPages((prev) => prev.filter((_, i) => i !== index));
+  };
 
-  // Launch the document scanner
-  const startScanning = useCallback(async () => {
-    console.log("[DocumentScanner] startScanning called");
-    console.log("[DocumentScanner] scanbotSDK:", !!scanbotSDK);
-    console.log("[DocumentScanner] isInitialized:", isInitialized);
+  // Convert images to PDF
+  const createPDF = async () => {
+    if (pages.length === 0) return;
 
-    if (!scanbotSDK || !isInitialized) {
-      console.log("[DocumentScanner] SDK not ready, aborting scan");
-      return;
-    }
+    setIsProcessing(true);
 
     try {
-      console.log("[DocumentScanner] Creating scanner config...");
+      const pdf = new jsPDF({
+        orientation: "portrait",
+        unit: "mm",
+        format: "a4",
+      });
 
-      // Configure the document scanner
-      const config = new scanbotSDK.UI.Config.DocumentScanningFlow();
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const pageHeight = pdf.internal.pageSize.getHeight();
 
-      // Customize the scanner appearance
-      config.palette = {
-        sbColorPrimary: "#a855f7", // Purple theme
-        sbColorOnPrimary: "#ffffff",
-        sbColorSecondary: "#7c3aed",
-        sbColorOnSecondary: "#ffffff",
-      };
-
-      console.log("[DocumentScanner] Launching scanner UI...");
-
-      // Launch the scanner
-      const result = await scanbotSDK.UI.createDocumentScanner(config);
-
-      console.log("[DocumentScanner] Scanner result:", result);
-
-      if (result && result.document) {
-        console.log("[DocumentScanner] Document captured, generating PDF...");
-
-        // Generate PDF from scanned document
-        const pdfConfig = {
-          pageSize: "A4",
-          pageDirection: "AUTO",
-        };
-
-        const pdfResult = await scanbotSDK.generatePdfFromDocument(
-          result.document,
-          pdfConfig
-        );
-
-        if (pdfResult) {
-          console.log("[DocumentScanner] PDF generated successfully");
-          // Convert to Blob
-          const pdfBlob = new Blob([pdfResult], { type: "application/pdf" });
-          const fileName = `scanned-contract-${Date.now()}.pdf`;
-          onScanComplete(pdfBlob, fileName);
+      for (let i = 0; i < pages.length; i++) {
+        if (i > 0) {
+          pdf.addPage();
         }
-      } else {
-        console.log("[DocumentScanner] No document in result, user may have cancelled");
+
+        const img = new Image();
+        img.src = pages[i];
+
+        await new Promise<void>((resolve) => {
+          img.onload = () => {
+            // Calculate dimensions to fit page while maintaining aspect ratio
+            const imgRatio = img.width / img.height;
+            const pageRatio = pageWidth / pageHeight;
+
+            let width = pageWidth;
+            let height = pageHeight;
+
+            if (imgRatio > pageRatio) {
+              height = pageWidth / imgRatio;
+            } else {
+              width = pageHeight * imgRatio;
+            }
+
+            const x = (pageWidth - width) / 2;
+            const y = (pageHeight - height) / 2;
+
+            pdf.addImage(pages[i], "JPEG", x, y, width, height);
+            resolve();
+          };
+        });
       }
-    } catch (err) {
-      console.error("[DocumentScanner] Error during document scanning:", err);
-      setError(`Failed to scan document: ${err instanceof Error ? err.message : 'Unknown error'}`);
+
+      const pdfBlob = pdf.output("blob");
+      const fileName = `scanned-contract-${Date.now()}.pdf`;
+      onScanComplete(pdfBlob, fileName);
+    } catch (error) {
+      console.error("Error creating PDF:", error);
+      alert("Failed to create PDF. Please try again.");
+    } finally {
+      setIsProcessing(false);
     }
-  }, [scanbotSDK, isInitialized, onScanComplete]);
-
-  // Auto-start scanning when initialized
-  useEffect(() => {
-    if (isInitialized && scanbotSDK) {
-      startScanning();
-    }
-  }, [isInitialized, scanbotSDK, startScanning]);
-
-  if (error) {
-    return (
-      <div className={cn("flex flex-col items-center justify-center p-8 gap-4", className)}>
-        <div className="w-16 h-16 rounded-full bg-red-500/10 flex items-center justify-center">
-          <X className="w-8 h-8 text-red-500" />
-        </div>
-        <p className="text-sm text-red-500 text-center">{error}</p>
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={onClose}>
-            Cancel
-          </Button>
-          <Button onClick={() => { setError(null); startScanning(); }}>
-            Try Again
-          </Button>
-        </div>
-      </div>
-    );
-  }
-
-  if (isInitializing) {
-    return (
-      <div className={cn("flex flex-col items-center justify-center p-8 gap-4", className)}>
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
-        <p className="text-sm text-muted-foreground">Initializing scanner...</p>
-      </div>
-    );
-  }
+  };
 
   return (
-    <div className={cn("flex flex-col items-center justify-center p-8 gap-4", className)}>
-      <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
-        <Camera className="w-8 h-8 text-primary" />
-      </div>
-      <p className="text-sm text-muted-foreground text-center">
-        Position your contract document in the camera view
-      </p>
-      {trialMode && (
-        <p className="text-xs text-amber-500 text-center">
-          Trial mode: 60 second limit per session
-        </p>
+    <div className={cn("flex flex-col p-4", className)}>
+      {/* Hidden file input for camera */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        capture="environment"
+        onChange={handleCapture}
+        className="hidden"
+      />
+
+      {/* Pages preview */}
+      {pages.length > 0 ? (
+        <div className="space-y-4">
+          <div className="grid grid-cols-3 gap-2">
+            {pages.map((page, index) => (
+              <div key={index} className="relative aspect-[3/4] rounded-lg overflow-hidden border border-border">
+                <img
+                  src={page}
+                  alt={`Page ${index + 1}`}
+                  className="w-full h-full object-cover"
+                />
+                <button
+                  onClick={() => removePage(index)}
+                  className="absolute top-1 right-1 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center"
+                >
+                  <Trash2 className="w-3 h-3" />
+                </button>
+                <span className="absolute bottom-1 left-1 text-xs bg-black/50 text-white px-1.5 py-0.5 rounded">
+                  {index + 1}
+                </span>
+              </div>
+            ))}
+
+            {/* Add more button */}
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              className="aspect-[3/4] rounded-lg border-2 border-dashed border-border flex flex-col items-center justify-center gap-1 text-muted-foreground hover:border-primary hover:text-primary transition-colors"
+            >
+              <Plus className="w-6 h-6" />
+              <span className="text-xs">Add page</span>
+            </button>
+          </div>
+
+          <p className="text-xs text-muted-foreground text-center">
+            {pages.length} page{pages.length !== 1 ? "s" : ""} captured
+          </p>
+        </div>
+      ) : (
+        <div className="flex flex-col items-center justify-center py-8 gap-4">
+          <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
+            <Camera className="w-8 h-8 text-primary" />
+          </div>
+          <div className="text-center">
+            <p className="text-sm font-medium text-foreground">
+              Scan your contract pages
+            </p>
+            <p className="text-xs text-muted-foreground mt-1">
+              Take photos of each page, then convert to PDF
+            </p>
+          </div>
+        </div>
       )}
-      <div className="flex gap-2">
-        <Button variant="outline" onClick={onClose}>
+
+      {/* Actions */}
+      <div className="flex gap-2 mt-4">
+        <Button variant="outline" onClick={onClose} className="flex-1">
           Cancel
         </Button>
-        <Button onClick={startScanning}>
-          <Camera className="w-4 h-4 mr-2" />
-          Start Scanning
-        </Button>
+
+        {pages.length === 0 ? (
+          <Button
+            onClick={() => fileInputRef.current?.click()}
+            className="flex-1 bg-purple-500 hover:bg-purple-600"
+          >
+            <Camera className="w-4 h-4 mr-2" />
+            Take Photo
+          </Button>
+        ) : (
+          <Button
+            onClick={createPDF}
+            disabled={isProcessing}
+            className="flex-1 bg-purple-500 hover:bg-purple-600"
+          >
+            {isProcessing ? (
+              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+            ) : (
+              <FileText className="w-4 h-4 mr-2" />
+            )}
+            Create PDF
+          </Button>
+        )}
       </div>
     </div>
   );
