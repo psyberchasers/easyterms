@@ -234,7 +234,7 @@ export function Navbar({ showNewAnalysis = true, showBorder = false, showSearch 
               {showNewAnalysis && (
                 <Link
                   href="/analyze"
-                  className="h-8 px-6 text-[13px] font-semibold bg-purple-500 hover:bg-purple-600 text-white rounded-md flex items-center gap-2 transition-colors whitespace-nowrap"
+                  className="h-8 px-3 text-[13px] font-semibold bg-purple-500 hover:bg-purple-600 text-white rounded-md flex items-center gap-2 transition-colors whitespace-nowrap"
                 >
                   <HugeiconsIcon icon={AiSheetsIcon} size={14} />
                   New Analysis
@@ -251,7 +251,7 @@ export function Navbar({ showNewAnalysis = true, showBorder = false, showSearch 
               {/* Notifications Bell */}
               <DropdownMenu open={notificationsOpen} onOpenChange={setNotificationsOpen}>
                 <DropdownMenuTrigger asChild>
-                  <button className="relative w-8 h-8 border border-border rounded-md flex items-center justify-center hover:bg-muted transition-colors">
+                  <button className="relative w-8 h-8 ml-2 border border-border rounded-md flex items-center justify-center hover:bg-muted transition-colors">
                     <Bell className="w-4 h-4 text-muted-foreground" />
                     {unreadCount > 0 && (
                       <span className="absolute -top-1 -right-1 w-4 h-4 bg-purple-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
@@ -343,7 +343,7 @@ export function Navbar({ showNewAnalysis = true, showBorder = false, showSearch 
               {/* User Profile */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <button className="w-8 h-8 border border-border rounded-md flex items-center justify-center hover:bg-muted transition-colors">
+                  <button className="w-8 h-8 ml-1 border border-border rounded-md flex items-center justify-center hover:bg-muted transition-colors">
                     <HugeiconsIcon icon={UserFullViewIcon} size={14} className="text-muted-foreground" />
                   </button>
                 </DropdownMenuTrigger>
