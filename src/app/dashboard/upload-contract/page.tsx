@@ -824,20 +824,21 @@ export default function UploadContractPage() {
                   </div>
                 </motion.div>
 
-                {/* Scan Document Button - Always show for testing */}
-                <button
-                  type="button"
-                  className="flex items-center gap-2 px-6 py-3 rounded-lg border-2 border-purple-500 bg-purple-500 text-white text-sm font-medium"
-                  style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
-                  onPointerDown={(e) => {
-                    e.stopPropagation();
-                    alert("Button tapped!");
-                    setShowScanner(true);
-                  }}
-                >
-                  <Camera className="w-4 h-4" />
-                  Scan Document
-                </button>
+                {/* Scan Document Button - Mobile Only */}
+                {isMobile && (
+                  <button
+                    type="button"
+                    className="flex items-center gap-2 px-4 py-2 rounded-lg border border-border bg-background text-foreground text-sm font-medium hover:bg-muted transition-colors"
+                    style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
+                    onPointerDown={(e) => {
+                      e.stopPropagation();
+                      setShowScanner(true);
+                    }}
+                  >
+                    <Camera className="w-4 h-4" />
+                    Scan Document
+                  </button>
+                )}
                 </div>
               </motion.div>
             )}
