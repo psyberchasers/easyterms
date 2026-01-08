@@ -145,14 +145,12 @@ const iconMap: Record<string, any> = {
   Edit01Icon: Edit02Icon,
 };
 
-// Template Card Component
-const TemplateCard = ({
+// Expanded Template Card Component (for Step 1)
+const ExpandedTemplateCard = ({
   template,
-  onSelect,
   onUse
 }: {
   template: ContractTemplate;
-  onSelect: () => void;
   onUse: () => void;
 }) => {
   const icon = iconMap[template.icon];
@@ -161,41 +159,49 @@ const TemplateCard = ({
     <motion.div
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      className="group border border-border rounded-xl p-4 hover:border-purple-500/30 hover:bg-purple-500/5 transition-all cursor-pointer"
-      onClick={onSelect}
+      className="border border-border rounded-2xl p-5 hover:border-purple-500/30 transition-all"
     >
-      <div className="flex items-start gap-3 mb-3">
-        <div className="w-10 h-10 rounded-lg bg-purple-500/10 flex items-center justify-center shrink-0">
-          {icon && <HugeiconsIcon icon={icon} size={20} className="text-purple-400" />}
+      <div className="flex items-start gap-3 mb-4">
+        <div className="w-12 h-12 rounded-xl bg-purple-500/10 flex items-center justify-center shrink-0">
+          {icon && <HugeiconsIcon icon={icon} size={24} className="text-purple-400" />}
         </div>
         <div className="flex-1 min-w-0">
-          <h3 className="font-medium text-sm mb-1">{template.name}</h3>
-          <p className="text-xs text-muted-foreground line-clamp-2">{template.description}</p>
+          <h3 className="font-semibold text-base mb-0.5">{template.name}</h3>
+          <p className="text-sm text-muted-foreground">
+            {template.parties.party1} ↔ {template.parties.party2}
+          </p>
         </div>
       </div>
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-1.5">
-          <Badge variant="secondary" className="text-[10px] bg-muted">
-            {template.parties.party1}
-          </Badge>
-          <span className="text-muted-foreground/40">↔</span>
-          <Badge variant="secondary" className="text-[10px] bg-muted">
-            {template.parties.party2}
-          </Badge>
+
+      <p className="text-sm text-muted-foreground mb-4 leading-relaxed">
+        {template.description}
+      </p>
+
+      <div className="mb-4">
+        <h4 className="text-sm font-medium mb-2">Included Clauses</h4>
+        <div className="flex flex-wrap gap-1.5">
+          {template.defaultClauses.slice(0, 8).map((clauseId) => {
+            const clause = getClauseById(clauseId);
+            return clause ? (
+              <Badge key={clauseId} variant="secondary" className="text-xs">
+                {clause.name}
+              </Badge>
+            ) : null;
+          })}
+          {template.defaultClauses.length > 8 && (
+            <Badge variant="secondary" className="text-xs text-muted-foreground">
+              +{template.defaultClauses.length - 8} more
+            </Badge>
+          )}
         </div>
-        <Button
-          size="sm"
-          variant="ghost"
-          className="h-7 px-2 text-xs opacity-0 group-hover:opacity-100 transition-opacity"
-          onClick={(e) => {
-            e.stopPropagation();
-            onUse();
-          }}
-        >
-          Use Template
-          <ChevronRight className="w-3 h-3 ml-1" />
-        </Button>
       </div>
+
+      <Button
+        className="w-full bg-purple-500 hover:bg-purple-600 text-white"
+        onClick={onUse}
+      >
+        Use This Template
+      </Button>
     </motion.div>
   );
 };
@@ -696,11 +702,10 @@ const ClauseEditor = ({
 
 export default function TemplatesPage() {
   const searchParams = useSearchParams();
-  const [activeTab, setActiveTab] = useState<"browse" | "builder">("browse");
   const [selectedTemplate, setSelectedTemplate] = useState<ContractTemplate | null>(null);
   const [initialTemplateHandled, setInitialTemplateHandled] = useState(false);
 
-  // Builder state
+  // Builder state - Step 1 is template selection
   const [builderStep, setBuilderStep] = useState(1);
   const [selectedClauses, setSelectedClauses] = useState<string[]>([]);
   const [clauseValues, setClauseValues] = useState<Record<string, Record<string, string>>>({});
@@ -721,7 +726,7 @@ export default function TemplatesPage() {
   // Direction of navigation for animations (1 = forward, -1 = backward)
   const [navigationDirection, setNavigationDirection] = useState(1);
 
-  // Start builder with a template
+  // Start builder with a template - goes directly to Step 2
   const startWithTemplate = useCallback((template: ContractTemplate) => {
     setSelectedTemplate(template);
     setSelectedClauses(template.defaultClauses);
@@ -730,8 +735,7 @@ export default function TemplatesPage() {
     setContractDate("");
     setClauseValues({});
     setPdfUrl(null);
-    setBuilderStep(1);
-    setActiveTab("builder");
+    setBuilderStep(2); // Go directly to Step 2 (Select Clauses)
   }, []);
 
   // Handle template query parameter from command menu
@@ -960,218 +964,66 @@ export default function TemplatesPage() {
 
   return (
     <div className="p-6 max-w-6xl mx-auto">
-      {/* Main Tabs */}
-      <Tabs value={activeTab} onValueChange={(v) => {
-        setActiveTab(v as "browse" | "builder");
-        if (v === "browse") {
-          setSelectedTemplate(null); // Close template modal when going back to browse
-        }
-      }}>
-        <div className="flex items-center justify-between mb-6">
-          {/* Breadcrumbs - Left side (only in builder mode) */}
-          {activeTab === "builder" ? (
-            <div className="flex items-center gap-1">
-              {[
-                { step: 1, label: "Choose Template" },
-                { step: 2, label: "Select Clauses" },
-                { step: 3, label: "Customize" },
-                { step: 4, label: "Review & Export" },
-              ].map((item, index) => (
-                <div key={item.step} className="flex items-center">
-                  <button
-                    onClick={() => setBuilderStep(item.step)}
-                    className={cn(
-                      "flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-bold transition-colors",
-                      builderStep === item.step
-                        ? "bg-purple-500 text-white"
-                        : builderStep > item.step
-                        ? "bg-purple-500/20 text-purple-400"
-                        : "bg-muted text-muted-foreground"
-                    )}
-                  >
-                    <span className={cn(
-                      "w-4 h-4 rounded-full flex items-center justify-center text-[10px]",
-                      builderStep > item.step ? "bg-purple-500/30" : ""
-                    )}>
-                      {builderStep > item.step ? <Check className="w-3 h-3" /> : item.step}
-                    </span>
-                    <span className="hidden lg:inline">{item.label}</span>
-                  </button>
-                  {index < 3 && (
-                    <ChevronRight className="w-3 h-3 text-muted-foreground/40 mx-0.5" />
-                  )}
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div /> /* Empty spacer when not in builder mode */
-          )}
-
-          {/* Tabs - Right side */}
-          <TabsList>
-            <TabsTrigger value="browse" className="gap-2">
-              <HugeiconsIcon icon={GridViewIcon} className="w-4 h-4" />
-              Browse Templates
-            </TabsTrigger>
-            <TabsTrigger value="builder" className="gap-2">
-              <HugeiconsIcon icon={PlusSignIcon} className="w-4 h-4" />
-              Contract Builder
-            </TabsTrigger>
-          </TabsList>
-        </div>
-
-        {/* Browse Templates Tab */}
-        <TabsContent value="browse" className="space-y-6">
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {contractTemplates.map((template) => (
-              <TemplateCard
-                key={template.id}
-                template={template}
-                onSelect={() => setSelectedTemplate(template)}
-                onUse={() => startWithTemplate(template)}
-              />
-            ))}
-          </div>
-
-          {/* Template Detail Modal */}
-          <AnimatePresence>
-            {selectedTemplate && activeTab === "browse" && (
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm p-4"
-                onClick={() => setSelectedTemplate(null)}
-              >
-                <motion.div
-                  initial={{ scale: 0.95, opacity: 0 }}
-                  animate={{ scale: 1, opacity: 1 }}
-                  exit={{ scale: 0.95, opacity: 0 }}
-                  className="bg-background border border-border rounded-2xl p-6 max-w-lg w-full max-h-[80vh] overflow-auto"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  <div className="flex items-start justify-between mb-4">
-                    <div className="flex items-center gap-3">
-                      <div className="w-12 h-12 rounded-xl bg-purple-500/10 flex items-center justify-center">
-                        {iconMap[selectedTemplate.icon] && (
-                          <HugeiconsIcon
-                            icon={iconMap[selectedTemplate.icon]}
-                            size={24}
-                            className="text-purple-400"
-                          />
-                        )}
-                      </div>
-                      <div>
-                        <h2 className="text-lg font-semibold">{selectedTemplate.name}</h2>
-                        <p className="text-sm text-muted-foreground">
-                          {selectedTemplate.parties.party1} ↔ {selectedTemplate.parties.party2}
-                        </p>
-                      </div>
-                    </div>
-                    <button
-                      onClick={() => setSelectedTemplate(null)}
-                      className="w-8 h-8 rounded-lg hover:bg-muted flex items-center justify-center"
-                    >
-                      <X className="w-4 h-4" />
-                    </button>
-                  </div>
-
-                  <p className="text-sm text-muted-foreground mb-4">
-                    {selectedTemplate.description}
-                  </p>
-
-                  <div className="mb-4">
-                    <h4 className="text-sm font-medium mb-2">Included Clauses</h4>
-                    <div className="flex flex-wrap gap-1.5">
-                      {selectedTemplate.defaultClauses.map((clauseId) => {
-                        const clause = getClauseById(clauseId);
-                        return clause ? (
-                          <Badge key={clauseId} variant="secondary" className="text-xs">
-                            {clause.name}
-                          </Badge>
-                        ) : null;
-                      })}
-                    </div>
-                  </div>
-
-                  <div className="flex gap-2">
-                    <Button
-                      className="flex-1 bg-purple-500 hover:bg-purple-600 text-white"
-                      onClick={() => startWithTemplate(selectedTemplate)}
-                    >
-                      Use This Template
-                    </Button>
-                    <Button variant="outline" onClick={() => setSelectedTemplate(null)}>
-                      Cancel
-                    </Button>
-                  </div>
-                </motion.div>
-              </motion.div>
+      {/* Breadcrumb Stepper - Always visible */}
+      <div className="flex items-center gap-1 mb-6">
+        {[
+          { step: 1, label: "Choose Template" },
+          { step: 2, label: "Select Clauses" },
+          { step: 3, label: "Customize" },
+          { step: 4, label: "Review & Export" },
+        ].map((item, index) => (
+          <div key={item.step} className="flex items-center">
+            <button
+              onClick={() => {
+                // Can only go back to Step 1 if no template selected, or go to previous completed steps
+                if (item.step === 1) {
+                  setBuilderStep(1);
+                  setSelectedTemplate(null);
+                } else if (item.step <= builderStep) {
+                  setBuilderStep(item.step);
+                }
+              }}
+              disabled={item.step > builderStep && item.step !== 1}
+              className={cn(
+                "flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-bold transition-colors",
+                builderStep === item.step
+                  ? "bg-purple-500 text-white"
+                  : builderStep > item.step
+                  ? "bg-purple-500/20 text-purple-400 hover:bg-purple-500/30 cursor-pointer"
+                  : "bg-muted text-muted-foreground cursor-not-allowed"
+              )}
+            >
+              <span className={cn(
+                "w-4 h-4 rounded-full flex items-center justify-center text-[10px]",
+                builderStep > item.step ? "bg-purple-500/30" : ""
+              )}>
+                {builderStep > item.step ? <Check className="w-3 h-3" /> : item.step}
+              </span>
+              <span className="hidden lg:inline">{item.label}</span>
+            </button>
+            {index < 3 && (
+              <ChevronRight className="w-3 h-3 text-muted-foreground/40 mx-0.5" />
             )}
-          </AnimatePresence>
-        </TabsContent>
+          </div>
+        ))}
+      </div>
 
-        {/* Contract Builder Tab */}
-        <TabsContent value="builder" className="space-y-6">
-          {/* Step 1: Choose Template */}
-          {builderStep === 1 && (
-            <div className="space-y-4">
-              <h2 className="text-lg font-medium">Choose a Starting Template</h2>
-              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {contractTemplates.map((template) => (
-                  <div
-                    key={template.id}
-                    onClick={() => {
-                      // Only reset if changing to a different template
-                      if (selectedTemplate?.id !== template.id) {
-                        setSelectedTemplate(template);
-                        setSelectedClauses(template.defaultClauses);
-                        setContractTitle(template.name);
-                      }
-                    }}
-                    className={cn(
-                      "border rounded-xl p-4 cursor-pointer transition-all",
-                      selectedTemplate?.id === template.id
-                        ? "border-purple-500 bg-purple-500/10"
-                        : "border-border hover:border-purple-500/30"
-                    )}
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-lg bg-purple-500/10 flex items-center justify-center">
-                        {iconMap[template.icon] && (
-                          <HugeiconsIcon
-                            icon={iconMap[template.icon]}
-                            size={20}
-                            className="text-purple-400"
-                          />
-                        )}
-                      </div>
-                      <div>
-                        <h3 className="font-medium text-sm">{template.name}</h3>
-                        <p className="text-xs text-muted-foreground">
-                          {template.defaultClauses.length} clauses
-                        </p>
-                      </div>
-                      {selectedTemplate?.id === template.id && (
-                        <Check className="w-5 h-5 text-purple-500 ml-auto" />
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-              <div className="flex justify-end">
-                <Button
-                  onClick={() => setBuilderStep(2)}
-                  disabled={!selectedTemplate}
-                  className="bg-purple-500 hover:bg-purple-600 text-white"
-                >
-                  Continue
-                  <ChevronRight className="w-4 h-4 ml-2" />
-                </Button>
-              </div>
-            </div>
-          )}
+      {/* Step 1: Choose Template */}
+      {builderStep === 1 && (
+        <div className="grid md:grid-cols-2 gap-4">
+          {contractTemplates.map((template) => (
+            <ExpandedTemplateCard
+              key={template.id}
+              template={template}
+              onUse={() => startWithTemplate(template)}
+            />
+          ))}
+        </div>
+      )}
 
+      {/* Steps 2-4: Builder Flow */}
+      {builderStep >= 2 && (
+        <>
           {/* Step 2: Select Clauses */}
           {builderStep === 2 && (
             <div className="space-y-4">
@@ -1604,8 +1456,8 @@ export default function TemplatesPage() {
               </div>
             </div>
           )}
-        </TabsContent>
-      </Tabs>
+        </>
+      )}
     </div>
   );
 }
