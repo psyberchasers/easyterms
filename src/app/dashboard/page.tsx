@@ -318,7 +318,7 @@ export default function DashboardPage() {
             </p>
             {contracts.length === 0 && (
               <Link href="/analyze">
-                <Button className="rounded-lg bg-primary text-primary-foreground hover:bg-primary/90">
+                <Button className="rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 px-6">
                   <HugeiconsIcon icon={AiSheetsIcon} size={16} className="mr-2" />
                   New Analysis
                 </Button>

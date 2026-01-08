@@ -210,7 +210,7 @@ function DashboardHeader({
   return (
     <header
       className={cn(
-        "fixed top-0 right-0 z-50 flex h-12 items-center gap-1 sm:gap-2 border-b border-border bg-background px-2 sm:px-4 transition-[left] duration-400 ease-[cubic-bezier(0.75,0,0.25,1)]",
+        "fixed top-0 right-0 z-50 flex h-12 items-center gap-1.5 sm:gap-2 border-b border-border bg-background px-4 sm:px-4 transition-[left] duration-400 ease-[cubic-bezier(0.75,0,0.25,1)]",
         "left-0 md:left-[var(--sidebar-width-icon,3rem)]",
         !isCollapsed && "md:left-[var(--sidebar-width,16rem)]"
       )}
