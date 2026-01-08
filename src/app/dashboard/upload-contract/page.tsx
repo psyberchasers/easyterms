@@ -73,6 +73,8 @@ import { FinancialCalculator } from "@/components/FinancialCalculator";
 import { MusicLoader } from "@/components/MusicLoader";
 import { DownloadIcon as AnimatedDownloadIcon, DownloadHandle } from "@/components/DownloadIcon";
 import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "@/components/animate-ui/components/animate/tooltip";
+import { DocumentScanner } from "@/components/DocumentScanner";
+import { Camera } from "lucide-react";
 
 // Dynamically import components
 const PDFViewerWithSearch = dynamic(() => import("@/components/PDFViewerWithSearch").then((mod) => mod.PDFViewerWithSearch), {
@@ -312,6 +314,17 @@ export default function UploadContractPage() {
   const versionInputRef = useRef<HTMLInputElement>(null);
   const downloadIconRef = useRef<DownloadHandle>(null);
 
+  // Document scanner state
+  const [showScanner, setShowScanner] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+
+  // Detect mobile
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      setIsMobile(window.innerWidth < 768);
+    }
+  }, []);
+
   // Handle file selection
   const handleFileSelect = useCallback(async (file: File) => {
     setStatus("uploading");
@@ -515,6 +528,13 @@ export default function UploadContractPage() {
     const file = e.dataTransfer.files[0];
     if (file) handleFileSelect(file);
   };
+
+  // Handle scanned document from DocumentScanner
+  const handleScanComplete = useCallback((pdfBlob: Blob, fileName: string) => {
+    setShowScanner(false);
+    const file = new File([pdfBlob], fileName, { type: "application/pdf" });
+    handleFileSelect(file);
+  }, [handleFileSelect]);
 
   // Helper functions
   const getRiskColor = (risk: string) => {
@@ -801,6 +821,21 @@ export default function UploadContractPage() {
                         PDF, DOC, DOCX, TXT up to 200MB
                       </p>
                     </div>
+                    {/* Scan Document Button - Mobile Only */}
+                    {isMobile && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="mt-4 rounded-lg"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setShowScanner(true);
+                        }}
+                      >
+                        <Camera className="w-4 h-4 mr-2" />
+                        Scan Document
+                      </Button>
+                    )}
                   </div>
                 </motion.div>
                 </div>
@@ -2006,6 +2041,23 @@ export default function UploadContractPage() {
             )}
         </main>
       </Tabs>
+
+      {/* Document Scanner Dialog */}
+      <Dialog open={showScanner} onOpenChange={setShowScanner}>
+        <DialogContent className="sm:max-w-md p-0">
+          <DialogHeader className="p-6 pb-0">
+            <DialogTitle>Scan Document</DialogTitle>
+            <DialogDescription>
+              Position your contract pages in the camera view to scan them as a PDF.
+            </DialogDescription>
+          </DialogHeader>
+          <DocumentScanner
+            onScanComplete={handleScanComplete}
+            onClose={() => setShowScanner(false)}
+            className="min-h-[300px]"
+          />
+        </DialogContent>
+      </Dialog>
     </motion.div>
   );
 }
