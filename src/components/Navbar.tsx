@@ -204,7 +204,7 @@ export function Navbar({ showNewAnalysis = true, showBorder = false, showSearch 
   return (
     <>
       <header className={`fixed top-0 left-0 right-0 z-50 bg-background ${showBorder ? 'border-b border-border' : ''}`}>
-        <div className="max-w-full mx-auto px-4 h-14 grid grid-cols-3 items-center">
+        <div className="max-w-full mx-auto px-6 h-14 grid grid-cols-3 items-center">
           {/* Left - Logo */}
           <Link href="/" className="flex items-center gap-2">
             <img src={theme === "dark" ? "/darkModeS.svg" : "/logoSingle.svg"} alt="EasyTerms" className="h-8" />
@@ -234,7 +234,7 @@ export function Navbar({ showNewAnalysis = true, showBorder = false, showSearch 
               {showNewAnalysis && (
                 <Link
                   href="/analyze"
-                  className="h-8 px-3 text-[13px] font-semibold bg-purple-500 hover:bg-purple-600 text-white rounded-md flex items-center gap-2 transition-colors"
+                  className="h-8 px-5 text-[13px] font-semibold bg-purple-500 hover:bg-purple-600 text-white rounded-md flex items-center gap-2 transition-colors"
                 >
                   <HugeiconsIcon icon={AiSheetsIcon} size={14} />
                   New Analysis
