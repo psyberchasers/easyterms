@@ -21,7 +21,7 @@ import {
   CommandList,
   CommandShortcut,
 } from "@/components/ui/command";
-import { FileText, X } from "lucide-react";
+import { FileText, X, Bell, CheckCheck, Share2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
@@ -54,6 +54,21 @@ interface Contract {
   created_at: string;
 }
 
+interface Notification {
+  id: string;
+  type: "contract_shared" | "signature_requested" | "contract_signed" | "comment_added";
+  title: string;
+  message: string | null;
+  contract_id: string | null;
+  from_user_id: string | null;
+  read: boolean;
+  created_at: string;
+  from_user?: {
+    full_name: string | null;
+    avatar_url: string | null;
+  };
+}
+
 export function Navbar({ showNewAnalysis = true, showBorder = false, showSearch = true }: NavbarProps) {
   const { user, profile, loading, signOut } = useAuth();
   const { theme } = useTheme();
@@ -62,7 +77,12 @@ export function Navbar({ showNewAnalysis = true, showBorder = false, showSearch 
   const [contracts, setContracts] = useState<Contract[]>([]);
   const [commandTab, setCommandTab] = useState<"all" | "contracts" | "actions" | "navigation">("all");
   const [searchValue, setSearchValue] = useState("");
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [notificationsOpen, setNotificationsOpen] = useState(false);
   const supabase = createClient();
+
+  // Calculate unread count
+  const unreadCount = notifications.filter((n) => !n.read).length;
 
   // Fetch contracts when command menu opens
   const fetchContracts = useCallback(async () => {
@@ -75,11 +95,94 @@ export function Navbar({ showNewAnalysis = true, showBorder = false, showSearch 
     if (data) setContracts(data);
   }, [user, supabase]);
 
+  // Fetch notifications
+  const fetchNotifications = useCallback(async () => {
+    if (!user) return;
+    const { data } = await supabase
+      .from("notifications")
+      .select(`
+        id,
+        type,
+        title,
+        message,
+        contract_id,
+        from_user_id,
+        read,
+        created_at,
+        from_user:profiles!from_user_id (
+          full_name,
+          avatar_url
+        )
+      `)
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false })
+      .limit(20);
+    if (data) {
+        // Transform the data to handle Supabase's array format for joined relations
+        const transformed = data.map((n: any) => ({
+          ...n,
+          from_user: Array.isArray(n.from_user) ? n.from_user[0] : n.from_user,
+        }));
+        setNotifications(transformed as Notification[]);
+      }
+  }, [user, supabase]);
+
+  // Mark notification as read
+  const markAsRead = async (notificationId: string) => {
+    await supabase
+      .from("notifications")
+      .update({ read: true })
+      .eq("id", notificationId);
+    setNotifications((prev) =>
+      prev.map((n) => (n.id === notificationId ? { ...n, read: true } : n))
+    );
+  };
+
+  // Mark all as read
+  const markAllAsRead = async () => {
+    if (!user) return;
+    await supabase
+      .from("notifications")
+      .update({ read: true })
+      .eq("user_id", user.id)
+      .eq("read", false);
+    setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+  };
+
   useEffect(() => {
     if (commandOpen && user) {
       fetchContracts();
     }
   }, [commandOpen, user, fetchContracts]);
+
+  // Fetch notifications on mount and subscribe to changes
+  useEffect(() => {
+    if (!user) return;
+
+    fetchNotifications();
+
+    // Subscribe to new notifications
+    const channel = supabase
+      .channel("notifications")
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "notifications",
+          filter: `user_id=eq.${user.id}`,
+        },
+        (payload) => {
+          // Fetch fresh to get the joined profile data
+          fetchNotifications();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user, supabase, fetchNotifications]);
 
   // Handle ⌘K keyboard shortcut
   useEffect(() => {
@@ -144,6 +247,100 @@ export function Navbar({ showNewAnalysis = true, showBorder = false, showSearch 
                 <HugeiconsIcon icon={DashboardSquare01Icon} size={14} />
                 Dashboard
               </Link>
+
+              {/* Notifications Bell */}
+              <DropdownMenu open={notificationsOpen} onOpenChange={setNotificationsOpen}>
+                <DropdownMenuTrigger asChild>
+                  <button className="relative w-8 h-8 border border-border rounded-md flex items-center justify-center hover:bg-muted transition-colors">
+                    <Bell className="w-4 h-4 text-muted-foreground" />
+                    {unreadCount > 0 && (
+                      <span className="absolute -top-1 -right-1 w-4 h-4 bg-purple-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
+                        {unreadCount > 9 ? "9+" : unreadCount}
+                      </span>
+                    )}
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-80 bg-card border-border p-0">
+                  <div className="flex items-center justify-between px-3 py-2 border-b border-border">
+                    <span className="text-sm font-medium text-foreground">Notifications</span>
+                    {unreadCount > 0 && (
+                      <button
+                        onClick={markAllAsRead}
+                        className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1"
+                      >
+                        <CheckCheck className="w-3 h-3" />
+                        Mark all read
+                      </button>
+                    )}
+                  </div>
+                  <div className="max-h-[320px] overflow-y-auto">
+                    {notifications.length === 0 ? (
+                      <div className="py-8 text-center">
+                        <Bell className="w-8 h-8 mx-auto text-muted-foreground/30 mb-2" />
+                        <p className="text-sm text-muted-foreground">No notifications yet</p>
+                      </div>
+                    ) : (
+                      notifications.map((notification) => (
+                        <button
+                          key={notification.id}
+                          onClick={() => {
+                            markAsRead(notification.id);
+                            if (notification.contract_id) {
+                              router.push(`/contract/${notification.contract_id}`);
+                            }
+                            setNotificationsOpen(false);
+                          }}
+                          className={cn(
+                            "w-full text-left px-3 py-3 hover:bg-muted transition-colors border-b border-border last:border-b-0",
+                            !notification.read && "bg-purple-500/5"
+                          )}
+                        >
+                          <div className="flex gap-3">
+                            <div className={cn(
+                              "w-8 h-8 rounded-full flex items-center justify-center shrink-0",
+                              notification.type === "contract_shared" && "bg-purple-500/10",
+                              notification.type === "signature_requested" && "bg-blue-500/10",
+                              notification.type === "contract_signed" && "bg-green-500/10",
+                              notification.type === "comment_added" && "bg-yellow-500/10"
+                            )}>
+                              <Share2 className={cn(
+                                "w-4 h-4",
+                                notification.type === "contract_shared" && "text-purple-500",
+                                notification.type === "signature_requested" && "text-blue-500",
+                                notification.type === "contract_signed" && "text-green-500",
+                                notification.type === "comment_added" && "text-yellow-500"
+                              )} />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium text-foreground truncate">
+                                {notification.title}
+                              </p>
+                              {notification.message && (
+                                <p className="text-xs text-muted-foreground line-clamp-2 mt-0.5">
+                                  {notification.message}
+                                </p>
+                              )}
+                              <p className="text-[10px] text-muted-foreground/60 mt-1">
+                                {new Date(notification.created_at).toLocaleDateString("en-US", {
+                                  month: "short",
+                                  day: "numeric",
+                                  hour: "numeric",
+                                  minute: "2-digit",
+                                })}
+                              </p>
+                            </div>
+                            {!notification.read && (
+                              <div className="w-2 h-2 rounded-full bg-purple-500 shrink-0 mt-2" />
+                            )}
+                          </div>
+                        </button>
+                      ))
+                    )}
+                  </div>
+                </DropdownMenuContent>
+              </DropdownMenu>
+
+              {/* User Profile */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <button className="w-8 h-8 border border-border rounded-md flex items-center justify-center hover:bg-muted transition-colors">

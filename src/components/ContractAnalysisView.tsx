@@ -36,6 +36,8 @@ import {
   ArrowUpRight,
   ArrowDownRight,
   FileOutput,
+  Share2,
+  Send,
 } from "lucide-react";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
@@ -177,6 +179,15 @@ export function ContractAnalysisView({
   const [downloading, setDownloading] = useState(false);
   const [exporting, setExporting] = useState(false);
 
+  // Share modal state
+  const [showShareModal, setShowShareModal] = useState(false);
+  const [shareEmail, setShareEmail] = useState("");
+  const [shareMessage, setShareMessage] = useState("");
+  const [sharePermission, setSharePermission] = useState<"view" | "comment" | "sign">("view");
+  const [sharing, setSharing] = useState(false);
+  const [shareSuccess, setShareSuccess] = useState(false);
+  const [shareError, setShareError] = useState<string | null>(null);
+
   // Date management
   const [showAddDate, setShowAddDate] = useState(false);
   const [newDate, setNewDate] = useState({ date_type: "", date: "", description: "" });
@@ -213,6 +224,45 @@ export function ContractAnalysisView({
       } finally {
         setExporting(false);
       }
+    }
+  };
+
+  // Handle share contract
+  const handleShare = async () => {
+    if (!contractId || !shareEmail) return;
+
+    setSharing(true);
+    setShareError(null);
+
+    try {
+      const response = await fetch("/api/contracts/share", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contractId,
+          email: shareEmail,
+          permission: sharePermission,
+          message: shareMessage || undefined,
+        }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || "Failed to share contract");
+      }
+
+      setShareSuccess(true);
+      setTimeout(() => {
+        setShowShareModal(false);
+        setShareEmail("");
+        setShareMessage("");
+        setSharePermission("view");
+        setShareSuccess(false);
+      }, 2000);
+    } catch (err) {
+      setShareError(err instanceof Error ? err.message : "Failed to share contract");
+    } finally {
+      setSharing(false);
     }
   };
 
@@ -347,6 +397,15 @@ export function ContractAnalysisView({
                     <Download className="w-3 h-3" />
                   )}
                   Download
+                </button>
+              )}
+              {contractId && (
+                <button
+                  onClick={() => setShowShareModal(true)}
+                  className="h-7 px-2 text-[11px] text-purple-400 hover:text-purple-300 border border-purple-500/30 hover:bg-purple-500/10 flex items-center gap-1.5 transition-colors rounded-md"
+                >
+                  <Share2 className="w-3 h-3" />
+                  Share
                 </button>
               )}
               {onReset && (
@@ -1090,6 +1149,129 @@ export function ContractAnalysisView({
           )}
         </main>
       </Tabs>
+
+      {/* Share Modal */}
+      <Dialog open={showShareModal} onOpenChange={(open) => {
+        setShowShareModal(open);
+        if (!open) {
+          setShareEmail("");
+          setShareMessage("");
+          setSharePermission("view");
+          setShareError(null);
+          setShareSuccess(false);
+        }
+      }}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Share Contract</DialogTitle>
+            <DialogDescription>
+              Invite someone to view, comment on, or sign this contract
+            </DialogDescription>
+          </DialogHeader>
+
+          {shareSuccess ? (
+            <div className="py-8 text-center">
+              <div className="w-12 h-12 rounded-full bg-green-500/10 flex items-center justify-center mx-auto mb-3">
+                <CheckCircle2 className="w-6 h-6 text-green-500" />
+              </div>
+              <p className="text-sm font-medium text-foreground">Invitation sent!</p>
+              <p className="text-xs text-muted-foreground mt-1">
+                {shareEmail} will receive an email shortly
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-4 pt-2">
+              {/* Email Input */}
+              <div className="space-y-2">
+                <label className="text-xs font-medium text-foreground">Email address</label>
+                <Input
+                  type="email"
+                  placeholder="colleague@example.com"
+                  value={shareEmail}
+                  onChange={(e) => setShareEmail(e.target.value)}
+                  className="text-sm"
+                />
+              </div>
+
+              {/* Permission Selector */}
+              <div className="space-y-2">
+                <label className="text-xs font-medium text-foreground">Permission</label>
+                <Select value={sharePermission} onValueChange={(v: "view" | "comment" | "sign") => setSharePermission(v)}>
+                  <SelectTrigger className="text-sm">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="view">
+                      <div className="flex items-center gap-2">
+                        <Eye className="w-3.5 h-3.5 text-muted-foreground" />
+                        <span>Can view</span>
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="comment">
+                      <div className="flex items-center gap-2">
+                        <FileText className="w-3.5 h-3.5 text-muted-foreground" />
+                        <span>Can comment</span>
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="sign">
+                      <div className="flex items-center gap-2">
+                        <Send className="w-3.5 h-3.5 text-muted-foreground" />
+                        <span>Request signature</span>
+                      </div>
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Optional Message */}
+              <div className="space-y-2">
+                <label className="text-xs font-medium text-foreground">
+                  Message <span className="text-muted-foreground font-normal">(optional)</span>
+                </label>
+                <textarea
+                  placeholder="Add a personal note..."
+                  value={shareMessage}
+                  onChange={(e) => setShareMessage(e.target.value)}
+                  rows={3}
+                  className="w-full px-3 py-2 text-sm bg-background border border-border rounded-md resize-none focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500/50"
+                />
+              </div>
+
+              {/* Error Message */}
+              {shareError && (
+                <div className="flex items-center gap-2 text-xs text-red-500 bg-red-500/10 px-3 py-2 rounded-md">
+                  <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
+                  {shareError}
+                </div>
+              )}
+
+              {/* Actions */}
+              <div className="flex gap-2 pt-2">
+                <button
+                  onClick={() => setShowShareModal(false)}
+                  className="flex-1 h-9 text-sm text-muted-foreground hover:text-foreground border border-border hover:bg-muted rounded-md transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleShare}
+                  disabled={!shareEmail || sharing}
+                  className="flex-1 h-9 text-sm bg-purple-600 hover:bg-purple-700 text-white rounded-md flex items-center justify-center gap-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {sharing ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <>
+                      <Send className="w-3.5 h-3.5" />
+                      Send Invitation
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </motion.div>
   );
 }

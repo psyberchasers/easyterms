@@ -57,6 +57,7 @@ import { MusicLoader } from "@/components/MusicLoader";
 import { DeleteConfirmModal } from "@/components/DeleteConfirmModal";
 import { NotificationModal } from "@/components/NotificationModal";
 import { FinancialCalculator } from "@/components/FinancialCalculator";
+import { ContractComments } from "@/components/ContractComments";
 import NewsCard from "@/components/NewsCard";
 
 interface ContractVersion {
@@ -703,6 +704,7 @@ export default function ContractDetailPage() {
                       { id: "advice", label: "Advice" },
                       { id: "versions", label: "Versions" },
                       { id: "dates", label: "Dates" },
+                      { id: "discussion", label: "Discussion" },
                     ].map((tab) => (
                       <button
                         key={tab.id}
@@ -1127,6 +1129,17 @@ export default function ContractDetailPage() {
                       })}
                     </div>
                   )}
+                </TabsContent>
+
+                {/* Discussion Tab */}
+                <TabsContent value="discussion" className="mt-0 h-[calc(100vh-280px)]">
+                  <div className="rounded-2xl overflow-hidden h-full" style={{ backgroundColor: '#f3f1f0' }}>
+                    <ContractComments
+                      contractId={contractId}
+                      isOwner={true}
+                      canComment={true}
+                    />
+                  </div>
                 </TabsContent>
               </div>
             </Tabs>

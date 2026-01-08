@@ -28,6 +28,9 @@ import {
 import {
   LogOut,
   ChevronsUpDown,
+  Bell,
+  CheckCheck,
+  Share2,
 } from "lucide-react";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
@@ -50,6 +53,20 @@ import { useTheme } from "@/components/providers/ThemeProvider";
 import { CommandMenu } from "@/components/CommandMenu";
 import { motion } from "framer-motion";
 import { createClient } from "@/lib/supabase/client";
+import { cn } from "@/lib/utils";
+import { useRouter } from "next/navigation";
+import { useCallback } from "react";
+
+interface Notification {
+  id: string;
+  type: "contract_shared" | "signature_requested" | "contract_signed" | "comment_added";
+  title: string;
+  message: string | null;
+  contract_id: string | null;
+  from_user_id: string | null;
+  read: boolean;
+  created_at: string;
+}
 
 interface SidebarContract {
   id: string;
@@ -77,12 +94,26 @@ interface DashboardHeaderProps {
   onSearchClick: () => void;
   theme: string;
   toggleTheme: () => void;
+  notifications: Notification[];
+  notificationsOpen: boolean;
+  setNotificationsOpen: (open: boolean) => void;
+  unreadCount: number;
+  markAsRead: (id: string) => void;
+  markAllAsRead: () => void;
+  onNotificationClick: (notification: Notification) => void;
 }
 
 function DashboardHeader({
   onSearchClick,
   theme,
   toggleTheme,
+  notifications,
+  notificationsOpen,
+  setNotificationsOpen,
+  unreadCount,
+  markAsRead,
+  markAllAsRead,
+  onNotificationClick,
 }: DashboardHeaderProps) {
   const { state } = useSidebar();
   const isCollapsed = state === "collapsed";
@@ -185,6 +216,93 @@ function DashboardHeader({
         <HugeiconsIcon icon={AiSearch02Icon} size={14} />
         <span>Search</span>
       </button>
+
+      {/* Notifications Bell */}
+      <DropdownMenu open={notificationsOpen} onOpenChange={setNotificationsOpen}>
+        <DropdownMenuTrigger asChild>
+          <button className="relative h-8 w-8 flex items-center justify-center border border-border hover:bg-muted transition-colors rounded-md">
+            <Bell className="w-4 h-4 text-muted-foreground" />
+            {unreadCount > 0 && (
+              <span className="absolute -top-1 -right-1 w-4 h-4 bg-purple-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
+                {unreadCount > 9 ? "9+" : unreadCount}
+              </span>
+            )}
+          </button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="w-80 bg-card border-border p-0">
+          <div className="flex items-center justify-between px-3 py-2 border-b border-border">
+            <span className="text-sm font-medium text-foreground">Notifications</span>
+            {unreadCount > 0 && (
+              <button
+                onClick={markAllAsRead}
+                className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1"
+              >
+                <CheckCheck className="w-3 h-3" />
+                Mark all read
+              </button>
+            )}
+          </div>
+          <div className="max-h-[320px] overflow-y-auto">
+            {notifications.length === 0 ? (
+              <div className="py-8 text-center">
+                <Bell className="w-8 h-8 mx-auto text-muted-foreground/30 mb-2" />
+                <p className="text-sm text-muted-foreground">No notifications yet</p>
+              </div>
+            ) : (
+              notifications.map((notification) => (
+                <button
+                  key={notification.id}
+                  onClick={() => onNotificationClick(notification)}
+                  className={cn(
+                    "w-full text-left px-3 py-3 hover:bg-muted transition-colors border-b border-border last:border-b-0",
+                    !notification.read && "bg-purple-500/5"
+                  )}
+                >
+                  <div className="flex gap-3">
+                    <div className={cn(
+                      "w-8 h-8 rounded-full flex items-center justify-center shrink-0",
+                      notification.type === "contract_shared" && "bg-purple-500/10",
+                      notification.type === "signature_requested" && "bg-blue-500/10",
+                      notification.type === "contract_signed" && "bg-green-500/10",
+                      notification.type === "comment_added" && "bg-yellow-500/10"
+                    )}>
+                      <Share2 className={cn(
+                        "w-4 h-4",
+                        notification.type === "contract_shared" && "text-purple-500",
+                        notification.type === "signature_requested" && "text-blue-500",
+                        notification.type === "contract_signed" && "text-green-500",
+                        notification.type === "comment_added" && "text-yellow-500"
+                      )} />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-foreground truncate">
+                        {notification.title}
+                      </p>
+                      {notification.message && (
+                        <p className="text-xs text-muted-foreground line-clamp-2 mt-0.5">
+                          {notification.message}
+                        </p>
+                      )}
+                      <p className="text-[10px] text-muted-foreground/60 mt-1">
+                        {new Date(notification.created_at).toLocaleDateString("en-US", {
+                          month: "short",
+                          day: "numeric",
+                          hour: "numeric",
+                          minute: "2-digit",
+                        })}
+                      </p>
+                    </div>
+                    {!notification.read && (
+                      <div className="w-2 h-2 rounded-full bg-purple-500 shrink-0 mt-2" />
+                    )}
+                  </div>
+                </button>
+              ))
+            )}
+          </div>
+        </DropdownMenuContent>
+      </DropdownMenu>
+
       <button
         disabled
         className="h-8 px-3 flex items-center gap-2 border border-border rounded-md text-[13px] font-semibold text-muted-foreground/40 cursor-not-allowed"
@@ -216,11 +334,88 @@ function DashboardHeader({
 
 export default function DashboardLayout({ children }: DashboardLayoutProps) {
   const pathname = usePathname();
+  const router = useRouter();
   const { user, profile, loading: authLoading, signOut } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const [commandMenuOpen, setCommandMenuOpen] = useState(false);
   const [sidebarContracts, setSidebarContracts] = useState<SidebarContract[]>([]);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [notificationsOpen, setNotificationsOpen] = useState(false);
   const supabase = createClient();
+
+  // Calculate unread count
+  const unreadCount = notifications.filter((n) => !n.read).length;
+
+  // Fetch notifications
+  const fetchNotifications = useCallback(async () => {
+    if (!user) return;
+    const { data } = await supabase
+      .from("notifications")
+      .select("*")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false })
+      .limit(20);
+    if (data) setNotifications(data as Notification[]);
+  }, [user, supabase]);
+
+  // Mark notification as read
+  const markAsRead = async (notificationId: string) => {
+    await supabase
+      .from("notifications")
+      .update({ read: true })
+      .eq("id", notificationId);
+    setNotifications((prev) =>
+      prev.map((n) => (n.id === notificationId ? { ...n, read: true } : n))
+    );
+  };
+
+  // Mark all as read
+  const markAllAsRead = async () => {
+    if (!user) return;
+    await supabase
+      .from("notifications")
+      .update({ read: true })
+      .eq("user_id", user.id)
+      .eq("read", false);
+    setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+  };
+
+  // Handle notification click
+  const handleNotificationClick = (notification: Notification) => {
+    markAsRead(notification.id);
+    if (notification.contract_id) {
+      router.push(`/dashboard/contracts/${notification.contract_id}`);
+    }
+    setNotificationsOpen(false);
+  };
+
+  // Fetch notifications on mount and subscribe to changes
+  useEffect(() => {
+    if (!user) return;
+
+    fetchNotifications();
+
+    // Subscribe to new notifications
+    const channel = supabase
+      .channel("dashboard-notifications")
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "notifications",
+          filter: `user_id=eq.${user.id}`,
+        },
+        () => {
+          fetchNotifications();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user, supabase, fetchNotifications]);
 
   // Fetch recent contracts for sidebar
   useEffect(() => {
@@ -468,6 +663,13 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
           onSearchClick={() => setCommandMenuOpen(true)}
           theme={theme}
           toggleTheme={toggleTheme}
+          notifications={notifications}
+          notificationsOpen={notificationsOpen}
+          setNotificationsOpen={setNotificationsOpen}
+          unreadCount={unreadCount}
+          markAsRead={markAsRead}
+          markAllAsRead={markAllAsRead}
+          onNotificationClick={handleNotificationClick}
         />
 
         {/* Main content - offset for fixed header */}
