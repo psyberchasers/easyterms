@@ -833,9 +833,6 @@ export default function UploadContractPage() {
                     onPointerDown={(e) => {
                       e.stopPropagation();
                       setShowScanner(true);
-                      setTimeout(() => {
-                        alert("showScanner is now: " + true);
-                      }, 100);
                     }}
                   >
                     <Camera className="w-4 h-4" />
@@ -2049,19 +2046,44 @@ export default function UploadContractPage() {
       {/* Document Scanner Dialog - Simplified for testing */}
       {showScanner && (
         <div
-          className="fixed inset-0 z-[9999] bg-black/50 flex items-center justify-center"
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(255, 0, 0, 0.9)',
+            zIndex: 99999,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
           onClick={() => setShowScanner(false)}
         >
           <div
-            className="bg-background p-6 rounded-lg max-w-md mx-4"
+            style={{
+              backgroundColor: 'white',
+              padding: '24px',
+              borderRadius: '12px',
+              maxWidth: '90%',
+            }}
             onClick={(e) => e.stopPropagation()}
           >
-            <h2 className="text-lg font-semibold mb-2">Scan Document</h2>
-            <p className="text-sm text-muted-foreground mb-4">
-              Scanner dialog is working! The DocumentScanner component would go here.
+            <h2 style={{ fontSize: '18px', fontWeight: 'bold', marginBottom: '8px', color: 'black' }}>
+              MODAL IS WORKING!
+            </h2>
+            <p style={{ fontSize: '14px', color: '#666', marginBottom: '16px' }}>
+              If you see this, the modal works. Tap Close or the red area.
             </p>
             <button
-              className="px-4 py-2 bg-purple-500 text-white rounded-lg"
+              style={{
+                padding: '12px 24px',
+                backgroundColor: '#a855f7',
+                color: 'white',
+                borderRadius: '8px',
+                border: 'none',
+                fontSize: '16px',
+              }}
               onClick={() => setShowScanner(false)}
             >
               Close
