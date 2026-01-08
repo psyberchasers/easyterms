@@ -162,72 +162,121 @@ const AnalysisResult = ({ analysis, fileName }: { analysis: ContractAnalysis; fi
   );
 };
 
+// Helper to render text with inline bold
+const renderWithBold = (text: string) => {
+  const parts = text.split(/\*\*([^*]+)\*\*/g);
+  return parts.map((part, i) =>
+    i % 2 === 1
+      ? <strong key={i} className="font-semibold text-foreground">{part}</strong>
+      : part
+  );
+};
+
 // Format chat message with basic markdown-like styling
 const FormattedMessage = ({ content }: { content: string }) => {
-  // Split by double newlines for paragraphs
-  const paragraphs = content.split(/\n\n+/);
+  // Split by newlines to process line by line
+  const lines = content.split('\n');
+  const elements: JSX.Element[] = [];
+  let currentParagraph: string[] = [];
+  let currentList: { type: 'ul' | 'ol'; items: string[] } | null = null;
 
-  return (
-    <div className="space-y-3">
-      {paragraphs.map((paragraph, pIndex) => {
-        // Check if it's a numbered list
-        if (/^\d+\.\s/.test(paragraph)) {
-          const items = paragraph.split(/\n(?=\d+\.\s)/);
-          return (
-            <ol key={pIndex} className="space-y-2">
-              {items.map((item, iIndex) => {
-                const match = item.match(/^(\d+)\.\s\*\*([^*]+)\*\*:?\s*([\s\S]*)/);
-                if (match) {
-                  return (
-                    <li key={iIndex} className="text-sm">
-                      <span className="font-semibold text-foreground">{match[2]}</span>
-                      {match[3] && <span className="text-foreground/80">: {match[3]}</span>}
-                    </li>
-                  );
-                }
-                const simpleMatch = item.match(/^(\d+)\.\s*([\s\S]*)/);
-                if (simpleMatch) {
-                  return (
-                    <li key={iIndex} className="text-sm text-foreground/80">
-                      {simpleMatch[2]}
-                    </li>
-                  );
-                }
-                return <li key={iIndex} className="text-sm">{item}</li>;
-              })}
-            </ol>
-          );
-        }
+  const flushParagraph = () => {
+    if (currentParagraph.length > 0) {
+      const text = currentParagraph.join(' ');
+      elements.push(
+        <p key={elements.length} className="text-sm leading-relaxed text-foreground/80">
+          {renderWithBold(text)}
+        </p>
+      );
+      currentParagraph = [];
+    }
+  };
 
-        // Check if it's a bullet list
-        if (/^[-•]\s/.test(paragraph)) {
-          const items = paragraph.split(/\n(?=[-•]\s)/);
-          return (
-            <ul key={pIndex} className="space-y-1.5">
-              {items.map((item, iIndex) => (
-                <li key={iIndex} className="text-sm text-foreground/80 flex items-start gap-2">
-                  <span className="w-1.5 h-1.5 rounded-full bg-purple-400 mt-2 shrink-0" />
-                  <span>{item.replace(/^[-•]\s*/, '')}</span>
-                </li>
-              ))}
-            </ul>
-          );
-        }
-
-        // Regular paragraph - handle inline bold
-        const parts = paragraph.split(/\*\*([^*]+)\*\*/g);
-        return (
-          <p key={pIndex} className="text-sm leading-relaxed text-foreground/80">
-            {parts.map((part, partIndex) =>
-              partIndex % 2 === 1
-                ? <strong key={partIndex} className="font-semibold text-foreground">{part}</strong>
-                : part
-            )}
-          </p>
+  const flushList = () => {
+    if (currentList) {
+      if (currentList.type === 'ul') {
+        elements.push(
+          <ul key={elements.length} className="space-y-1.5">
+            {currentList.items.map((item, i) => (
+              <li key={i} className="text-sm text-foreground/80 flex items-start gap-2">
+                <span className="w-1.5 h-1.5 rounded-full bg-purple-400 mt-2 shrink-0" />
+                <span>{renderWithBold(item)}</span>
+              </li>
+            ))}
+          </ul>
         );
-      })}
-    </div>
-  );
+      } else {
+        elements.push(
+          <ol key={elements.length} className="space-y-1.5 list-decimal list-inside">
+            {currentList.items.map((item, i) => (
+              <li key={i} className="text-sm text-foreground/80">
+                {renderWithBold(item)}
+              </li>
+            ))}
+          </ol>
+        );
+      }
+      currentList = null;
+    }
+  };
+
+  for (const line of lines) {
+    const trimmedLine = line.trim();
+
+    // Empty line - flush current content
+    if (!trimmedLine) {
+      flushList();
+      flushParagraph();
+      continue;
+    }
+
+    // Headers (### or ##)
+    const headerMatch = trimmedLine.match(/^#{1,3}\s+(.+)$/);
+    if (headerMatch) {
+      flushList();
+      flushParagraph();
+      elements.push(
+        <p key={elements.length} className="text-sm font-semibold text-foreground mt-2">
+          {renderWithBold(headerMatch[1])}
+        </p>
+      );
+      continue;
+    }
+
+    // Bullet list item (- or •)
+    const bulletMatch = trimmedLine.match(/^[-•]\s+(.+)$/);
+    if (bulletMatch) {
+      flushParagraph();
+      if (currentList?.type !== 'ul') {
+        flushList();
+        currentList = { type: 'ul', items: [] };
+      }
+      currentList.items.push(bulletMatch[1]);
+      continue;
+    }
+
+    // Numbered list item
+    const numberedMatch = trimmedLine.match(/^\d+\.\s+(.+)$/);
+    if (numberedMatch) {
+      flushParagraph();
+      if (currentList?.type !== 'ol') {
+        flushList();
+        currentList = { type: 'ol', items: [] };
+      }
+      currentList.items.push(numberedMatch[1]);
+      continue;
+    }
+
+    // Regular text - add to current paragraph
+    flushList();
+    currentParagraph.push(trimmedLine);
+  }
+
+  // Flush remaining content
+  flushList();
+  flushParagraph();
+
+  return <div className="space-y-3">{elements}</div>;
 };
 
 const ChatUI = () => {
