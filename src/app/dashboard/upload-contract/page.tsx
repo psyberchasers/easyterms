@@ -830,9 +830,11 @@ export default function UploadContractPage() {
                     type="button"
                     className="flex items-center gap-2 px-4 py-2 rounded-lg border border-border bg-background text-foreground text-sm font-medium hover:bg-muted transition-colors"
                     style={{ touchAction: 'manipulation' }}
-                    onPointerDown={(e) => {
+                    onClick={(e) => {
+                      e.preventDefault();
                       e.stopPropagation();
-                      setShowScanner(true);
+                      // Small delay to prevent event bubbling to modal backdrop
+                      setTimeout(() => setShowScanner(true), 50);
                     }}
                   >
                     <Camera className="w-4 h-4" />
@@ -2047,7 +2049,12 @@ export default function UploadContractPage() {
       {showScanner && (
         <div
           className="fixed inset-0 z-[9999] bg-black/50 flex items-center justify-center p-4"
-          onClick={() => setShowScanner(false)}
+          onClick={(e) => {
+            // Only close if clicking the backdrop itself, not children
+            if (e.target === e.currentTarget) {
+              setShowScanner(false);
+            }
+          }}
         >
           <div
             className="bg-background rounded-xl w-full max-w-md max-h-[90vh] overflow-auto"
