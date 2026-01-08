@@ -163,12 +163,12 @@ const ExpandedTemplateCard = ({
       className="border border-border rounded-2xl overflow-hidden hover:border-purple-500/50 transition-all cursor-pointer"
     >
       {/* Title section with different background */}
-      <div className="flex items-start gap-3 p-5 bg-muted/30 border-b border-dashed border-border">
+      <div className="flex items-center gap-3 p-5 bg-muted/30 border-b border-dashed border-border">
         <div className="w-12 h-12 rounded-xl bg-purple-500/10 flex items-center justify-center shrink-0">
           {icon && <HugeiconsIcon icon={icon} size={24} className="text-purple-400" />}
         </div>
-        <div className="flex-1 min-w-0">
-          <h3 className="font-semibold text-base mb-1.5">{template.name}</h3>
+        <div className="flex-1 min-w-0 flex items-center gap-3">
+          <h3 className="font-semibold text-base">{template.name}</h3>
           <span className="inline-flex items-center text-xs text-muted-foreground bg-muted px-2.5 py-1 rounded-full">
             {template.parties.party1} ↔ {template.parties.party2}
           </span>
