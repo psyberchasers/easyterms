@@ -40,6 +40,7 @@ import {
   LicenseIcon,
   ShieldUserIcon,
   Agreement01Icon,
+  AiIdeaIcon,
 } from "@hugeicons-pro/core-stroke-rounded";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -148,17 +149,25 @@ const iconMap: Record<string, any> = {
 // Expanded Template Card Component (for Step 1)
 const ExpandedTemplateCard = ({
   template,
-  onUse
+  onUse,
+  index = 0,
 }: {
   template: ContractTemplate;
   onUse: () => void;
+  index?: number;
 }) => {
   const icon = iconMap[template.icon];
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 10 }}
+      initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: 30 }}
+      transition={{
+        duration: 0.4,
+        delay: index * 0.08,
+        ease: "easeOut"
+      }}
       onClick={onUse}
       className="border border-border rounded-2xl overflow-hidden hover:border-purple-500/50 transition-all cursor-pointer"
     >
@@ -177,7 +186,7 @@ const ExpandedTemplateCard = ({
 
       {/* Content section */}
       <div className="p-5">
-        <p className="text-sm text-muted-foreground mb-4 leading-relaxed">
+        <p className="text-sm text-foreground/70 mb-4 leading-relaxed">
           {template.description}
         </p>
 
@@ -720,17 +729,26 @@ export default function TemplatesPage() {
   const [currentClauseIndex, setCurrentClauseIndex] = useState(0);
   // Direction of navigation for animations (1 = forward, -1 = backward)
   const [navigationDirection, setNavigationDirection] = useState(1);
+  // Transition state for step animations
+  const [isTransitioning, setIsTransitioning] = useState(false);
 
   // Start builder with a template - goes directly to Step 2
   const startWithTemplate = useCallback((template: ContractTemplate) => {
-    setSelectedTemplate(template);
-    setSelectedClauses(template.defaultClauses);
-    setContractTitle(template.name);
-    setPartyNames({ party1: "", party2: "" });
-    setContractDate("");
-    setClauseValues({});
-    setPdfUrl(null);
-    setBuilderStep(2); // Go directly to Step 2 (Select Clauses)
+    // Start exit animation
+    setIsTransitioning(true);
+
+    // Wait for exit animations to complete, then proceed
+    setTimeout(() => {
+      setSelectedTemplate(template);
+      setSelectedClauses(template.defaultClauses);
+      setContractTitle(template.name);
+      setPartyNames({ party1: "", party2: "" });
+      setContractDate("");
+      setClauseValues({});
+      setPdfUrl(null);
+      setBuilderStep(2); // Go directly to Step 2 (Select Clauses)
+      setIsTransitioning(false);
+    }, 800); // Wait for stagger exit animation to fully complete
   }, []);
 
   // Handle template query parameter from command menu
@@ -1007,21 +1025,35 @@ export default function TemplatesPage() {
       {builderStep === 1 && (
         <div className="space-y-6">
           {/* Info notice */}
-          <div className="rounded-2xl border border-purple-500/30 bg-purple-500/5 px-5 py-4">
-            <p className="text-sm text-muted-foreground">
-              Each template comes with predefined clauses tailored to that contract type. You can add, remove, or customize any clause in the next step to perfectly fit your needs.
-            </p>
-          </div>
+          <AnimatePresence mode="wait">
+            {!isTransitioning && (
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 10 }}
+                transition={{ duration: 0.3 }}
+                className="rounded-2xl border border-purple-500/30 bg-purple-500/5 px-5 py-4 flex items-center gap-3"
+              >
+                <HugeiconsIcon icon={AiIdeaIcon} size={20} className="text-purple-400 shrink-0" />
+                <p className="text-sm text-purple-400">
+                  Each template comes with predefined clauses tailored to that contract type. You can add, remove, or customize any clause in the next step to perfectly fit your needs.
+                </p>
+              </motion.div>
+            )}
+          </AnimatePresence>
 
           {/* Template cards */}
           <div className="grid md:grid-cols-2 gap-4">
-            {contractTemplates.map((template) => (
-              <ExpandedTemplateCard
-                key={template.id}
-                template={template}
-                onUse={() => startWithTemplate(template)}
-              />
-            ))}
+            <AnimatePresence>
+              {!isTransitioning && contractTemplates.map((template, index) => (
+                <ExpandedTemplateCard
+                  key={template.id}
+                  template={template}
+                  index={index}
+                  onUse={() => startWithTemplate(template)}
+                />
+              ))}
+            </AnimatePresence>
           </div>
         </div>
       )}
@@ -1031,8 +1063,18 @@ export default function TemplatesPage() {
         <>
           {/* Step 2: Select Clauses */}
           {builderStep === 2 && (
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
+            <motion.div
+              className="space-y-4"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.3 }}
+            >
+              <motion.div
+                className="flex items-center justify-between"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3, delay: 0.1 }}
+              >
                 <h2 className="text-lg font-medium">Select Clauses</h2>
                 <div className="flex items-center gap-2">
                   {clauseCategories.map((cat) => (
@@ -1051,7 +1093,7 @@ export default function TemplatesPage() {
                     </button>
                   ))}
                 </div>
-              </div>
+              </motion.div>
 
               {/* Conflict Warnings */}
               <AnimatePresence>
@@ -1083,16 +1125,31 @@ export default function TemplatesPage() {
               </AnimatePresence>
 
               <TooltipProvider>
-                <div className="grid md:grid-cols-2 gap-3">
-                  {filteredClauses.map((clause) => (
-                    <ClauseItem
+                <motion.div
+                  className="grid md:grid-cols-2 gap-3"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ duration: 0.2, delay: 0.2 }}
+                >
+                  {filteredClauses.map((clause, index) => (
+                    <motion.div
                       key={clause.id}
-                      clause={clause}
-                      isSelected={selectedClauses.includes(clause.id)}
-                      onToggle={() => toggleClause(clause.id)}
-                    />
+                      initial={{ opacity: 0, y: 15 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{
+                        duration: 0.3,
+                        delay: 0.25 + index * 0.03,
+                        ease: "easeOut"
+                      }}
+                    >
+                      <ClauseItem
+                        clause={clause}
+                        isSelected={selectedClauses.includes(clause.id)}
+                        onToggle={() => toggleClause(clause.id)}
+                      />
+                    </motion.div>
                   ))}
-                </div>
+                </motion.div>
               </TooltipProvider>
 
               <div className="flex items-center justify-between pt-4 border-t border-border">
@@ -1115,7 +1172,7 @@ export default function TemplatesPage() {
                   <ChevronRight className="w-4 h-4 ml-2" />
                 </Button>
               </div>
-            </div>
+            </motion.div>
           )}
 
           {/* Step 3: Customize */}
