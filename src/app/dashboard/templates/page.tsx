@@ -197,7 +197,8 @@ const ExpandedTemplateCard = ({
       </div>
 
       <Button
-        className="w-full bg-purple-500 hover:bg-purple-600 text-white"
+        variant="outline"
+        className="w-full border-2 border-purple-500 bg-transparent hover:bg-purple-500/10 text-purple-400 hover:text-purple-300"
         onClick={onUse}
       >
         Use This Template
