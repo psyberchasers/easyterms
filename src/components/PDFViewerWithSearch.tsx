@@ -27,6 +27,7 @@ interface PDFViewerWithSearchProps {
   searchText?: string;
   highlightColor?: "yellow" | "red" | "green";
   className?: string;
+  initialScale?: number;
 }
 
 // Normalize text for comparison
@@ -94,10 +95,11 @@ export function PDFViewerWithSearch({
   searchText,
   highlightColor = "yellow",
   className,
+  initialScale = 1.0,
 }: PDFViewerWithSearchProps) {
   const [numPages, setNumPages] = useState<number>(0);
   const [currentPage, setCurrentPage] = useState<number>(1);
-  const [scale, setScale] = useState<number>(1.0);
+  const [scale, setScale] = useState<number>(initialScale);
   const [loading, setLoading] = useState<boolean>(true);
   const [documentReady, setDocumentReady] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);

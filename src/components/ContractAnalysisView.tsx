@@ -195,10 +195,17 @@ export function ContractAnalysisView({
   // Refs
   const versionInputRef = useRef<HTMLInputElement>(null);
 
+  // Mobile detection
+  const [isMobile, setIsMobile] = useState(true);
+
   // Show PDF by default on desktop only
   useEffect(() => {
-    if (typeof window !== "undefined" && window.innerWidth >= 768) {
-      setShowDocument(true);
+    if (typeof window !== "undefined") {
+      const mobile = window.innerWidth < 768;
+      setIsMobile(mobile);
+      if (!mobile) {
+        setShowDocument(true);
+      }
     }
   }, []);
 
@@ -335,6 +342,7 @@ export function ContractAnalysisView({
                   fileUrl={fileUrl}
                   searchText={highlightedClause || ""}
                   className="h-full"
+                  initialScale={isMobile ? 0.8 : 1.0}
                 />
               ) : (
                 <div className="flex items-center justify-center h-full">

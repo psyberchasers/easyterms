@@ -196,18 +196,6 @@ export default function DashboardPage() {
               Manage and analyze your music contracts
             </p>
           </div>
-          <div className="flex items-center gap-2">
-            <Link href="/dashboard/compare">
-              <Button variant="outline" size="sm" className="rounded-lg">
-                <HugeiconsIcon icon={RepeatOffIcon} size={16} className="mr-2" />
-                Compare
-              </Button>
-            </Link>
-            <Button variant="outline" size="sm" className="rounded-lg" onClick={() => fetchContracts(false)} disabled={loading}>
-              <RefreshCw className={cn("w-4 h-4 mr-2", loading && "animate-spin")} />
-              Refresh
-            </Button>
-          </div>
         </motion.div>
 
         {/* Error Display */}
@@ -398,24 +386,14 @@ export default function DashboardPage() {
                   </p>
                 </div>
 
-                {/* Tags */}
-                <div className="px-4 pb-3 flex flex-wrap gap-1.5">
-                  {contract.overall_risk && (
-                    <span className={cn(
-                      "text-[10px] font-medium px-2 py-0.5 rounded-lg",
-                      contract.overall_risk === "high" ? "bg-red-500/10 text-red-600" :
-                      contract.overall_risk === "medium" ? "bg-amber-500/10 text-amber-600" :
-                      "bg-green-500/10 text-green-600"
-                    )}>
-                      {contract.overall_risk === "high" ? "High Risk" : contract.overall_risk === "medium" ? "Medium" : "Low Risk"}
-                    </span>
-                  )}
-                  {contractVersions[contract.id]?.length > 0 && (
+                {/* Tags - only versions */}
+                {contractVersions[contract.id]?.length > 0 && (
+                  <div className="px-4 pb-3">
                     <span className="text-[10px] font-medium px-2 py-0.5 rounded-lg bg-muted text-muted-foreground">
                       {contractVersions[contract.id].length + 1} versions
                     </span>
-                  )}
-                </div>
+                  </div>
+                )}
 
                 {/* Action Footer */}
                 <Link
@@ -423,7 +401,22 @@ export default function DashboardPage() {
                   onClick={(e) => e.stopPropagation()}
                   className="flex items-center justify-between px-4 py-3 border-t border-border bg-muted/50 hover:bg-muted transition-colors"
                 >
-                  <span className="text-sm text-muted-foreground">View contract</span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-muted-foreground">View contract</span>
+                    {contract.overall_risk && (
+                      <>
+                        <span className="text-muted-foreground/40">•</span>
+                        <span className={cn(
+                          "text-xs font-medium",
+                          contract.overall_risk === "high" ? "text-red-500" :
+                          contract.overall_risk === "medium" ? "text-amber-500" :
+                          "text-green-500"
+                        )}>
+                          {contract.overall_risk === "high" ? "High Risk" : contract.overall_risk === "medium" ? "Medium" : "Low Risk"}
+                        </span>
+                      </>
+                    )}
+                  </div>
                   <ChevronRight className="w-4 h-4 text-muted-foreground" />
                 </Link>
               </div>
