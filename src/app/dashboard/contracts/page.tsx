@@ -240,7 +240,7 @@ export default function ContractsPage() {
             type="text"
             placeholder="Search contracts"
             data-rounded="true"
-            className="px-4 py-1.5 text-[12px] border border-border rounded-full w-52 bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-purple-500/30"
+            className="px-4 py-1.5 text-[12px] border border-border rounded-lg w-52 bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-purple-500/30"
           />
         </div>
       </motion.div>

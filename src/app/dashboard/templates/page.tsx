@@ -160,38 +160,42 @@ const ExpandedTemplateCard = ({
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       onClick={onUse}
-      className="border border-border rounded-2xl p-5 hover:border-purple-500/50 hover:bg-purple-500/5 transition-all cursor-pointer"
+      className="border border-border rounded-2xl overflow-hidden hover:border-purple-500/50 transition-all cursor-pointer"
     >
-      <div className="flex items-start gap-3 mb-4">
+      {/* Title section with different background */}
+      <div className="flex items-start gap-3 p-5 bg-muted/30 border-b border-dashed border-border">
         <div className="w-12 h-12 rounded-xl bg-purple-500/10 flex items-center justify-center shrink-0">
           {icon && <HugeiconsIcon icon={icon} size={24} className="text-purple-400" />}
         </div>
         <div className="flex-1 min-w-0">
-          <h3 className="font-semibold text-base mb-0.5">{template.name}</h3>
-          <p className="text-sm text-muted-foreground">
+          <h3 className="font-semibold text-base mb-1.5">{template.name}</h3>
+          <span className="inline-flex items-center text-xs text-muted-foreground bg-muted px-2.5 py-1 rounded-full">
             {template.parties.party1} ↔ {template.parties.party2}
-          </p>
+          </span>
         </div>
       </div>
 
-      <p className="text-sm text-muted-foreground mb-4 leading-relaxed">
-        {template.description}
-      </p>
+      {/* Content section */}
+      <div className="p-5">
+        <p className="text-sm text-muted-foreground mb-4 leading-relaxed">
+          {template.description}
+        </p>
 
-      <div className="flex flex-wrap gap-1.5">
-        {template.defaultClauses.slice(0, 8).map((clauseId) => {
-          const clause = getClauseById(clauseId);
-          return clause ? (
-            <Badge key={clauseId} variant="secondary" className="text-xs">
-              {clause.name}
+        <div className="flex flex-wrap gap-1.5">
+          {template.defaultClauses.slice(0, 8).map((clauseId) => {
+            const clause = getClauseById(clauseId);
+            return clause ? (
+              <Badge key={clauseId} variant="secondary" className="text-xs">
+                {clause.name}
+              </Badge>
+            ) : null;
+          })}
+          {template.defaultClauses.length > 8 && (
+            <Badge variant="secondary" className="text-xs text-muted-foreground">
+              +{template.defaultClauses.length - 8} more
             </Badge>
-          ) : null;
-        })}
-        {template.defaultClauses.length > 8 && (
-          <Badge variant="secondary" className="text-xs text-muted-foreground">
-            +{template.defaultClauses.length - 8} more
-          </Badge>
-        )}
+          )}
+        </div>
       </div>
     </motion.div>
   );
