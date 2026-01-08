@@ -958,6 +958,10 @@ const ChatUI = () => {
                     )}
                   </AnimatePresence>
                 </div>
+                <div className="flex items-center gap-1.5 px-2 py-1.5 text-muted-foreground">
+                  <span className="px-1.5 py-0.5 rounded bg-background/50 font-mono text-[10px]">@</span>
+                  <span className="text-xs font-medium">to mention</span>
+                </div>
               </div>
               <p className="text-muted-foreground/50 pr-2 text-xs">
                 Powered by EasyTerms
