@@ -828,9 +828,14 @@ export default function UploadContractPage() {
                 {isMobile && (
                   <Button
                     variant="outline"
-                    size="sm"
-                    className="rounded-lg"
-                    onClick={() => setShowScanner(true)}
+                    size="default"
+                    className="rounded-lg z-10 relative"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      console.log("[ScanButton] Clicked!");
+                      setShowScanner(true);
+                    }}
                   >
                     <Camera className="w-4 h-4 mr-2" />
                     Scan Document
