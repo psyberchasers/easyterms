@@ -833,6 +833,9 @@ export default function UploadContractPage() {
                     onPointerDown={(e) => {
                       e.stopPropagation();
                       setShowScanner(true);
+                      setTimeout(() => {
+                        alert("showScanner is now: " + true);
+                      }, 100);
                     }}
                   >
                     <Camera className="w-4 h-4" />
