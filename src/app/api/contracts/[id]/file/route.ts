@@ -36,12 +36,22 @@ export async function GET(
       );
     }
 
-    // Verify user owns this contract
+    // Verify user owns this contract OR has a valid share
     if (contract.user_id !== user.id) {
-      return NextResponse.json(
-        { error: "Unauthorized" },
-        { status: 403 }
-      );
+      // Check if user has a share for this contract
+      const { data: share } = await supabase
+        .from("contract_shares")
+        .select("id")
+        .eq("contract_id", id)
+        .eq("shared_with_email", user.email)
+        .single();
+
+      if (!share) {
+        return NextResponse.json(
+          { error: "Unauthorized" },
+          { status: 403 }
+        );
+      }
     }
 
     // Use version path if provided, otherwise use original contract file
