@@ -43,7 +43,7 @@ export default function DashboardPage() {
   const [initialLoad, setInitialLoad] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
-  const [filter, setFilter] = useState<"all" | "starred" | "high-risk">("all");
+  const [filter, setFilter] = useState<"all" | "starred" | "high-risk" | "shared">("all");
   const [viewMode, setViewMode] = useState<"list" | "grid">("grid");
   const [contractVersions, setContractVersions] = useState<Record<string, number[]>>({});
   const [contractShares, setContractShares] = useState<Record<string, number>>({});
@@ -172,6 +172,7 @@ export default function DashboardPage() {
 
     if (filter === "starred") return matchesSearch && contract.is_starred;
     if (filter === "high-risk") return matchesSearch && contract.overall_risk === "high";
+    if (filter === "shared") return matchesSearch && contractShares[contract.id];
     return matchesSearch;
   });
 
@@ -279,6 +280,16 @@ export default function DashboardPage() {
             >
               <HugeiconsIcon icon={Alert02Icon} size={12} className="mr-1" />
               High Risk
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              style={{ borderRadius: '6px', backgroundColor: filter === "shared" ? '#a855f7' : undefined, color: filter === "shared" ? 'white' : undefined, borderColor: filter === "shared" ? '#a855f7' : undefined }}
+              className="h-7 px-3 text-xs border"
+              onClick={() => setFilter("shared")}
+            >
+              <Share2 className="w-3 h-3 mr-1" />
+              Shared
             </Button>
             <Link href="/analyze">
               <Button variant="outline" size="sm" style={{ borderRadius: '6px' }} className="h-7 px-3 text-xs border-border bg-transparent hover:bg-muted">
