@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import { MusicLoader } from "@/components/MusicLoader";
 import { ContractComments } from "@/components/ContractComments";
+import { Navbar } from "@/components/Navbar";
 
 interface Share {
   id: string;
@@ -208,8 +209,10 @@ export default function SharedContractPage() {
   }
 
   return (
-    <div className="flex flex-col h-screen bg-card overflow-hidden">
-      {/* Shared Banner */}
+    <>
+      <Navbar showSearch={false} />
+      <div className="flex flex-col h-screen pt-16 bg-card overflow-hidden">
+        {/* Shared Banner */}
       <div className="shrink-0 px-4 py-2 bg-purple-500/5 border-b border-purple-500/10 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <Link href="/dashboard" className="flex items-center justify-center w-7 h-7 rounded-md border border-border hover:bg-muted transition-colors">
@@ -290,6 +293,7 @@ export default function SharedContractPage() {
           )}
         </div>
       </div>
-    </div>
+      </div>
+    </>
   );
 }
