@@ -196,87 +196,6 @@ const termsContent: TermItem[] = [
   },
 ];
 
-const billingContent: TermItem[] = [
-  {
-    id: "billing-subscription-plans",
-    title: "Subscription Plans",
-    content: (
-      <p className="lg:text-lg">
-        EasyTerms offers free and paid subscription plans. Features vary by plan.
-      </p>
-    ),
-  },
-  {
-    id: "billing-billing",
-    title: "Billing",
-    content: (
-      <ul className="list-disc space-y-2 pl-6 lg:text-lg">
-        <li>Subscriptions are billed monthly or annually (as selected)</li>
-        <li>Payments are processed via third-party payment providers</li>
-        <li>Prices may change with notice</li>
-      </ul>
-    ),
-  },
-  {
-    id: "billing-auto-renewal",
-    title: "Auto-Renewal",
-    content: (
-      <p className="lg:text-lg">
-        Subscriptions automatically renew unless canceled before the billing cycle ends.
-      </p>
-    ),
-  },
-  {
-    id: "billing-cancellation",
-    title: "Cancellation",
-    content: (
-      <p className="lg:text-lg">
-        You may cancel your subscription at any time. Access remains active until the end of the current billing period.
-      </p>
-    ),
-  },
-  {
-    id: "billing-refunds",
-    title: "Refunds",
-    content: (
-      <ul className="list-disc space-y-2 pl-6 lg:text-lg">
-        <li>Payments are non-refundable</li>
-        <li>No refunds for partial billing periods</li>
-        <li>Exceptions may apply where required by law</li>
-      </ul>
-    ),
-  },
-  {
-    id: "billing-failed-payments",
-    title: "Failed Payments",
-    content: (
-      <>
-        <p className="lg:text-lg">If payment fails:</p>
-        <ul className="list-disc space-y-2 pl-6 lg:text-lg">
-          <li>Access may be suspended</li>
-          <li>You will be notified to update payment information</li>
-        </ul>
-      </>
-    ),
-  },
-  {
-    id: "billing-taxes",
-    title: "Taxes",
-    content: (
-      <p className="lg:text-lg">
-        You are responsible for any applicable taxes unless otherwise stated.
-      </p>
-    ),
-  },
-  {
-    id: "billing-contact",
-    title: "Billing Contact",
-    content: (
-      <p className="lg:text-lg text-primary">billing@easyterms.ai</p>
-    ),
-  },
-];
-
 export default function TermsPage() {
   return (
     <>
@@ -286,27 +205,6 @@ export default function TermsPage() {
           title="Terms of Service"
           terms={termsContent}
         />
-        
-        {/* Billing Section */}
-        <div className="px-4 lg:px-12 pb-12">
-          <div className="border-t border-border pt-12">
-            <h2 className="mb-8" style={{ fontWeight: 500, color: 'rgb(250, 250, 250)', fontSize: '24px', lineHeight: '32px' }}>
-              Billing & Refund Policy
-            </h2>
-            <div className="flex flex-col gap-[40px] md:gap-[60px] max-w-3xl">
-              {billingContent.map((item) => (
-                <div key={item.id} className="space-y-4">
-                  <h3 style={{ fontWeight: 500, color: 'rgb(250, 250, 250)', fontSize: '24px', lineHeight: '32px' }}>
-                    {item.title}
-                  </h3>
-                  <div className="space-y-4" style={{ fontWeight: 400, color: 'rgb(135, 135, 135)', fontSize: '14px', lineHeight: '20px' }}>
-                    {item.content}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
       </div>
     </>
   );
