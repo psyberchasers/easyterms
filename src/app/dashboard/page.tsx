@@ -437,7 +437,7 @@ export default function DashboardPage() {
                         <span className="text-muted-foreground/40">•</span>
                         <span className="text-xs font-medium text-purple-500 flex items-center gap-1">
                           <Share2 className="w-3 h-3" />
-                          Shared
+                          Shared by you
                         </span>
                       </>
                     )}
