@@ -60,25 +60,35 @@ export default function SharedContractPage() {
   // Fetch share and contract data
   const fetchShareData = useCallback(async () => {
     try {
+      // First get the share
       const { data: shareData, error: shareError } = await supabase
         .from("contract_shares")
-        .select(`
-          *,
-          owner:profiles!owner_id (
-            full_name,
-            email
-          )
-        `)
+        .select("*")
         .eq("id", shareId)
         .single();
 
       if (shareError || !shareData) {
+        console.error("Share fetch error:", shareError);
         setError("Share not found or you don't have access");
         setLoading(false);
         return;
       }
 
-      setShare(shareData as Share);
+      // Then get the owner's profile separately
+      let ownerProfile = null;
+      if (shareData.owner_id) {
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("full_name, email")
+          .eq("id", shareData.owner_id)
+          .single();
+        ownerProfile = profile;
+      }
+
+      setShare({
+        ...shareData,
+        owner: ownerProfile
+      } as Share);
 
       const { data: contractData, error: contractError } = await supabase
         .from("contracts")
@@ -115,12 +125,14 @@ export default function SharedContractPage() {
 
   const fetchPdfUrl = async (contractId: string) => {
     try {
+      console.log("Fetching PDF for contract:", contractId);
       const response = await fetch(`/api/contracts/${contractId}/file`);
       const data = await response.json();
+      console.log("PDF fetch response:", response.status, data);
       if (response.ok && data.url) {
         setPdfUrl(data.url);
       } else {
-        console.error("PDF fetch error:", data.error);
+        console.error("PDF fetch error:", response.status, data.error);
       }
     } catch (err) {
       console.error("Error fetching PDF:", err);

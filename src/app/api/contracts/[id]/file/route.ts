@@ -39,6 +39,10 @@ export async function GET(
     // Verify user owns this contract OR has a valid share
     if (contract.user_id !== user.id) {
       // Check if user has a share for this contract
+      console.log("User doesn't own contract, checking for share...");
+      console.log("User email:", user.email);
+      console.log("Contract ID:", id);
+
       if (!user.email) {
         return NextResponse.json(
           { error: "Unauthorized - no email" },
@@ -53,20 +57,25 @@ export async function GET(
         .eq("shared_with_email", user.email)
         .maybeSingle();
 
+      console.log("Share query result:", { share, shareError });
+
       if (shareError) {
         console.error("Share check error:", shareError);
         return NextResponse.json(
-          { error: "Failed to verify access" },
+          { error: "Failed to verify access: " + shareError.message },
           { status: 500 }
         );
       }
 
       if (!share) {
+        console.log("No share found for this user/contract combination");
         return NextResponse.json(
-          { error: "Unauthorized" },
+          { error: "Unauthorized - no share found" },
           { status: 403 }
         );
       }
+
+      console.log("Share found, allowing access");
     }
 
     // Use version path if provided, otherwise use original contract file
