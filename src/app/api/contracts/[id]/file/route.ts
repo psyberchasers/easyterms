@@ -80,6 +80,7 @@ export async function GET(
 
     // Use version path if provided, otherwise use original contract file
     const filePath = versionPath || contract.file_url;
+    console.log("File path:", filePath);
 
     if (!filePath) {
       return NextResponse.json(
@@ -88,15 +89,24 @@ export async function GET(
       );
     }
 
+    // Clean the file path - remove bucket name if it's prefixed
+    let cleanPath = filePath;
+    if (cleanPath.startsWith("contracts/")) {
+      cleanPath = cleanPath.replace("contracts/", "");
+    }
+    console.log("Clean path:", cleanPath);
+
     // Generate signed URL (valid for 1 hour)
     const { data: signedUrlData, error: signedUrlError } = await supabase.storage
       .from("contracts")
-      .createSignedUrl(filePath, 3600);
+      .createSignedUrl(cleanPath, 3600);
+
+    console.log("Signed URL result:", { signedUrlData, signedUrlError });
 
     if (signedUrlError || !signedUrlData) {
       console.error("Signed URL error:", signedUrlError);
       return NextResponse.json(
-        { error: "Failed to generate file URL" },
+        { error: "Failed to generate file URL: " + (signedUrlError?.message || "unknown") },
         { status: 500 }
       );
     }

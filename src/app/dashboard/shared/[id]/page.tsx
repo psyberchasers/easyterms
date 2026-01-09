@@ -74,15 +74,17 @@ export default function SharedContractPage() {
         return;
       }
 
-      // Then get the owner's profile separately
+      // Get owner info - try profiles first, fall back to auth.users via API
       let ownerProfile = null;
       if (shareData.owner_id) {
-        const { data: profile } = await supabase
-          .from("profiles")
-          .select("full_name, email")
-          .eq("id", shareData.owner_id)
-          .single();
-        ownerProfile = profile;
+        try {
+          const response = await fetch(`/api/users/${shareData.owner_id}/profile`);
+          if (response.ok) {
+            ownerProfile = await response.json();
+          }
+        } catch (e) {
+          console.log("Could not fetch owner profile");
+        }
       }
 
       setShare({
