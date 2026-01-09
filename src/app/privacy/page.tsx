@@ -68,7 +68,7 @@ const privacyContent: TermItem[] = [
 export default function PrivacyPage() {
   return (
     <>
-      <Navbar />
+      <Navbar showSearch={false} />
       <LegalPageLayout title="Privacy Policy" terms={privacyContent} />
     </>
   );

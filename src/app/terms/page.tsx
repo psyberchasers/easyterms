@@ -280,7 +280,7 @@ const billingContent: TermItem[] = [
 export default function TermsPage() {
   return (
     <>
-      <Navbar />
+      <Navbar showSearch={false} />
       <div className="pt-16">
         <LegalPageLayout
           title="Terms of Service"
