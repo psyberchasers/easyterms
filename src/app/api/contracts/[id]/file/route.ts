@@ -12,12 +12,10 @@ export async function GET(
     const versionPath = url.searchParams.get("versionPath");
 
     const supabase = await createClient();
-    // Use admin client for storage to bypass RLS policies
-    const adminClient = createAdminClient();
-    
+
     // Check if user is authenticated
     const { data: { user }, error: authError } = await supabase.auth.getUser();
-    
+
     if (authError || !user) {
       return NextResponse.json(
         { error: "Not authenticated" },
@@ -39,13 +37,12 @@ export async function GET(
       );
     }
 
-    // Verify user owns this contract OR has a valid share
-    if (contract.user_id !== user.id) {
-      // Check if user has a share for this contract
-      console.log("User doesn't own contract, checking for share...");
-      console.log("User email:", user.email);
-      console.log("Contract ID:", id);
+    // Determine if user owns this contract or has shared access
+    const isOwner = contract.user_id === user.id;
+    let hasSharedAccess = false;
 
+    if (!isOwner) {
+      // Check if user has a share for this contract
       if (!user.email) {
         return NextResponse.json(
           { error: "Unauthorized - no email" },
@@ -60,8 +57,6 @@ export async function GET(
         .eq("shared_with_email", user.email)
         .maybeSingle();
 
-      console.log("Share query result:", { share, shareError });
-
       if (shareError) {
         console.error("Share check error:", shareError);
         return NextResponse.json(
@@ -71,21 +66,17 @@ export async function GET(
       }
 
       if (!share) {
-        console.log("No share found for this user/contract combination");
         return NextResponse.json(
-          { error: "Unauthorized - no share found" },
+          { error: "Unauthorized - no access" },
           { status: 403 }
         );
       }
 
-      console.log("Share found, allowing access");
+      hasSharedAccess = true;
     }
 
     // Use version path if provided, otherwise use original contract file
     const filePath = versionPath || contract.file_url;
-    console.log("Raw file_url from DB:", JSON.stringify(contract.file_url));
-    console.log("Version path:", versionPath);
-    console.log("File path being used:", filePath);
 
     if (!filePath) {
       return NextResponse.json(
@@ -99,33 +90,49 @@ export async function GET(
     if (cleanPath.startsWith("contracts/")) {
       cleanPath = cleanPath.replace("contracts/", "");
     }
-    console.log("Clean path for storage:", JSON.stringify(cleanPath));
 
-    // Generate signed URL (valid for 1 hour) using admin client to bypass RLS
-    const { data: signedUrlData, error: signedUrlError } = await adminClient.storage
-      .from("contracts")
-      .createSignedUrl(cleanPath, 3600);
+    // For owners, use regular client (RLS allows access to own files)
+    // For shared access, try admin client first, fall back to regular client
+    let signedUrlData;
+    let signedUrlError;
 
-    console.log("Signed URL result:", { signedUrlData, signedUrlError });
+    if (isOwner) {
+      // Owner can use regular client - RLS allows access
+      const result = await supabase.storage
+        .from("contracts")
+        .createSignedUrl(cleanPath, 3600);
+      signedUrlData = result.data;
+      signedUrlError = result.error;
+    } else {
+      // Shared user needs admin client to bypass storage RLS
+      const adminClient = createAdminClient();
+      const result = await adminClient.storage
+        .from("contracts")
+        .createSignedUrl(cleanPath, 3600);
+      signedUrlData = result.data;
+      signedUrlError = result.error;
+
+      // If admin client failed (maybe no service role key), try regular client as fallback
+      if (signedUrlError) {
+        console.warn("Admin client failed, trying regular client:", signedUrlError.message);
+        const fallbackResult = await supabase.storage
+          .from("contracts")
+          .createSignedUrl(cleanPath, 3600);
+        signedUrlData = fallbackResult.data;
+        signedUrlError = fallbackResult.error;
+      }
+    }
 
     if (signedUrlError || !signedUrlData) {
       console.error("Signed URL error:", signedUrlError);
-
-      // Debug: Try to list files in that user's directory
-      const userDir = cleanPath.split("/")[0];
-      const { data: files, error: listError } = await adminClient.storage
-        .from("contracts")
-        .list(userDir, { limit: 10 });
-      console.log("Files in user directory:", userDir, files, listError);
-
       return NextResponse.json(
         { error: "Failed to generate file URL: " + (signedUrlError?.message || "unknown") },
         { status: 500 }
       );
     }
 
-    return NextResponse.json({ 
-      url: signedUrlData.signedUrl 
+    return NextResponse.json({
+      url: signedUrlData.signedUrl
     });
   } catch (err) {
     console.error("Server error:", err);
