@@ -39,12 +39,27 @@ export async function GET(
     // Verify user owns this contract OR has a valid share
     if (contract.user_id !== user.id) {
       // Check if user has a share for this contract
-      const { data: share } = await supabase
+      if (!user.email) {
+        return NextResponse.json(
+          { error: "Unauthorized - no email" },
+          { status: 403 }
+        );
+      }
+
+      const { data: share, error: shareError } = await supabase
         .from("contract_shares")
         .select("id")
         .eq("contract_id", id)
         .eq("shared_with_email", user.email)
-        .single();
+        .maybeSingle();
+
+      if (shareError) {
+        console.error("Share check error:", shareError);
+        return NextResponse.json(
+          { error: "Failed to verify access" },
+          { status: 500 }
+        );
+      }
 
       if (!share) {
         return NextResponse.json(
