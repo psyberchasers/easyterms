@@ -72,48 +72,57 @@ export function DocumentScanner({
     };
   }, []);
 
-  // Start scanning
-  const startScanning = async () => {
-    if (!sdkRef.current || !scannerContainerRef.current) return;
-
+  // Start scanning - just set state, useEffect will initialize camera
+  const startScanning = () => {
+    if (!sdkRef.current) return;
     setIsScanning(true);
     setError(null);
+  };
 
-    try {
-      const config = {
-        containerId: "scanbot-scanner-container",
-        onDocumentDetected: async (result: any) => {
-          if (result.success && result.document) {
-            setScannedPages((prev) => [...prev, result.document]);
-          }
-        },
-        onError: (err: any) => {
-          console.error("Scanner error:", err);
-          setError("Scanner error occurred. Please try again.");
-          setIsScanning(false);
-        },
-        style: {
-          outline: {
-            polygon: {
-              fillCapturing: "rgba(168, 85, 247, 0.2)",
-              strokeCapturing: "#a855f7",
-              fillSearching: "rgba(168, 85, 247, 0.1)",
-              strokeSearching: "#a855f7",
+  // Initialize camera when isScanning becomes true and container exists
+  useEffect(() => {
+    if (!isScanning || !sdkRef.current) return;
+
+    // Small delay to ensure DOM is ready
+    const timer = setTimeout(async () => {
+      try {
+        const config = {
+          containerId: "scanbot-scanner-container",
+          onDocumentDetected: async (result: any) => {
+            if (result.success && result.document) {
+              setScannedPages((prev) => [...prev, result.document]);
+            }
+          },
+          onError: (err: any) => {
+            console.error("Scanner error:", err);
+            setError("Scanner error occurred. Please try again.");
+            setIsScanning(false);
+          },
+          style: {
+            outline: {
+              polygon: {
+                fillCapturing: "rgba(168, 85, 247, 0.2)",
+                strokeCapturing: "#a855f7",
+                fillSearching: "rgba(168, 85, 247, 0.1)",
+                strokeSearching: "#a855f7",
+              },
             },
           },
-        },
-        preferredCamera: "back",
-        autoCaptureEnabled: true,
-        autoCaptureSensitivity: 0.75,
-      };
+          preferredCamera: "back",
+          autoCaptureEnabled: true,
+          autoCaptureSensitivity: 0.75,
+        };
 
-      await sdkRef.current.createDocumentScanner(config);
-    } catch (err) {
-      console.error("Failed to start scanner:", err);
-      setError("Failed to start camera. Please check permissions.");
-      setIsScanning(false);
-    }
-  };
+        await sdkRef.current.createDocumentScanner(config);
+      } catch (err) {
+        console.error("Failed to start scanner:", err);
+        setError("Failed to start camera. Please check permissions.");
+        setIsScanning(false);
+      }
+    }, 100);
+
+    return () => clearTimeout(timer);
+  }, [isScanning]);
 
   // Stop scanning and create PDF
   const finishScanning = async () => {
