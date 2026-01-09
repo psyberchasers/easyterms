@@ -343,6 +343,7 @@ export default function UploadContractPage() {
       const formData = new FormData();
       formData.append("file", file);
       formData.append("industry", "music"); // Default to music, AI will auto-detect
+      formData.append("role", selectedRole || "recipient"); // Pass user's role for analysis perspective
 
       const response = await fetch("/api/analyze", {
         method: "POST",
@@ -852,33 +853,136 @@ export default function UploadContractPage() {
             flex: selectedRole === "sender" ? 1 : selectedRole === "recipient" ? 0 : 1
           }}
           transition={{ duration: 0.4, ease: [0.4, 0, 0.2, 1], delay: 0.1 }}
-          className="flex flex-col items-center justify-center bg-muted/30 cursor-not-allowed relative overflow-hidden min-h-[45vh] md:min-h-0"
+          onClick={() => !selectedRole && handleRoleSelect("sender")}
+          className={cn(
+            "flex flex-col items-center justify-center transition-all relative overflow-hidden min-h-[45vh] md:min-h-0",
+            !selectedRole && "cursor-pointer hover:bg-muted/50 group"
+          )}
           style={{ flex: selectedRole === "sender" ? 1 : selectedRole === "recipient" ? 0 : 1 }}
         >
-          {/* Coming Soon Overlay */}
-          {!selectedRole && (
-            <div className="absolute inset-0 bg-card/60 backdrop-blur-[1px] z-10 flex items-center justify-center">
-              <span className="px-3 py-1.5 bg-foreground text-background text-xs font-medium rounded-full">
-                Coming Soon
-              </span>
-            </div>
-          )}
+          {/* Role selection content - hide when selected */}
+          <AnimatePresence>
+            {!selectedRole && (
+              <motion.div
+                exit={{ opacity: 0, y: -30 }}
+                transition={{ duration: 0.3 }}
+                className="flex flex-col items-center gap-6 max-w-sm text-center"
+              >
+                <div className="w-20 h-20 rounded-2xl bg-blue-500/10 flex items-center justify-center group-hover:bg-blue-500/20 transition-colors">
+                  <Upload className="w-10 h-10 text-blue-500" />
+                </div>
+                <div className="space-y-2">
+                  <h2 className="text-xl font-semibold text-foreground">I&apos;m sending a contract</h2>
+                  <p className="text-sm text-muted-foreground">
+                    Upload a contract you&apos;re sending to check for completeness, enforceability, and missing protections
+                  </p>
+                </div>
+                <div className="flex items-center gap-2 text-blue-500 font-medium text-sm group-hover:gap-3 transition-all">
+                  <span>Get started</span>
+                  <ChevronRight className="w-4 h-4" />
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
 
-          <div className="flex flex-col items-center gap-6 max-w-sm text-center opacity-50">
-            <div className="w-20 h-20 rounded-2xl bg-muted flex items-center justify-center">
-              <Upload className="w-10 h-10 text-muted-foreground" />
-            </div>
-            <div className="space-y-2">
-              <h2 className="text-xl font-semibold text-foreground">I&apos;m sending a contract</h2>
-              <p className="text-sm text-muted-foreground">
-                Create and send contracts with built-in tracking, e-signatures, and analytics
-              </p>
-            </div>
-            <div className="flex items-center gap-2 text-muted-foreground font-medium text-sm">
-              <span>Get started</span>
-              <ChevronRight className="w-4 h-4" />
-            </div>
-          </div>
+          {/* Upload modal for sender - slides up from bottom */}
+          <AnimatePresence mode="wait">
+            {showUploadModal && selectedRole === "sender" && (
+              <motion.div
+                initial={{ opacity: 0, y: 100 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 100 }}
+                transition={{ duration: 0.4, ease: [0.4, 0, 0.2, 1] }}
+                className="absolute inset-0 flex flex-col p-8 z-10"
+              >
+                {/* Back button and role indicator */}
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ delay: 0.3 }}
+                  className="absolute top-3 left-4 flex items-center gap-2"
+                >
+                  <button
+                    onClick={() => {
+                      setShowUploadModal(false);
+                      setTimeout(() => setSelectedRole(null), 400);
+                    }}
+                    className="flex items-center gap-1.5 px-3 py-2 text-xs font-medium text-muted-foreground hover:text-foreground border border-border hover:bg-muted rounded-lg transition-colors"
+                  >
+                    <ChevronLeft className="w-3.5 h-3.5" />
+                    Change Role
+                  </button>
+                  <div className="flex items-center gap-1.5 px-3 py-2 text-xs font-medium bg-blue-500/10 text-blue-500 rounded-lg">
+                    Sender
+                  </div>
+                </motion.div>
+
+                <div className="flex-1 flex flex-col items-center justify-center gap-4 pt-4 md:pt-0">
+                <motion.div
+                  initial={{ scale: 0.95 }}
+                  animate={{ scale: 1 }}
+                  transition={{ duration: 0.4, delay: 0.1 }}
+                  onDragOver={handleDragOver}
+                  onDrop={handleDrop}
+                  onClick={() => fileInputRef.current?.click()}
+                  onMouseEnter={() => setIsHovering(true)}
+                  onMouseLeave={() => setIsHovering(false)}
+                  className="w-full max-w-4xl p-12 md:p-32 text-center transition-all cursor-pointer rounded-xl"
+                  style={{
+                    border: `1.5px dashed ${isHovering ? '#3b82f6' : 'var(--border)'}`,
+                    backgroundColor: isHovering ? 'rgba(59, 130, 246, 0.05)' : 'transparent',
+                    transition: 'all 0.2s ease',
+                  }}
+                >
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept=".pdf,.doc,.docx,.txt"
+                    onChange={handleFileInput}
+                    className="hidden"
+                  />
+                  <div className="flex flex-col items-center gap-3">
+                    <div className="w-14 h-14 rounded-full flex items-center justify-center transition-all bg-white">
+                      <HugeiconsIcon
+                        icon={FileUploadIcon}
+                        size={28}
+                        style={{
+                          color: isHovering ? '#3b82f6' : 'var(--muted-foreground)',
+                          transition: 'color 0.2s ease'
+                        }}
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-sm font-medium text-foreground">
+                        Drop your file here, or{" "}
+                        <span className="text-blue-600 hover:text-blue-700 transition-colors">
+                          browse
+                        </span>
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        PDF, DOC, DOCX, TXT up to 200MB
+                      </p>
+                    </div>
+                  </div>
+                </motion.div>
+
+                {/* Scan Document Button - Mobile Only */}
+                {isMobile && (
+                  <button
+                    type="button"
+                    className="flex items-center gap-2 px-4 py-2 rounded-lg border border-border bg-background text-foreground text-sm font-medium hover:bg-muted transition-colors"
+                    style={{ touchAction: 'manipulation' }}
+                    onClick={() => setShowScanner(true)}
+                  >
+                    <Camera className="w-4 h-4" />
+                    Scan Document
+                  </button>
+                )}
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </motion.div>
       </div>
 

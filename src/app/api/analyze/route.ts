@@ -137,7 +137,9 @@ export async function POST(request: NextRequest) {
     const formData = await request.formData();
     const file = formData.get("file") as File | null;
     const industryParam = formData.get("industry") as string | null;
+    const roleParam = formData.get("role") as string | null;
     const industry: IndustryType = (industryParam as IndustryType) || "music";
+    const role: "recipient" | "sender" = (roleParam === "sender") ? "sender" : "recipient";
 
     if (!file) {
       return NextResponse.json({ error: "No file provided" }, { status: 400 });
@@ -197,14 +199,34 @@ export async function POST(request: NextRequest) {
     // Build industry-specific prompt
     const industryPrompt = getAnalysisPrompt(industry);
     const outputSchema = getOutputSchema(industry);
+
+    // Role-specific analysis perspective
+    const roleGuidelines = role === "sender"
+      ? `
+ANALYSIS PERSPECTIVE: You are analyzing this contract from the SENDER'S perspective (the party who drafted/is sending this contract).
+- Focus on enforceability: Are terms clear and legally sound?
+- Check for completeness: Are there missing clauses that should protect the sender?
+- Identify ambiguities that could be challenged or interpreted against the sender
+- Flag terms that may be unenforceable or overly aggressive
+- Recommendations should focus on strengthening the contract and ensuring it will hold up
+- Risk assessment reflects risk TO THE SENDER (e.g., "high risk" means the sender may have exposure)`
+      : `
+ANALYSIS PERSPECTIVE: You are analyzing this contract from the RECIPIENT'S perspective (the party who received this contract to review/sign).
+- Focus on risks: What obligations and restrictions is the recipient taking on?
+- Identify terms that favor the other party at the recipient's expense
+- Flag potentially problematic or one-sided clauses
+- Recommendations should focus on negotiation points and protections to request
+- Risk assessment reflects risk TO THE RECIPIENT (e.g., "high risk" means bad for the recipient)`;
+
     const fullPrompt = `${industryPrompt}
+${roleGuidelines}
 
 Respond ONLY with valid JSON matching this structure:
 ${outputSchema}
 
 Important guidelines:
 - If certain information is not present in the contract, use null or omit the field
-- Be conservative with risk assessments - flag anything that could disadvantage the individual
+- Be conservative with risk assessments based on the ${role === "sender" ? "sender's" : "recipient's"} perspective
 - The confidenceScore should reflect how complete and clear the contract text was (0-1)
 - Always explain legal jargon in plain English
 - For originalText and concernSnippets, use EXACT quotes from the contract that can be found via text search
@@ -221,6 +243,7 @@ ${contractText}`;
         analysis: getSmartMockAnalysis(file.name, contractText, industry),
         extractedText: contractText,
         industry,
+        role,
         isDemo: true,
       });
     }
@@ -233,12 +256,16 @@ ${contractText}`;
 
     // Analyze with OpenAI using industry-specific prompt
     // Use higher max_tokens for comprehensive analysis of long contracts
+    const roleContext = role === "sender"
+      ? "analyzing from the sender's perspective (checking enforceability, completeness, and potential challenges)"
+      : "analyzing from the recipient's perspective (identifying risks, one-sided terms, and negotiation points)";
+
     const completion = await openai.chat.completions.create({
       model: "gpt-4o",
       messages: [
         {
           role: "system",
-          content: `You are an expert contract analyst specializing in the ${industry} industry. Always respond with valid JSON only. Be thorough - analyze ALL sections of the contract.`,
+          content: `You are an expert contract analyst specializing in the ${industry} industry, ${roleContext}. Always respond with valid JSON only. Be thorough - analyze ALL sections of the contract.`,
         },
         {
           role: "user",
@@ -257,7 +284,7 @@ ${contractText}`;
 
     const analysis: ContractAnalysis = JSON.parse(responseText);
 
-    return NextResponse.json({ analysis, extractedText: contractText, industry });
+    return NextResponse.json({ analysis, extractedText: contractText, industry, role });
   } catch (error) {
     console.error("Analysis error:", error);
     return NextResponse.json(
