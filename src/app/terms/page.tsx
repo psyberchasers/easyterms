@@ -190,7 +190,7 @@ const termsContent: TermItem[] = [
     content: (
       <>
         <p className="lg:text-lg">If you have questions about these Terms, contact us at:</p>
-        <p className="lg:text-lg text-primary">support@easyterms.ai</p>
+        <p className="lg:text-lg text-purple-500">support@easyterms.ai</p>
       </>
     ),
   },
