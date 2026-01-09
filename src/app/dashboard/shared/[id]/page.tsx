@@ -1,23 +1,20 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { ContractAnalysis } from "@/types/contract";
 import { ContractAnalysisView } from "@/components/ContractAnalysisView";
-import { cn } from "@/lib/utils";
 import {
   AlertTriangle,
   ArrowLeft,
   UserCircle,
   CheckCircle2,
   PenTool,
-  MessageCircle,
 } from "lucide-react";
 import { MusicLoader } from "@/components/MusicLoader";
-import { ContractComments } from "@/components/ContractComments";
 
 interface Share {
   id: string;
@@ -45,15 +42,17 @@ interface Contract {
 
 export default function SharedContractPage() {
   const params = useParams();
+  const searchParams = useSearchParams();
   const { user, loading: authLoading } = useAuth();
   const supabase = createClient();
+  const initialTab = searchParams.get("tab") || "overview";
 
   const [share, setShare] = useState<Share | null>(null);
   const [contract, setContract] = useState<Contract | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
-  const [showDiscussion, setShowDiscussion] = useState(false);
+  const [pdfError, setPdfError] = useState<string | null>(null);
 
   const shareId = params.id as string;
 
@@ -128,6 +127,7 @@ export default function SharedContractPage() {
   const fetchPdfUrl = async (contractId: string) => {
     try {
       console.log("Fetching PDF for contract:", contractId);
+      setPdfError(null);
       const response = await fetch(`/api/contracts/${contractId}/file`);
       const data = await response.json();
       console.log("PDF fetch response:", response.status, data);
@@ -135,9 +135,11 @@ export default function SharedContractPage() {
         setPdfUrl(data.url);
       } else {
         console.error("PDF fetch error:", response.status, data.error);
+        setPdfError(data.error || "Failed to load PDF");
       }
     } catch (err) {
       console.error("Error fetching PDF:", err);
+      setPdfError("Failed to load PDF");
     }
   };
 
@@ -226,52 +228,22 @@ export default function SharedContractPage() {
               Signed
             </span>
           )}
-          {(share.permission === "comment" || share.permission === "sign") && (
-            <button
-              onClick={() => setShowDiscussion(!showDiscussion)}
-              className={cn(
-                "h-7 px-2 text-[11px] rounded-md flex items-center gap-1.5 transition-colors",
-                showDiscussion
-                  ? "bg-purple-500 text-white"
-                  : "text-muted-foreground hover:text-foreground border border-border hover:bg-muted"
-              )}
-            >
-              <MessageCircle className="w-3 h-3" />
-            </button>
-          )}
         </div>
       </div>
 
       {/* Main Content */}
-      <div className="flex flex-1 overflow-hidden">
-        {/* Analysis View - using the shared component */}
-        <div className={cn(
-          "flex-1 overflow-hidden transition-all duration-300",
-          showDiscussion && "md:mr-0"
-        )}>
-          <ContractAnalysisView
-            analysis={analysis}
-            fileName={contract.title}
-            fileUrl={pdfUrl || ""}
-            contractId={null}
-          />
-        </div>
-
-        {/* Discussion Panel */}
-        <div
-          className={cn(
-            "h-full flex flex-col bg-card border-l border-border transition-all duration-300 ease-in-out overflow-hidden",
-            showDiscussion ? "w-96" : "w-0"
-          )}
-        >
-          {showDiscussion && (
-            <ContractComments
-              contractId={contract.id}
-              isOwner={false}
-              canComment={share.permission === "comment" || share.permission === "sign"}
-            />
-          )}
-        </div>
+      <div className="flex-1 overflow-hidden">
+        <ContractAnalysisView
+          analysis={analysis}
+          fileName={contract.title}
+          fileUrl={pdfUrl || ""}
+          contractId={contract.id}
+          pdfError={pdfError}
+          showDiscussionTab={share.permission === "comment" || share.permission === "sign"}
+          canComment={share.permission === "comment" || share.permission === "sign"}
+          isSharedView={true}
+          initialTab={initialTab}
+        />
       </div>
     </div>
   );

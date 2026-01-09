@@ -21,7 +21,7 @@ import {
   CommandList,
   CommandShortcut,
 } from "@/components/ui/command";
-import { FileText, X, Bell, CheckCheck, Share2 } from "lucide-react";
+import { FileText, X, Bell, CheckCheck, Share2, MessageCircle, PenTool, CheckCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
@@ -283,10 +283,25 @@ export function Navbar({ showNewAnalysis = true, showBorder = false, showSearch 
                       notifications.map((notification) => (
                         <button
                           key={notification.id}
-                          onClick={() => {
+                          onClick={async () => {
                             markAsRead(notification.id);
                             if (notification.contract_id) {
-                              router.push(`/contract/${notification.contract_id}`);
+                              if (notification.type === "comment_added") {
+                                // Check if user owns the contract to navigate to correct page
+                                const { data: contract } = await supabase
+                                  .from("contracts")
+                                  .select("user_id")
+                                  .eq("id", notification.contract_id)
+                                  .single();
+
+                                if (contract?.user_id === user?.id) {
+                                  router.push(`/dashboard/contracts/${notification.contract_id}?tab=discussion`);
+                                } else {
+                                  router.push(`/dashboard/shared/${notification.contract_id}?tab=discussion`);
+                                }
+                              } else {
+                                router.push(`/contract/${notification.contract_id}`);
+                              }
                             }
                             setNotificationsOpen(false);
                           }}
@@ -303,13 +318,18 @@ export function Navbar({ showNewAnalysis = true, showBorder = false, showSearch 
                               notification.type === "contract_signed" && "bg-green-500/10",
                               notification.type === "comment_added" && "bg-yellow-500/10"
                             )}>
-                              <Share2 className={cn(
-                                "w-4 h-4",
-                                notification.type === "contract_shared" && "text-purple-500",
-                                notification.type === "signature_requested" && "text-blue-500",
-                                notification.type === "contract_signed" && "text-green-500",
-                                notification.type === "comment_added" && "text-yellow-500"
-                              )} />
+                              {notification.type === "contract_shared" && (
+                                <Share2 className="w-4 h-4 text-purple-500" />
+                              )}
+                              {notification.type === "signature_requested" && (
+                                <PenTool className="w-4 h-4 text-blue-500" />
+                              )}
+                              {notification.type === "contract_signed" && (
+                                <CheckCircle className="w-4 h-4 text-green-500" />
+                              )}
+                              {notification.type === "comment_added" && (
+                                <MessageCircle className="w-4 h-4 text-yellow-500" />
+                              )}
                             </div>
                             <div className="flex-1 min-w-0">
                               <p className="text-sm font-medium text-foreground truncate">

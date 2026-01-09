@@ -49,6 +49,7 @@ import { cn } from "@/lib/utils";
 import dynamic from "next/dynamic";
 import { FinancialCalculator } from "@/components/FinancialCalculator";
 import { MusicLoader } from "@/components/MusicLoader";
+import { ContractComments } from "@/components/ContractComments";
 import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "@/components/animate-ui/components/animate/tooltip";
 import { exportAnnotatedContract } from "@/lib/pdf-export";
 
@@ -102,6 +103,14 @@ interface ContractAnalysisViewProps {
   saving?: boolean;
   // Original file for export
   originalFile?: File | null;
+  // PDF error state
+  pdfError?: string | null;
+  // Discussion/Comments for shared views
+  showDiscussionTab?: boolean;
+  canComment?: boolean;
+  isSharedView?: boolean;
+  // Initial tab to show (for deep linking from notifications)
+  initialTab?: string;
 }
 
 // Helper to safely render values that might be objects
@@ -169,11 +178,16 @@ export function ContractAnalysisView({
   onDeleteDate,
   saving = false,
   originalFile,
+  pdfError,
+  showDiscussionTab = false,
+  canComment = false,
+  isSharedView = false,
+  initialTab = "overview",
 }: ContractAnalysisViewProps) {
   // UI state
   const [showDocument, setShowDocument] = useState(false);
   const [highlightedClause, setHighlightedClause] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState("overview");
+  const [activeTab, setActiveTab] = useState(initialTab);
   const [expandedTerm, setExpandedTerm] = useState<number | null>(0);
   const [selectedFinancial, setSelectedFinancial] = useState<string | null>(null);
   const [downloading, setDownloading] = useState(false);
@@ -286,9 +300,12 @@ export function ContractAnalysisView({
     { id: "terms", label: "Key Terms" },
     { id: "financial", label: "Finances" },
     { id: "advice", label: "Advice" },
-    ...(contractId ? [
+    ...(contractId && !isSharedView ? [
       { id: "versions", label: "Versions" },
       { id: "dates", label: "Dates" },
+    ] : []),
+    ...(showDiscussionTab ? [
+      { id: "discussion", label: "Discussion" },
     ] : []),
   ];
 
@@ -344,6 +361,16 @@ export function ContractAnalysisView({
                   className="h-full"
                   initialScale={isMobile ? 0.8 : 1.0}
                 />
+              ) : pdfError ? (
+                <div className="flex flex-col items-center justify-center h-full gap-3 text-center px-4">
+                  <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center">
+                    <FileText className="w-5 h-5 text-muted-foreground" />
+                  </div>
+                  <p className="text-sm text-muted-foreground">PDF not available</p>
+                  <p className="text-xs text-muted-foreground/60 max-w-xs">
+                    The document file could not be loaded. The analysis is still available.
+                  </p>
+                </div>
               ) : (
                 <div className="flex items-center justify-center h-full">
                   <MusicLoader />
@@ -1162,6 +1189,18 @@ export function ContractAnalysisView({
                   ))}
                 </div>
               )}
+            </TabsContent>
+          )}
+
+          {/* Discussion Tab */}
+          {showDiscussionTab && contractId && (
+            <TabsContent value="discussion" className="h-full -mx-6 -mt-6 -mb-24">
+              <ContractComments
+                contractId={contractId}
+                isOwner={false}
+                canComment={canComment}
+                className="h-full"
+              />
             </TabsContent>
           )}
         </main>

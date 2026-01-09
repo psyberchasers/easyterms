@@ -15,7 +15,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { MoreHorizontal, Star, StarOff, Trash2, Plus, Check } from "lucide-react";
+import { MoreHorizontal, Star, StarOff, Trash2, Plus, Check, Share2 } from "lucide-react";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { ContractsIcon, PlusSignIcon, PlayIcon, FilterIcon, ViewIcon } from "@hugeicons-pro/core-stroke-rounded";
 import { cn } from "@/lib/utils";
@@ -30,6 +30,7 @@ export default function ContractsPage() {
   const [initialLoad, setInitialLoad] = useState(true);
   const [filter, setFilter] = useState<"all" | "high-risk" | "medium-risk" | "low-risk">("all");
   const [selectedContracts, setSelectedContracts] = useState<Set<string>>(new Set());
+  const [contractShares, setContractShares] = useState<Record<string, number>>({});
   const [deleteModal, setDeleteModal] = useState<{ open: boolean; contract: Contract | null }>({
     open: false,
     contract: null,
@@ -56,6 +57,23 @@ export default function ContractsPage() {
         console.error("Error fetching contracts:", error);
       } else {
         setContracts(data as Contract[] || []);
+
+        // Fetch shares count for each contract
+        if (data && data.length > 0) {
+          const contractIds = data.map((c: Contract) => c.id);
+          const { data: shares } = await supabase
+            .from("contract_shares")
+            .select("contract_id")
+            .in("contract_id", contractIds);
+
+          if (shares) {
+            const shareMap: Record<string, number> = {};
+            shares.forEach((s: { contract_id: string }) => {
+              shareMap[s.contract_id] = (shareMap[s.contract_id] || 0) + 1;
+            });
+            setContractShares(shareMap);
+          }
+        }
       }
     } catch (err) {
       console.error("Error:", err);
@@ -323,6 +341,11 @@ export default function ContractsPage() {
                 <span className="text-[13px] font-medium truncate text-foreground">
                   {contract.title}
                 </span>
+                {contractShares[contract.id] && (
+                  <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-purple-500/10 text-purple-500 flex items-center gap-1 shrink-0">
+                    <Share2 className="w-2.5 h-2.5" />
+                  </span>
+                )}
                 <button
                   onClick={(e) => {
                     e.stopPropagation();

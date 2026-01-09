@@ -26,6 +26,7 @@ import {
   Search,
   RefreshCw,
   ChevronRight,
+  Share2,
 } from "lucide-react";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { RepeatOffIcon, FolderBlockIcon, AiSheetsIcon, Alert02Icon, StarIcon } from "@hugeicons-pro/core-solid-rounded";
@@ -45,6 +46,7 @@ export default function DashboardPage() {
   const [filter, setFilter] = useState<"all" | "starred" | "high-risk">("all");
   const [viewMode, setViewMode] = useState<"list" | "grid">("grid");
   const [contractVersions, setContractVersions] = useState<Record<string, number[]>>({});
+  const [contractShares, setContractShares] = useState<Record<string, number>>({});
   const [deleteModal, setDeleteModal] = useState<{ open: boolean; contract: Contract | null }>({
     open: false,
     contract: null,
@@ -97,6 +99,20 @@ export default function DashboardPage() {
               versionMap[v.contract_id].push(v.version_number + 1);
             });
             setContractVersions(versionMap);
+          }
+
+          // Fetch shares count for each contract
+          const { data: shares } = await supabase
+            .from("contract_shares")
+            .select("contract_id")
+            .in("contract_id", contractIds);
+
+          if (shares) {
+            const shareMap: Record<string, number> = {};
+            shares.forEach((s: { contract_id: string }) => {
+              shareMap[s.contract_id] = (shareMap[s.contract_id] || 0) + 1;
+            });
+            setContractShares(shareMap);
           }
         }
       }
@@ -386,9 +402,9 @@ export default function DashboardPage() {
                   </p>
                 </div>
 
-                {/* Tags - only versions */}
+                {/* Tags - versions only */}
                 {contractVersions[contract.id]?.length > 0 && (
-                  <div className="px-4 pb-3">
+                  <div className="px-4 pb-3 flex gap-2">
                     <span className="text-[10px] font-medium px-2 py-0.5 rounded-lg bg-muted text-muted-foreground">
                       {contractVersions[contract.id].length + 1} versions
                     </span>
@@ -413,6 +429,15 @@ export default function DashboardPage() {
                           "text-green-500"
                         )}>
                           {contract.overall_risk === "high" ? "High Risk" : contract.overall_risk === "medium" ? "Medium" : "Low Risk"}
+                        </span>
+                      </>
+                    )}
+                    {contractShares[contract.id] && (
+                      <>
+                        <span className="text-muted-foreground/40">•</span>
+                        <span className="text-xs font-medium text-purple-500 flex items-center gap-1">
+                          <Share2 className="w-3 h-3" />
+                          Shared
                         </span>
                       </>
                     )}
@@ -490,6 +515,11 @@ export default function DashboardPage() {
                       <div className="col-span-3 flex items-center gap-3 min-w-0">
                         <FileText className="w-4 h-4 text-muted-foreground shrink-0" />
                         <p className="text-sm text-foreground truncate">{contract.title}</p>
+                        {contractShares[contract.id] && (
+                          <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-purple-500/10 text-purple-500 flex items-center gap-1 shrink-0">
+                            <Share2 className="w-2.5 h-2.5" />
+                          </span>
+                        )}
                       </div>
 
                       {/* Type */}

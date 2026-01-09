@@ -122,7 +122,8 @@ export function ContractComments({
       }
 
       setNewComment("");
-      // Comment will be added via subscription
+      // Refetch comments to show the new one immediately
+      fetchComments();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to send comment");
     } finally {
@@ -283,41 +284,43 @@ export function ContractComments({
 
       {/* Input Area */}
       {canComment ? (
-        <div className="shrink-0 p-4 border-t border-border">
-          {error && (
-            <p className="text-xs text-red-500 mb-2">{error}</p>
-          )}
-          <div className="flex gap-2">
-            <textarea
-              ref={inputRef}
-              value={newComment}
-              onChange={(e) => setNewComment(e.target.value)}
-              onKeyDown={handleKeyDown}
-              placeholder="Type a message..."
-              rows={1}
-              className="flex-1 px-3 py-2 text-sm bg-muted border-0 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-purple-500/20 placeholder:text-muted-foreground/60"
-              style={{ minHeight: "40px", maxHeight: "120px" }}
-              onInput={(e) => {
-                const target = e.target as HTMLTextAreaElement;
-                target.style.height = "40px";
-                target.style.height = `${Math.min(target.scrollHeight, 120)}px`;
-              }}
-            />
-            <button
-              onClick={handleSend}
-              disabled={!newComment.trim() || sending}
-              className="w-10 h-10 bg-purple-500 hover:bg-purple-600 text-white rounded-lg flex items-center justify-center transition-colors disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
-            >
-              {sending ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
-              ) : (
-                <Send className="w-4 h-4" />
-              )}
-            </button>
+        <div className="shrink-0 border-t border-border">
+          <div className="p-4 pt-6">
+            {error && (
+              <p className="text-xs text-red-500 mb-2">{error}</p>
+            )}
+            <div className="flex gap-2">
+              <textarea
+                ref={inputRef}
+                value={newComment}
+                onChange={(e) => setNewComment(e.target.value)}
+                onKeyDown={handleKeyDown}
+                placeholder="Type a message..."
+                rows={1}
+                className="flex-1 px-3 py-2 text-sm bg-muted border-0 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-purple-500/20 placeholder:text-muted-foreground/60"
+                style={{ minHeight: "40px", maxHeight: "120px" }}
+                onInput={(e) => {
+                  const target = e.target as HTMLTextAreaElement;
+                  target.style.height = "40px";
+                  target.style.height = `${Math.min(target.scrollHeight, 120)}px`;
+                }}
+              />
+              <button
+                onClick={handleSend}
+                disabled={!newComment.trim() || sending}
+                className="w-10 h-10 bg-purple-500 hover:bg-purple-600 text-white rounded-lg flex items-center justify-center transition-colors disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
+              >
+                {sending ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Send className="w-4 h-4" />
+                )}
+              </button>
+            </div>
+            <p className="text-[10px] text-muted-foreground/60 mt-2">
+              Press Enter to send, Shift+Enter for new line
+            </p>
           </div>
-          <p className="text-[10px] text-muted-foreground/60 mt-2">
-            Press Enter to send, Shift+Enter for new line
-          </p>
         </div>
       ) : (
         <div className="shrink-0 p-4 border-t border-border text-center">
