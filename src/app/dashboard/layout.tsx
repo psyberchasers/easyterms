@@ -51,6 +51,7 @@ import {
 } from "@hugeicons-pro/core-stroke-rounded";
 import { MusicLoader } from "@/components/MusicLoader";
 import { useTheme } from "@/components/providers/ThemeProvider";
+import { IconMsgs } from "nucleo-glass";
 import { CommandMenu } from "@/components/CommandMenu";
 import { motion } from "framer-motion";
 import { createClient } from "@/lib/supabase/client";
@@ -509,7 +510,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
 
   const mainNav = [
     { title: "Home", icon: Home01Icon, href: "/dashboard" },
-    { title: "Chat", icon: ChatSparkIcon, href: "/dashboard/chat" },
+    { title: "Chat", icon: null, customIcon: <IconMsgs size={16} className="text-muted-foreground" />, href: "/dashboard/chat" },
     { title: "Contracts", icon: ContractsIcon, href: "/dashboard/contracts" },
     { title: "Shared", icon: Share01Icon, href: "/dashboard/shared" },
     { title: "Upload Contract", icon: FileUploadIcon, href: "/dashboard/upload-contract" },
@@ -556,7 +557,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                         className="h-auto py-1.5 px-3 text-[13px] font-medium text-sidebar-foreground"
                       >
                         <Link href={item.href}>
-                          <HugeiconsIcon icon={item.icon} size={16} className="text-muted-foreground" />
+                          {item.customIcon ? item.customIcon : <HugeiconsIcon icon={item.icon} size={16} className="text-muted-foreground" />}
                           <span>{item.title}</span>
                         </Link>
                       </SidebarMenuButton>
