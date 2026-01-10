@@ -52,6 +52,7 @@ import {
 import { MusicLoader } from "@/components/MusicLoader";
 import { useTheme } from "@/components/providers/ThemeProvider";
 import { IconMsgs, IconHouse, IconFiles, IconAppStack, IconUsers, IconStackPerspective } from "nucleo-glass";
+import { GlassyHomeIcon } from "@/components/icons/GlassyIcons";
 import { CommandMenu } from "@/components/CommandMenu";
 import { motion } from "framer-motion";
 import { createClient } from "@/lib/supabase/client";
@@ -509,7 +510,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   }
 
   const mainNav = [
-    { title: "Home", icon: null, customIcon: <IconHouse size={16} className="text-muted-foreground" />, href: "/dashboard" },
+    { title: "Home", icon: null, customIcon: <GlassyHomeIcon size={16} />, href: "/dashboard" },
     { title: "Chat", icon: null, customIcon: <IconMsgs size={16} className="text-muted-foreground" />, href: "/dashboard/chat" },
     { title: "Contracts", icon: null, customIcon: <IconFiles size={16} className="text-muted-foreground" />, href: "/dashboard/contracts" },
     { title: "Shared", icon: null, customIcon: <IconUsers size={16} className="text-muted-foreground" />, href: "/dashboard/shared" },
