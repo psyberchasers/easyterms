@@ -51,7 +51,7 @@ import {
 } from "@hugeicons-pro/core-stroke-rounded";
 import { MusicLoader } from "@/components/MusicLoader";
 import { useTheme } from "@/components/providers/ThemeProvider";
-import { IconMsgs } from "nucleo-glass";
+import { IconMsgs, IconHouse, IconFiles, IconAppStack, IconUsers, IconStackPerspective } from "nucleo-glass";
 import { CommandMenu } from "@/components/CommandMenu";
 import { motion } from "framer-motion";
 import { createClient } from "@/lib/supabase/client";
@@ -509,13 +509,13 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   }
 
   const mainNav = [
-    { title: "Home", icon: Home01Icon, href: "/dashboard" },
+    { title: "Home", icon: null, customIcon: <IconHouse size={16} className="text-muted-foreground" />, href: "/dashboard" },
     { title: "Chat", icon: null, customIcon: <IconMsgs size={16} className="text-muted-foreground" />, href: "/dashboard/chat" },
-    { title: "Contracts", icon: ContractsIcon, href: "/dashboard/contracts" },
-    { title: "Shared", icon: Share01Icon, href: "/dashboard/shared" },
+    { title: "Contracts", icon: null, customIcon: <IconFiles size={16} className="text-muted-foreground" />, href: "/dashboard/contracts" },
+    { title: "Shared", icon: null, customIcon: <IconUsers size={16} className="text-muted-foreground" />, href: "/dashboard/shared" },
     { title: "Upload Contract", icon: FileUploadIcon, href: "/dashboard/upload-contract" },
-    { title: "Compare", icon: GitCompareIcon, href: "/dashboard/compare" },
-    { title: "Templates", icon: GridViewIcon, href: "/dashboard/templates" },
+    { title: "Compare", icon: null, customIcon: <IconStackPerspective size={16} className="text-muted-foreground" />, href: "/dashboard/compare" },
+    { title: "Templates", icon: null, customIcon: <IconAppStack size={16} className="text-muted-foreground" />, href: "/dashboard/templates" },
   ];
 
   return (
