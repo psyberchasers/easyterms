@@ -68,28 +68,28 @@ export default function Home() {
         <div className="relative z-10 max-w-4xl mx-auto text-center space-y-8">
           {/* Logo */}
           <div className="flex items-center justify-center animate-fade-in-up">
-            <img src={theme === "dark" ? "/darkModeS.svg" : "/logoSingle.svg"} alt="EasyTerms Logo" className="h-12" />
+            <img src={theme === "dark" ? "/darkModeS.svg" : "/logoSingle.svg"} alt="EasyTerms - AI Contract Analysis App" className="h-12" />
           </div>
 
-          {/* Headline */}
+          {/* Headline - h1 for SEO with EasyTerms name */}
           <div className="space-y-4 animate-fade-in-up stagger-1">
             <h1 className="text-4xl md:text-6xl font-light tracking-tight text-white">
-              Welcome to <span className="font-medium">EasyTerms</span>
+              <span className="font-medium">EasyTerms</span>
             </h1>
             <p className="text-xl md:text-2xl text-white/80 font-light">
               AI-Powered Contract Analysis for Musicians, Creators & Talent
             </p>
           </div>
 
-          {/* Purpose Statement for Google Verification */}
-          <p className="text-base text-white/70 max-w-2xl mx-auto animate-fade-in-up stagger-1">
+          {/* Purpose Statement - clearly explains app purpose */}
+          <p className="text-lg text-white/90 max-w-2xl mx-auto animate-fade-in-up stagger-1 bg-black/30 backdrop-blur-sm rounded-xl px-6 py-4">
             EasyTerms helps artists and creators understand their music contracts, licensing agreements, and publishing deals by providing instant AI-powered analysis in plain English.
           </p>
 
           {/* Data Usage & Privacy Link */}
-          <p className="text-sm text-white/50 max-w-xl mx-auto animate-fade-in-up stagger-1">
+          <p className="text-sm text-white/70 max-w-xl mx-auto animate-fade-in-up stagger-1">
             We use your email to create your account and securely store your uploaded contracts. We never share your data with third parties.{" "}
-            <Link href="/privacy" className="underline hover:text-white/70 transition-colors">Privacy Policy</Link>
+            <Link href="/privacy" className="underline hover:text-white transition-colors">Privacy Policy</Link> | <Link href="/terms" className="underline hover:text-white transition-colors">Terms of Service</Link>
           </p>
 
           {/* Subheadline */}
