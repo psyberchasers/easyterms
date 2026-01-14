@@ -370,7 +370,7 @@ export function ContractAnalysisView({
                     value={selectedVersionId || "original"}
                     onValueChange={(value) => setSelectedVersionId(value === "original" ? null : value)}
                   >
-                    <SelectTrigger className="h-7 w-auto px-2 text-xs border-border bg-muted/50 gap-1 !rounded-lg">
+                    <SelectTrigger className="h-7 w-auto px-2 text-xs border-border bg-muted/50 gap-1">
                       <SelectValue>
                         <span className={cn(
                           "font-medium",
