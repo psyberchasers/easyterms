@@ -68,18 +68,23 @@ export default function Home() {
         <div className="relative z-10 max-w-4xl mx-auto text-center space-y-8">
           {/* Logo */}
           <div className="flex items-center justify-center animate-fade-in-up">
-            <img src={theme === "dark" ? "/darkModeS.svg" : "/logoSingle.svg"} alt="EasyTerms" className="h-12" />
+            <img src={theme === "dark" ? "/darkModeS.svg" : "/logoSingle.svg"} alt="EasyTerms Logo" className="h-12" />
           </div>
 
           {/* Headline */}
           <div className="space-y-4 animate-fade-in-up stagger-1">
             <h1 className="text-4xl md:text-6xl font-light tracking-tight text-white">
-              Welcome to <span className="text-white">EasyTerms</span>
+              Welcome to <span className="font-medium">EasyTerms</span>
             </h1>
             <p className="text-xl md:text-2xl text-white/80 font-light">
-              AI Contract Analysis for Creators & Talent
+              AI-Powered Contract Analysis for Musicians, Creators & Talent
             </p>
           </div>
+
+          {/* Purpose Statement for Google Verification */}
+          <p className="text-base text-white/70 max-w-2xl mx-auto animate-fade-in-up stagger-1">
+            EasyTerms helps artists and creators understand their music contracts, licensing agreements, and publishing deals by providing instant AI-powered analysis in plain English.
+          </p>
 
           {/* Subheadline */}
           <div className="text-lg text-white/80 max-w-2xl mx-auto leading-relaxed animate-fade-in-up stagger-2 space-y-3">
