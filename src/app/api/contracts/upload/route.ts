@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 import { prepareBenchmarkContribution } from "@/lib/benchmarking";
 import { IndustryType } from "@/config/industries";
+import { convertToPdf } from "@/lib/convertToPdf";
 
 export async function POST(request: Request) {
   try {
@@ -35,14 +36,40 @@ export async function POST(request: Request) {
     console.log("Uploading file for user:", user.id);
     console.log("File:", file.name, file.type, file.size);
 
+    // Convert TXT/DOCX files to PDF for consistent viewing
+    let fileToUpload: File | Blob = file;
+    let uploadFileName = file.name;
+    let uploadContentType = file.type;
+
+    const isTextOrDoc = file.type === "text/plain" ||
+      file.type === "application/msword" ||
+      file.type === "application/vnd.openxmlformats-officedocument.wordprocessingml.document" ||
+      file.name.toLowerCase().endsWith(".txt") ||
+      file.name.toLowerCase().endsWith(".doc") ||
+      file.name.toLowerCase().endsWith(".docx");
+
+    if (isTextOrDoc) {
+      try {
+        console.log("Converting file to PDF...");
+        const { pdfBuffer, originalName } = await convertToPdf(file);
+        fileToUpload = new Blob([new Uint8Array(pdfBuffer)], { type: "application/pdf" });
+        uploadFileName = originalName;
+        uploadContentType = "application/pdf";
+        console.log("File converted to PDF:", uploadFileName);
+      } catch (convertErr) {
+        console.warn("PDF conversion failed, uploading original:", convertErr);
+        // Continue with original file if conversion fails
+      }
+    }
+
     // Upload file to Supabase Storage
-    const fileExt = file.name.split('.').pop();
-    const fileName = `${user.id}/${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
-    
+    const fileExt = uploadFileName.split('.').pop();
+    const storagePath = `${user.id}/${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+
     const { data: uploadData, error: uploadError } = await supabase.storage
       .from("contracts")
-      .upload(fileName, file, {
-        contentType: file.type,
+      .upload(storagePath, fileToUpload, {
+        contentType: uploadContentType,
         upsert: false,
       });
 
@@ -60,9 +87,9 @@ export async function POST(request: Request) {
       .insert({
         user_id: user.id,
         title,
-        file_name: file.name,
+        file_name: uploadFileName,
         file_url: fileUrl,
-        file_type: file.type,
+        file_type: uploadContentType,
         extracted_text: extractedText,
         analysis,
         contract_type: contractType,

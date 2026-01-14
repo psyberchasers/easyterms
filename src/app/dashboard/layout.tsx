@@ -338,17 +338,8 @@ function DashboardHeader({
       {/* Search Command */}
       <SearchCommand />
 
-      {/* Settings - hidden on mobile */}
-      <button
-        disabled
-        className="hidden sm:flex h-8 px-3 items-center gap-2 border border-border rounded-md text-[13px] font-semibold text-muted-foreground/40 cursor-not-allowed"
-      >
-        <HugeiconsIcon icon={Settings03Icon} size={14} />
-        <span>Settings</span>
-      </button>
-
       {/* Upload - icon only on mobile */}
-      <Link href="/dashboard/upload-contract">
+      <Link href="/dashboard/upload-contract?new=true">
         <button className="h-8 w-8 sm:w-auto sm:px-3 flex items-center justify-center sm:justify-start gap-2 transition-colors rounded-md text-[13px] font-semibold text-white bg-purple-500 hover:bg-purple-600">
           <HugeiconsIcon icon={FileUploadIcon} size={14} />
           <span className="hidden sm:inline">Upload</span>
@@ -358,9 +349,7 @@ function DashboardHeader({
       {/* Theme toggle - hidden on mobile */}
       <button
         onClick={toggleTheme}
-        disabled
-        className="hidden sm:flex h-8 w-8 items-center justify-center border border-border hover:bg-muted transition-colors rounded-md opacity-50 cursor-not-allowed"
-        title="Theme toggle temporarily disabled"
+        className="hidden sm:flex h-8 w-8 items-center justify-center border border-border hover:bg-muted transition-colors rounded-md"
       >
         {theme === "dark" ? (
           <HugeiconsIcon icon={Sun01Icon} size={14} className="text-muted-foreground" />
@@ -505,7 +494,6 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
     { title: "Chat", icon: ChatSearch01Icon, href: "/dashboard/chat" },
     { title: "Contracts", icon: DocumentAttachmentIcon, href: "/dashboard/contracts" },
     { title: "Shared", icon: FolderShared02Icon, href: "/dashboard/shared" },
-    { title: "Upload Contract", icon: FileUploadBulkIcon, href: "/dashboard/upload-contract" },
     { title: "Compare", icon: GitCompareBulkIcon, href: "/dashboard/compare" },
     { title: "Templates", icon: LayoutGridIcon, href: "/dashboard/templates" },
   ];
