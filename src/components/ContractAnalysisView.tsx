@@ -364,6 +364,41 @@ export function ContractAnalysisView({
             <div className="shrink-0 h-12 px-4 border-b border-border bg-background flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <span className="text-sm font-medium text-foreground">{fileName}</span>
+                {/* Version Selector in PDF Header */}
+                {versions.length > 0 && (
+                  <Select
+                    value={selectedVersionId || "original"}
+                    onValueChange={(value) => setSelectedVersionId(value === "original" ? null : value)}
+                  >
+                    <SelectTrigger className="h-7 w-auto px-2 text-xs border-border bg-muted/50 gap-1">
+                      <SelectValue>
+                        <span className={cn(
+                          "font-medium",
+                          selectedVersionId ? "text-purple-400" : "text-muted-foreground"
+                        )}>
+                          V{activeVersionNumber}
+                        </span>
+                      </SelectValue>
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="original">
+                        <span className="flex items-center gap-2">
+                          V1 <span className="text-muted-foreground/60">(Original)</span>
+                        </span>
+                      </SelectItem>
+                      {versions.map((v) => (
+                        <SelectItem key={v.id} value={v.id}>
+                          <span className="flex items-center gap-2">
+                            V{v.version_number}
+                            <span className="text-muted-foreground/60 text-[10px]">
+                              {new Date(v.created_at).toLocaleDateString()}
+                            </span>
+                          </span>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
                 {highlightedClause && (
                   <span className="text-xs text-muted-foreground/60 px-2 py-0.5 border border-border">Highlighting</span>
                 )}
@@ -422,49 +457,9 @@ export function ContractAnalysisView({
             "px-6 py-3 md:py-0 md:h-12 flex flex-col md:flex-row md:items-center md:justify-between border-b border-border gap-2 md:gap-0",
             !showDocument && "max-w-4xl mx-auto"
           )}>
-            {/* Left: Title + Version Selector + Risk Assessment */}
+            {/* Left: Title + Risk Assessment */}
             <div className="flex items-center gap-2 shrink-0">
               <h1 className="text-sm font-medium text-foreground">{activeAnalysis.contractType || fileName}</h1>
-
-              {/* Version Selector Dropdown */}
-              {versions.length > 0 && (
-                <>
-                  <span className="text-[10px] text-muted-foreground/40">•</span>
-                  <Select
-                    value={selectedVersionId || "original"}
-                    onValueChange={(value) => setSelectedVersionId(value === "original" ? null : value)}
-                  >
-                    <SelectTrigger className="h-6 w-auto px-2 text-[11px] border-border bg-transparent gap-1">
-                      <SelectValue>
-                        <span className={cn(
-                          "font-medium",
-                          selectedVersionId ? "text-purple-400" : "text-muted-foreground"
-                        )}>
-                          Version {activeVersionNumber}
-                        </span>
-                      </SelectValue>
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="original">
-                        <span className="flex items-center gap-2">
-                          Version 1 <span className="text-muted-foreground/60">(Original)</span>
-                        </span>
-                      </SelectItem>
-                      {versions.map((v) => (
-                        <SelectItem key={v.id} value={v.id}>
-                          <span className="flex items-center gap-2">
-                            Version {v.version_number}
-                            <span className="text-muted-foreground/60 text-[10px]">
-                              {new Date(v.created_at).toLocaleDateString()}
-                            </span>
-                          </span>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </>
-              )}
-
               <span className="text-[10px] text-muted-foreground/40">•</span>
               <span className={cn(
                 "text-[10px] uppercase font-medium",
