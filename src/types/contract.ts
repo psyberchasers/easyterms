@@ -35,6 +35,7 @@ export interface RightsAndOwnership {
   territorialRights?: string;
   termLength?: string;
   exclusivity?: string;
+  reversion?: string;
   additionalNotes?: string;
 }
 
