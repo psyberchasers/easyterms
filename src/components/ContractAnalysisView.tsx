@@ -193,6 +193,16 @@ export function ContractAnalysisView({
   const [downloading, setDownloading] = useState(false);
   const [exporting, setExporting] = useState(false);
 
+  // Version selection state - null means original (Version 1)
+  const [selectedVersionId, setSelectedVersionId] = useState<string | null>(null);
+  const [versionFileUrls, setVersionFileUrls] = useState<Record<string, string>>({});
+
+  // Compute active analysis and file URL based on selected version
+  const selectedVersion = versions.find(v => v.id === selectedVersionId);
+  const activeAnalysis = selectedVersion?.analysis || analysis;
+  const activeFileUrl = selectedVersionId && versionFileUrls[selectedVersionId] ? versionFileUrls[selectedVersionId] : fileUrl;
+  const activeVersionNumber = selectedVersion?.version_number || 1;
+
   // Share modal state
   const [showShareModal, setShowShareModal] = useState(false);
   const [shareEmail, setShareEmail] = useState("");
@@ -208,6 +218,29 @@ export function ContractAnalysisView({
 
   // Refs
   const versionInputRef = useRef<HTMLInputElement>(null);
+
+  // Fetch signed URL for version file when selected
+  useEffect(() => {
+    const fetchVersionFileUrl = async () => {
+      if (!selectedVersionId || !contractId) return;
+      if (versionFileUrls[selectedVersionId]) return; // Already fetched
+
+      const version = versions.find(v => v.id === selectedVersionId);
+      if (!version?.file_url) return;
+
+      try {
+        const response = await fetch(`/api/contracts/${contractId}/file?path=${encodeURIComponent(version.file_url)}`);
+        if (response.ok) {
+          const data = await response.json();
+          setVersionFileUrls(prev => ({ ...prev, [selectedVersionId]: data.url }));
+        }
+      } catch (err) {
+        console.error("Error fetching version file URL:", err);
+      }
+    };
+
+    fetchVersionFileUrl();
+  }, [selectedVersionId, contractId, versions, versionFileUrls]);
 
   // Mobile detection
   const [isMobile, setIsMobile] = useState(true);
@@ -354,9 +387,9 @@ export function ContractAnalysisView({
             </div>
             {/* PDF Content */}
             <div className="flex-1 overflow-auto bg-card">
-              {fileUrl ? (
+              {activeFileUrl ? (
                 <PDFViewerWithSearch
-                  fileUrl={fileUrl}
+                  fileUrl={activeFileUrl}
                   searchText={highlightedClause || ""}
                   className="h-full"
                   initialScale={isMobile ? 0.8 : 1.0}
@@ -389,20 +422,60 @@ export function ContractAnalysisView({
             "px-6 py-3 md:py-0 md:h-12 flex flex-col md:flex-row md:items-center md:justify-between border-b border-border gap-2 md:gap-0",
             !showDocument && "max-w-4xl mx-auto"
           )}>
-            {/* Left: Title + Risk Assessment */}
+            {/* Left: Title + Version Selector + Risk Assessment */}
             <div className="flex items-center gap-2 shrink-0">
-              <h1 className="text-sm font-medium text-foreground">{analysis.contractType || fileName}</h1>
+              <h1 className="text-sm font-medium text-foreground">{activeAnalysis.contractType || fileName}</h1>
+
+              {/* Version Selector Dropdown */}
+              {versions.length > 0 && (
+                <>
+                  <span className="text-[10px] text-muted-foreground/40">•</span>
+                  <Select
+                    value={selectedVersionId || "original"}
+                    onValueChange={(value) => setSelectedVersionId(value === "original" ? null : value)}
+                  >
+                    <SelectTrigger className="h-6 w-auto px-2 text-[11px] border-border bg-transparent gap-1">
+                      <SelectValue>
+                        <span className={cn(
+                          "font-medium",
+                          selectedVersionId ? "text-purple-400" : "text-muted-foreground"
+                        )}>
+                          Version {activeVersionNumber}
+                        </span>
+                      </SelectValue>
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="original">
+                        <span className="flex items-center gap-2">
+                          Version 1 <span className="text-muted-foreground/60">(Original)</span>
+                        </span>
+                      </SelectItem>
+                      {versions.map((v) => (
+                        <SelectItem key={v.id} value={v.id}>
+                          <span className="flex items-center gap-2">
+                            Version {v.version_number}
+                            <span className="text-muted-foreground/60 text-[10px]">
+                              {new Date(v.created_at).toLocaleDateString()}
+                            </span>
+                          </span>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </>
+              )}
+
               <span className="text-[10px] text-muted-foreground/40">•</span>
               <span className={cn(
                 "text-[10px] uppercase font-medium",
-                analysis.overallRiskAssessment === "low" ? "text-green-600" :
-                analysis.overallRiskAssessment === "medium" ? "text-yellow-600" :
-                analysis.overallRiskAssessment === "high" ? "text-red-600" :
+                activeAnalysis.overallRiskAssessment === "low" ? "text-green-600" :
+                activeAnalysis.overallRiskAssessment === "medium" ? "text-yellow-600" :
+                activeAnalysis.overallRiskAssessment === "high" ? "text-red-600" :
                 "text-muted-foreground"
               )}>
-                {analysis.overallRiskAssessment === "low" ? "LOW RISK" :
-                 analysis.overallRiskAssessment === "medium" ? "MEDIUM RISK" :
-                 analysis.overallRiskAssessment === "high" ? "HIGH RISK" : "ANALYZED"}
+                {activeAnalysis.overallRiskAssessment === "low" ? "LOW RISK" :
+                 activeAnalysis.overallRiskAssessment === "medium" ? "MEDIUM RISK" :
+                 activeAnalysis.overallRiskAssessment === "high" ? "HIGH RISK" : "ANALYZED"}
               </span>
             </div>
 
@@ -544,7 +617,7 @@ export function ContractAnalysisView({
               </div>
               <div className="space-y-3">
                 {(() => {
-                  const sentences = analysis.summary.match(/[^.!?]+[.!?]+/g) || [analysis.summary];
+                  const sentences = activeAnalysis.summary.match(/[^.!?]+[.!?]+/g) || [activeAnalysis.summary];
                   const paragraphs: string[] = [];
                   for (let i = 0; i < sentences.length; i += 3) {
                     paragraphs.push(sentences.slice(i, i + 3).join(' ').trim());
@@ -557,77 +630,77 @@ export function ContractAnalysisView({
             </div>
 
             {/* Financial Terms */}
-            {analysis.financialTerms && (
+            {activeAnalysis.financialTerms && (
               <div>
                 <div className="flex items-center gap-2 mb-4 -mr-6">
                   <span className="text-[10px] text-muted-foreground/60 uppercase tracking-wider shrink-0">Financial Analysis</span>
                   <div className="h-px flex-1 bg-border" />
                 </div>
                 <div className="space-y-0 -mt-1">
-                  {analysis.financialTerms.royaltyRate && (
+                  {activeAnalysis.financialTerms.royaltyRate && (
                     <div
                       className="py-3 cursor-pointer hover:bg-muted/30 transition-colors -mx-1 px-1"
                       onClick={() => {
                         setSelectedFinancial('royalty');
-                        handleClauseClick(analysis.financialTerms.royaltyRate);
+                        handleClauseClick(activeAnalysis.financialTerms.royaltyRate);
                       }}
                     >
                       <div className="flex items-center">
                         <p className="text-[10px] font-medium uppercase tracking-wider shrink-0 transition-colors duration-300" style={{ color: selectedFinancial === 'royalty' ? '#a855f7' : 'var(--foreground)' }}>Royalty</p>
                         <span className="mx-2 text-[10px] transition-colors duration-300" style={{ color: selectedFinancial === 'royalty' ? '#a855f7' : 'var(--muted-foreground)' }}>·</span>
                         <p className="text-[10px] tracking-wider uppercase shrink-0 transition-colors duration-300" style={{ color: selectedFinancial === 'royalty' ? '#a855f7' : 'var(--foreground)' }}>
-                          {renderValue(analysis.financialTerms.royaltyRate)}
+                          {renderValue(activeAnalysis.financialTerms.royaltyRate)}
                         </p>
                       </div>
                     </div>
                   )}
-                  {analysis.termLength && (
+                  {activeAnalysis.termLength && (
                     <div
                       className="py-3 cursor-pointer hover:bg-muted/30 transition-colors -mx-1 px-1"
                       onClick={() => {
                         setSelectedFinancial('term');
-                        handleClauseClick(analysis.termLength);
+                        handleClauseClick(activeAnalysis.termLength);
                       }}
                     >
                       <div className="flex items-center">
                         <p className="text-[10px] font-medium uppercase tracking-wider shrink-0 transition-colors duration-300" style={{ color: selectedFinancial === 'term' ? '#a855f7' : 'var(--foreground)' }}>Term</p>
                         <span className="mx-2 text-[10px] transition-colors duration-300" style={{ color: selectedFinancial === 'term' ? '#a855f7' : 'var(--muted-foreground)' }}>·</span>
                         <p className="text-[10px] tracking-wider uppercase shrink-0 transition-colors duration-300" style={{ color: selectedFinancial === 'term' ? '#a855f7' : 'var(--foreground)' }}>
-                          {renderValue(analysis.termLength)}
+                          {renderValue(activeAnalysis.termLength)}
                         </p>
                       </div>
                     </div>
                   )}
-                  {analysis.financialTerms.advanceAmount && (
+                  {activeAnalysis.financialTerms.advanceAmount && (
                     <div
                       className="py-3 cursor-pointer hover:bg-muted/30 transition-colors -mx-1 px-1"
                       onClick={() => {
                         setSelectedFinancial('advance');
-                        handleClauseClick(analysis.financialTerms.advanceAmount);
+                        handleClauseClick(activeAnalysis.financialTerms.advanceAmount);
                       }}
                     >
                       <div className="flex items-center">
                         <p className="text-[10px] font-medium uppercase tracking-wider shrink-0 transition-colors duration-300" style={{ color: selectedFinancial === 'advance' ? '#a855f7' : 'var(--foreground)' }}>Advance</p>
                         <span className="mx-2 text-[10px] transition-colors duration-300" style={{ color: selectedFinancial === 'advance' ? '#a855f7' : 'var(--muted-foreground)' }}>·</span>
                         <p className="text-[10px] tracking-wider uppercase shrink-0 transition-colors duration-300" style={{ color: selectedFinancial === 'advance' ? '#a855f7' : 'var(--foreground)' }}>
-                          {renderValue(analysis.financialTerms.advanceAmount)}
+                          {renderValue(activeAnalysis.financialTerms.advanceAmount)}
                         </p>
                       </div>
                     </div>
                   )}
-                  {analysis.financialTerms.paymentSchedule && (
+                  {activeAnalysis.financialTerms.paymentSchedule && (
                     <div
                       className="py-3 cursor-pointer hover:bg-muted/30 transition-colors -mx-1 px-1"
                       onClick={() => {
                         setSelectedFinancial('payment');
-                        handleClauseClick(analysis.financialTerms.paymentSchedule);
+                        handleClauseClick(activeAnalysis.financialTerms.paymentSchedule);
                       }}
                     >
                       <div className="flex items-center">
                         <p className="text-[10px] font-medium uppercase tracking-wider shrink-0 transition-colors duration-300" style={{ color: selectedFinancial === 'payment' ? '#a855f7' : 'var(--foreground)' }}>Payment</p>
                         <span className="mx-2 text-[10px] transition-colors duration-300" style={{ color: selectedFinancial === 'payment' ? '#a855f7' : 'var(--muted-foreground)' }}>·</span>
                         <p className="text-[10px] tracking-wider uppercase shrink-0 transition-colors duration-300" style={{ color: selectedFinancial === 'payment' ? '#a855f7' : 'var(--foreground)' }}>
-                          {renderValue(analysis.financialTerms.paymentSchedule)}
+                          {renderValue(activeAnalysis.financialTerms.paymentSchedule)}
                         </p>
                       </div>
                     </div>
@@ -637,15 +710,15 @@ export function ContractAnalysisView({
             )}
 
             {/* Issues Overview */}
-            {((analysis.potentialConcerns && analysis.potentialConcerns.length > 0) || (analysis.missingClauses && analysis.missingClauses.length > 0)) && (
+            {((activeAnalysis.potentialConcerns && activeAnalysis.potentialConcerns.length > 0) || (activeAnalysis.missingClauses && activeAnalysis.missingClauses.length > 0)) && (
               <div>
                 <div className="flex items-center gap-2 mb-4 -mr-6">
                   <span className="text-[10px] text-muted-foreground/60 uppercase tracking-wider shrink-0">Issues to Review</span>
                   <div className="h-px flex-1 bg-border" />
                 </div>
                 <div className="flex flex-wrap gap-2">
-                  {analysis.potentialConcerns?.slice(0, 4).map((concern, i) => {
-                    const matchingTerm = analysis.keyTerms?.find(term => {
+                  {activeAnalysis.potentialConcerns?.slice(0, 4).map((concern, i) => {
+                    const matchingTerm = activeAnalysis.keyTerms?.find(term => {
                       const concernLower = concern.toLowerCase();
                       const titleLower = term.title.toLowerCase();
                       const contentLower = term.content.toLowerCase();
@@ -670,16 +743,16 @@ export function ContractAnalysisView({
                       </span>
                     );
                   })}
-                  {analysis.potentialConcerns && analysis.potentialConcerns.length > 4 && (
+                  {activeAnalysis.potentialConcerns && activeAnalysis.potentialConcerns.length > 4 && (
                     <span
                       className="inline-flex items-center px-3 py-1.5 rounded-full text-xs font-medium cursor-pointer hover:opacity-80 transition-opacity"
                       style={{ backgroundColor: 'var(--muted)', color: 'var(--muted-foreground)' }}
                       onClick={() => setActiveTab('terms')}
                     >
-                      +{analysis.potentialConcerns.length - 4} more
+                      +{activeAnalysis.potentialConcerns.length - 4} more
                     </span>
                   )}
-                  {analysis.missingClauses?.slice(0, 3).map((clause, i) => {
+                  {activeAnalysis.missingClauses?.slice(0, 3).map((clause, i) => {
                     const severityColors = {
                       critical: { bg: 'rgba(239, 68, 68, 0.1)', text: '#dc2626', dot: 'bg-red-500' },
                       high: { bg: 'rgba(239, 68, 68, 0.1)', text: '#dc2626', dot: 'bg-red-500' },
@@ -698,13 +771,13 @@ export function ContractAnalysisView({
                       </span>
                     );
                   })}
-                  {analysis.missingClauses && analysis.missingClauses.length > 3 && (
+                  {activeAnalysis.missingClauses && activeAnalysis.missingClauses.length > 3 && (
                     <span
                       className="inline-flex items-center px-3 py-1.5 rounded-full text-xs font-medium cursor-pointer hover:opacity-80 transition-opacity"
                       style={{ backgroundColor: 'var(--muted)', color: 'var(--muted-foreground)' }}
                       onClick={() => setActiveTab('terms')}
                     >
-                      +{analysis.missingClauses.length - 3} more
+                      +{activeAnalysis.missingClauses.length - 3} more
                     </span>
                   )}
                 </div>
@@ -720,23 +793,23 @@ export function ContractAnalysisView({
               <div className="flex items-center gap-2 flex-wrap">
                 {(() => {
                   const keyInfoItems: { id: string; label: string; value: string; isBlue?: boolean }[] = [];
-                  if (analysis.parties) {
+                  if (activeAnalysis.parties) {
                     const labels: Record<string, string> = {
                       artist: 'Artist', label: 'Label', publisher: 'Publisher', manager: 'Manager',
                       distributor: 'Distributor', brand: 'Brand', team: 'Team', client: 'Client',
                       landlord: 'Landlord', tenant: 'Tenant', individual: 'Individual', company: 'Company',
                     };
-                    Object.entries(analysis.parties).forEach(([key, value]) => {
+                    Object.entries(activeAnalysis.parties).forEach(([key, value]) => {
                       if (value && key !== 'other') {
                         keyInfoItems.push({ id: `party-${key}`, label: labels[key] || key, value: renderValue(value), isBlue: true });
                       }
                     });
                   }
-                  if (analysis.contractType) keyInfoItems.push({ id: 'type', label: 'Contract Type', value: analysis.contractType });
-                  if (analysis.effectiveDate) keyInfoItems.push({ id: 'date', label: 'Effective Date', value: renderValue(analysis.effectiveDate) });
-                  if (analysis.termLength) keyInfoItems.push({ id: 'term', label: 'Term Length', value: renderValue(analysis.termLength) });
-                  if (analysis.rightsAndOwnership?.territorialRights) keyInfoItems.push({ id: 'territory', label: 'Territory', value: renderValue(analysis.rightsAndOwnership.territorialRights) });
-                  if (analysis.rightsAndOwnership?.exclusivity) keyInfoItems.push({ id: 'exclusivity', label: 'Exclusivity', value: renderValue(analysis.rightsAndOwnership.exclusivity) });
+                  if (activeAnalysis.contractType) keyInfoItems.push({ id: 'type', label: 'Contract Type', value: activeAnalysis.contractType });
+                  if (activeAnalysis.effectiveDate) keyInfoItems.push({ id: 'date', label: 'Effective Date', value: renderValue(activeAnalysis.effectiveDate) });
+                  if (activeAnalysis.termLength) keyInfoItems.push({ id: 'term', label: 'Term Length', value: renderValue(activeAnalysis.termLength) });
+                  if (activeAnalysis.rightsAndOwnership?.territorialRights) keyInfoItems.push({ id: 'territory', label: 'Territory', value: renderValue(activeAnalysis.rightsAndOwnership.territorialRights) });
+                  if (activeAnalysis.rightsAndOwnership?.exclusivity) keyInfoItems.push({ id: 'exclusivity', label: 'Exclusivity', value: renderValue(activeAnalysis.rightsAndOwnership.exclusivity) });
 
                   return (
                     <TooltipProvider>
@@ -769,7 +842,7 @@ export function ContractAnalysisView({
           {/* Key Terms Tab */}
           <TabsContent value="terms" className="space-y-0 -mx-6 -mt-6 min-w-[calc(100%+48px)] block">
             {/* Concerns Section */}
-            {analysis.potentialConcerns && analysis.potentialConcerns.length > 0 && (() => {
+            {activeAnalysis.potentialConcerns && activeAnalysis.potentialConcerns.length > 0 && (() => {
               const colorScheme = { border: 'border-purple-500/30', bg: 'bg-purple-500/5', text: 'text-purple-400', dot: 'bg-purple-400/60' };
               const headerColors = { bg: 'rgba(168, 85, 247, 0.08)', line: '#a855f7' };
 
@@ -779,20 +852,20 @@ export function ContractAnalysisView({
                     className="px-6 py-2.5 flex items-center gap-2"
                     style={{ backgroundColor: headerColors.bg }}
                   >
-                    <span className={`text-xs font-medium ${colorScheme.text} leading-none`}>{analysis.potentialConcerns.length} Concerns to Address</span>
+                    <span className={`text-xs font-medium ${colorScheme.text} leading-none`}>{activeAnalysis.potentialConcerns.length} Concerns to Address</span>
                   </div>
                   <ul className="px-6 py-4 space-y-2">
-                    {analysis.potentialConcerns.map((concern, i) => {
-                      const matchingTermIndex = analysis.keyTerms?.findIndex(term => {
+                    {activeAnalysis.potentialConcerns.map((concern, i) => {
+                      const matchingTermIndex = activeAnalysis.keyTerms?.findIndex(term => {
                         const concernLower = concern.toLowerCase();
                         const titleLower = term.title.toLowerCase();
                         const contentLower = term.content.toLowerCase();
                         const keywords = concernLower.split(/\s+/).filter(w => w.length > 4);
                         return keywords.some(kw => titleLower.includes(kw) || contentLower.includes(kw));
                       });
-                      const snippet = analysis.concernSnippets?.[i];
+                      const snippet = activeAnalysis.concernSnippets?.[i];
                       const matchingTerm = matchingTermIndex !== undefined && matchingTermIndex >= 0
-                        ? analysis.keyTerms?.[matchingTermIndex]
+                        ? activeAnalysis.keyTerms?.[matchingTermIndex]
                         : null;
 
                       return (
@@ -820,13 +893,13 @@ export function ContractAnalysisView({
               );
             })()}
 
-            {(!analysis.keyTerms || analysis.keyTerms.length === 0) && (
+            {(!activeAnalysis.keyTerms || activeAnalysis.keyTerms.length === 0) && (
               <div className="border-y border-border p-8 text-center">
                 <FileText className="w-6 h-6 text-muted-foreground/60 mx-auto mb-2" />
                 <p className="text-xs text-muted-foreground">No key terms extracted</p>
               </div>
             )}
-            {analysis.keyTerms?.map((term, i) => {
+            {activeAnalysis.keyTerms?.map((term, i) => {
               const isExpanded = expandedTerm === i;
               return (
                 <div
@@ -937,14 +1010,14 @@ export function ContractAnalysisView({
               const financialTerms: { id: string; title: string; value: string; explanation: string; industryContext: string; questionsToAsk: string[] }[] = [];
 
               // Detect contract type for context-aware explanations
-              const contractType = (analysis.contractType || '').toLowerCase();
+              const contractType = (activeAnalysis.contractType || '').toLowerCase();
               const isSyncLicense = contractType.includes('sync') || contractType.includes('license');
               const isRecordingDeal = contractType.includes('recording') || contractType.includes('record deal');
               const isPublishing = contractType.includes('publishing') || contractType.includes('songwriter');
               const isProducer = contractType.includes('producer');
               const isDistribution = contractType.includes('distribution');
 
-              if (analysis.financialTerms?.royaltyRate) {
+              if (activeAnalysis.financialTerms?.royaltyRate) {
                 let explanation = 'The percentage of revenue you receive from sales or streams of your work.';
                 let industryContext = 'Standard royalties range from 12-20% for new artists, while established artists may negotiate 20-25% or higher.';
                 let questions = [
@@ -974,14 +1047,14 @@ export function ContractAnalysisView({
                 financialTerms.push({
                   id: 'royalty',
                   title: 'Royalty Rate',
-                  value: renderValue(analysis.financialTerms.royaltyRate),
+                  value: renderValue(activeAnalysis.financialTerms.royaltyRate),
                   explanation,
                   industryContext,
                   questionsToAsk: questions,
                 });
               }
 
-              if (analysis.financialTerms?.advanceAmount) {
+              if (activeAnalysis.financialTerms?.advanceAmount) {
                 let title = 'Advance';
                 let explanation = 'An upfront payment that is recoupable from your future royalties. You keep the advance, but won\'t receive royalty payments until it\'s paid back.';
                 let industryContext = 'Advances vary widely based on the artist\'s track record, genre, and label. They can range from $10,000 for new artists to millions for established acts.';
@@ -1015,14 +1088,14 @@ export function ContractAnalysisView({
                 financialTerms.push({
                   id: 'advance',
                   title,
-                  value: renderValue(analysis.financialTerms.advanceAmount),
+                  value: renderValue(activeAnalysis.financialTerms.advanceAmount),
                   explanation,
                   industryContext,
                   questionsToAsk: questions,
                 });
               }
 
-              if (analysis.termLength) {
+              if (activeAnalysis.termLength) {
                 let explanation = 'The duration of the agreement. This determines how long the other party has rights to your work.';
                 let industryContext = 'Major label deals typically span 5-7 albums or 7-10 years. Shorter terms give you more flexibility to renegotiate.';
                 let questions = [
@@ -1052,18 +1125,18 @@ export function ContractAnalysisView({
                 financialTerms.push({
                   id: 'term',
                   title: 'Contract Term',
-                  value: renderValue(analysis.termLength),
+                  value: renderValue(activeAnalysis.termLength),
                   explanation,
                   industryContext,
                   questionsToAsk: questions,
                 });
               }
 
-              if (analysis.financialTerms?.paymentSchedule) {
+              if (activeAnalysis.financialTerms?.paymentSchedule) {
                 financialTerms.push({
                   id: 'payment',
                   title: 'Payment Schedule',
-                  value: renderValue(analysis.financialTerms.paymentSchedule),
+                  value: renderValue(activeAnalysis.financialTerms.paymentSchedule),
                   explanation: 'When and how often you receive payments. This affects your cash flow and ability to plan financially.',
                   industryContext: 'Industry standard is semi-annual (twice yearly) royalty statements, though some deals offer quarterly. Payment usually follows 45-90 days after the statement period.',
                   questionsToAsk: [
@@ -1075,7 +1148,7 @@ export function ContractAnalysisView({
               }
 
               // Territory (especially important for sync/licensing)
-              if (analysis.rightsAndOwnership?.territorialRights) {
+              if (activeAnalysis.rightsAndOwnership?.territorialRights) {
                 let explanation = 'The geographic regions where the agreement applies.';
                 let industryContext = 'Worldwide rights are standard but may not be necessary. Retaining certain territories can be valuable for separate deals.';
                 let questions = [
@@ -1097,7 +1170,7 @@ export function ContractAnalysisView({
                 financialTerms.push({
                   id: 'territory',
                   title: 'Territory',
-                  value: renderValue(analysis.rightsAndOwnership.territorialRights),
+                  value: renderValue(activeAnalysis.rightsAndOwnership.territorialRights),
                   explanation,
                   industryContext,
                   questionsToAsk: questions,
@@ -1105,11 +1178,11 @@ export function ContractAnalysisView({
               }
 
               // Rights Reversion
-              if (analysis.rightsAndOwnership?.reversion) {
+              if (activeAnalysis.rightsAndOwnership?.reversion) {
                 financialTerms.push({
                   id: 'reversion',
                   title: 'Rights Reversion',
-                  value: renderValue(analysis.rightsAndOwnership.reversion),
+                  value: renderValue(activeAnalysis.rightsAndOwnership.reversion),
                   explanation: 'When and if the rights to your work return to you. This is crucial for long-term ownership of your creative output.',
                   industryContext: 'Life-of-copyright deals are common but unfavorable. Better deals include reversion after 15-35 years or based on recoupment.',
                   questionsToAsk: [
@@ -1121,11 +1194,11 @@ export function ContractAnalysisView({
               }
 
               // Exclusivity (financial impact)
-              if (analysis.rightsAndOwnership?.exclusivity) {
+              if (activeAnalysis.rightsAndOwnership?.exclusivity) {
                 financialTerms.push({
                   id: 'exclusivity',
                   title: 'Exclusivity',
-                  value: renderValue(analysis.rightsAndOwnership.exclusivity),
+                  value: renderValue(activeAnalysis.rightsAndOwnership.exclusivity),
                   explanation: 'Whether this deal prevents you from working with others or licensing your work elsewhere. Exclusivity has significant financial implications.',
                   industryContext: 'Exclusive deals should pay significantly more than non-exclusive. If granting exclusivity, ensure the compensation reflects the opportunity cost.',
                   questionsToAsk: [
@@ -1248,13 +1321,13 @@ export function ContractAnalysisView({
 
           {/* Advice Tab */}
           <TabsContent value="advice" className="space-y-0 -mx-6 -mt-6 min-w-[calc(100%+48px)] block">
-            {(!analysis.recommendations || analysis.recommendations.length === 0) && (
+            {(!activeAnalysis.recommendations || activeAnalysis.recommendations.length === 0) && (
               <div className="border-y border-border p-8 text-center">
                 <CheckCircle2 className="w-6 h-6 text-muted-foreground/60 mx-auto mb-2" />
                 <p className="text-xs text-muted-foreground">No recommendations available</p>
               </div>
             )}
-            {analysis.recommendations?.map((rec, i) => {
+            {activeAnalysis.recommendations?.map((rec, i) => {
               const isStructured = typeof rec === 'object' && rec !== null;
               const advice = isStructured ? rec.advice : rec;
               const rationale = isStructured ? rec.rationale : "Following this recommendation helps protect your rights and ensures you maintain leverage in negotiations.";
