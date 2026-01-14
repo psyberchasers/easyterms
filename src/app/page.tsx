@@ -86,6 +86,12 @@ export default function Home() {
             EasyTerms helps artists and creators understand their music contracts, licensing agreements, and publishing deals by providing instant AI-powered analysis in plain English.
           </p>
 
+          {/* Data Usage & Privacy Link */}
+          <p className="text-sm text-white/50 max-w-xl mx-auto animate-fade-in-up stagger-1">
+            We use your email to create your account and securely store your uploaded contracts. We never share your data with third parties.{" "}
+            <Link href="/privacy" className="underline hover:text-white/70 transition-colors">Privacy Policy</Link>
+          </p>
+
           {/* Subheadline */}
           <div className="text-lg text-white/80 max-w-2xl mx-auto leading-relaxed animate-fade-in-up stagger-2 space-y-3">
             <p>Upload any contract and get an <span className="text-white">instant, easy-to-understand</span> breakdown</p>
