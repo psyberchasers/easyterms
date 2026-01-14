@@ -548,7 +548,8 @@ export default function DashboardPage() {
                             </TooltipTrigger>
                             <TooltipContent
                               side="top"
-                              className="max-w-[250px] bg-primary text-primary-foreground border-primary"
+                              className="max-w-[280px] bg-purple-500 text-white border-purple-500"
+                              arrowClassName="bg-purple-500 fill-purple-500"
                             >
                               <p className="text-xs">{riskTooltips[contract.overall_risk]}</p>
                             </TooltipContent>
@@ -681,7 +682,8 @@ export default function DashboardPage() {
                               </TooltipTrigger>
                               <TooltipContent
                                 side="top"
-                                className="max-w-[250px] bg-primary text-primary-foreground border-primary"
+                                className="max-w-[280px] bg-purple-500 text-white border-purple-500"
+                                arrowClassName="bg-purple-500 fill-purple-500"
                               >
                                 <p className="text-xs">{riskTooltips[contract.overall_risk]}</p>
                               </TooltipContent>

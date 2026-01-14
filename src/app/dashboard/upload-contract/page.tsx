@@ -1148,54 +1148,38 @@ export default function UploadContractPage() {
             </div>
           </div>
 
-          {/* Animated Status Text - Rolling characters */}
+          {/* Animated Status Text - Skiper6 style letter animation */}
           <div className="text-center h-8 relative overflow-hidden">
             <AnimatePresence mode="wait">
               <motion.div
                 key={phraseIndex}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.2 }}
-                className="flex justify-center text-lg font-medium text-muted-foreground"
+                className="absolute w-full flex justify-center text-lg font-medium text-muted-foreground"
+                initial="hidden"
+                animate="visible"
+                exit="exit"
               >
                 {loadingPhrases[phraseIndex].split('').map((letter, index) => {
                   const centerIndex = Math.floor(loadingPhrases[phraseIndex].length / 2);
                   const distanceFromCenter = Math.abs(index - centerIndex);
-                  const delay = distanceFromCenter * 0.03;
-                  const rollDuration = 0.15 + distanceFromCenter * 0.08;
-                  const numberOfRolls = Math.floor(1.5 / rollDuration);
-                  const totalMovement = numberOfRolls * 1.2;
+                  const delay = distanceFromCenter * 0.04;
 
                   return (
-                    <div
+                    <motion.span
                       key={index}
-                      className="relative inline-block overflow-hidden"
-                      style={{ height: "1.2em" }}
+                      className="inline-block"
+                      variants={{
+                        hidden: { y: "100%", opacity: 0 },
+                        visible: { y: "0%", opacity: 1 },
+                        exit: { y: "-100%", opacity: 0 },
+                      }}
+                      transition={{
+                        duration: 0.5,
+                        ease: [0.19, 1, 0.22, 1],
+                        delay: delay,
+                      }}
                     >
-                      <motion.span
-                        className="flex flex-col"
-                        initial={{ y: 0 }}
-                        animate={{ y: `-${totalMovement}em` }}
-                        transition={{
-                          duration: 1.5,
-                          ease: [0.15, 1, 0.1, 1],
-                          delay: delay,
-                        }}
-                      >
-                        {Array(numberOfRolls + 2)
-                          .fill(null)
-                          .map((_, copyIndex) => (
-                            <span
-                              key={copyIndex}
-                              className="flex shrink-0 items-center justify-center"
-                              style={{ height: "1.2em" }}
-                            >
-                              {letter === ' ' ? '\u00A0' : letter}
-                            </span>
-                          ))}
-                      </motion.span>
-                    </div>
+                      {letter === ' ' ? '\u00A0' : letter}
+                    </motion.span>
                   );
                 })}
               </motion.div>
