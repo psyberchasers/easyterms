@@ -106,7 +106,7 @@ export default function ContractDetailPage() {
       const response = await fetch(`/api/contracts/${contractId}/versions`);
       if (response.ok) {
         const data = await response.json();
-        setVersions(data);
+        setVersions(data.versions || []);
       }
     } catch (err) {
       console.error("Error fetching versions:", err);
@@ -123,7 +123,7 @@ export default function ContractDetailPage() {
       const response = await fetch(`/api/contracts/${contractId}/dates`);
       if (response.ok) {
         const data = await response.json();
-        setDates(data);
+        setDates(data.dates || []);
       }
     } catch (err) {
       console.error("Error fetching dates:", err);
