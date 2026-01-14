@@ -83,7 +83,7 @@ export async function POST(
       .select("*", { count: "exact", head: true })
       .eq("contract_id", contractId);
 
-    const newVersionNumber = (count || 0) + 1;
+    const newVersionNumber = (count || 0) + 2; // +2 because original contract is Version 1
 
     // Upload file to storage
     const fileExt = file.name.split(".").pop();
