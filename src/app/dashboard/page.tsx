@@ -11,6 +11,12 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -18,7 +24,6 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
-  FileText,
   Star,
   StarOff,
   MoreVertical,
@@ -30,11 +35,106 @@ import {
 } from "lucide-react";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { RepeatOffIcon, FolderBlockIcon, AiSheetsIcon, Alert02Icon, StarIcon } from "@hugeicons-pro/core-solid-rounded";
+import {
+  Mic01Icon,
+  MusicNote02Icon,
+  Film01Icon,
+  SlidersHorizontalIcon,
+  Briefcase01Icon,
+  Globe02Icon,
+  Agreement01Icon,
+  FileAudioIcon,
+  MusicNoteSquare01Icon,
+} from "@hugeicons-pro/core-bulk-rounded";
 import { cn } from "@/lib/utils";
 import { MusicLoader } from "@/components/MusicLoader";
 import { motion } from "framer-motion";
 import { DeleteConfirmModal } from "@/components/DeleteConfirmModal";
 import { ContractQuickView } from "@/components/ContractQuickView";
+
+// Risk level tooltip descriptions
+const riskTooltips = {
+  high: "This contract contains terms that may significantly disadvantage you. Review carefully before signing.",
+  medium: "This contract has some terms that could be negotiated for better protection.",
+  low: "This contract appears balanced with industry-standard terms that protect your interests.",
+};
+
+// Helper to generate a custom display title from contract analysis
+function getContractDisplayTitle(contract: Contract): string {
+  const analysis = contract.analysis as {
+    parties?: {
+      artist?: string;
+      label?: string;
+      publisher?: string;
+      manager?: string;
+      distributor?: string;
+      producer?: string;
+      brand?: string;
+      company?: string;
+    };
+    contractType?: string;
+  } | null;
+
+  if (!analysis?.parties) {
+    return contract.title;
+  }
+
+  const { artist, label, publisher, manager, distributor, producer, brand, company } = analysis.parties;
+
+  // Get the primary party (artist/individual)
+  const primaryParty = artist;
+
+  // Get the secondary party (company/organization)
+  const secondaryParty = label || publisher || manager || distributor || producer || brand || company;
+
+  // Generate title based on available parties
+  if (primaryParty && secondaryParty) {
+    return `${primaryParty} × ${secondaryParty}`;
+  }
+
+  if (primaryParty) {
+    return primaryParty;
+  }
+
+  if (secondaryParty) {
+    return secondaryParty;
+  }
+
+  // Fallback to original title
+  return contract.title;
+}
+
+// Helper to get icon based on contract type
+function getContractIcon(contractType: string | null | undefined) {
+  const type = (contractType || "").toLowerCase();
+
+  if (type.includes("recording") || type.includes("record deal") || type.includes("record contract")) {
+    return Mic01Icon;
+  }
+  if (type.includes("publishing") || type.includes("songwriter")) {
+    return MusicNote02Icon;
+  }
+  if (type.includes("sync") || type.includes("license") || type.includes("licensing")) {
+    return Film01Icon;
+  }
+  if (type.includes("producer") || type.includes("production")) {
+    return SlidersHorizontalIcon;
+  }
+  if (type.includes("management") || type.includes("manager")) {
+    return Briefcase01Icon;
+  }
+  if (type.includes("distribution") || type.includes("distributor")) {
+    return Globe02Icon;
+  }
+  if (type.includes("master") || type.includes("audio")) {
+    return FileAudioIcon;
+  }
+  if (type.includes("performance") || type.includes("live")) {
+    return MusicNoteSquare01Icon;
+  }
+  // Default icon for general agreements
+  return Agreement01Icon;
+}
 
 export default function DashboardPage() {
   const { user, profile, loading: authLoading } = useAuth();
@@ -373,17 +473,27 @@ export default function DashboardPage() {
                       contract.overall_risk === "medium" ? "bg-amber-500/10" :
                       "bg-primary/10"
                     )}>
-                      <FileText className={cn(
-                        "w-5 h-5",
-                        contract.overall_risk === "high" ? "text-red-500" :
-                        contract.overall_risk === "medium" ? "text-amber-500" :
-                        "text-primary"
-                      )} />
+                      <HugeiconsIcon
+                        icon={getContractIcon(contract.contract_type)}
+                        size={20}
+                        className={cn(
+                          contract.overall_risk === "high" ? "text-red-500" :
+                          contract.overall_risk === "medium" ? "text-amber-500" :
+                          "text-primary"
+                        )}
+                      />
                     </div>
 
                     {/* Title & Status */}
                     <div className="flex-1 min-w-0">
-                      <h3 className="font-medium text-foreground truncate">{contract.title}</h3>
+                      <div className="flex items-center gap-2">
+                        <h3 className="font-medium text-foreground truncate">{getContractDisplayTitle(contract)}</h3>
+                        {contractVersions[contract.id]?.length > 0 && (
+                          <span className="text-[10px] font-medium text-purple-400 bg-purple-500/10 border border-purple-500/30 px-1.5 py-0.5 rounded shrink-0">
+                            V{contractVersions[contract.id].length + 1}
+                          </span>
+                        )}
+                      </div>
                       <p className="text-xs text-muted-foreground">
                         {contract.contract_type || "Contract"}
                       </p>
@@ -421,25 +531,29 @@ export default function DashboardPage() {
                 >
                   <div className="flex items-center gap-2">
                     <span className="text-sm text-muted-foreground">View contract</span>
-                    {contractVersions[contract.id]?.length > 0 && (
-                      <>
-                        <span className="text-muted-foreground/40">•</span>
-                        <span className="text-xs font-medium text-muted-foreground">
-                          V{contractVersions[contract.id].length + 1}
-                        </span>
-                      </>
-                    )}
                     {contract.overall_risk && (
                       <>
                         <span className="text-muted-foreground/40">•</span>
-                        <span className={cn(
-                          "text-xs font-medium",
-                          contract.overall_risk === "high" ? "text-red-500" :
-                          contract.overall_risk === "medium" ? "text-amber-500" :
-                          "text-green-500"
-                        )}>
-                          {contract.overall_risk === "high" ? "High Risk" : contract.overall_risk === "medium" ? "Medium" : "Low Risk"}
-                        </span>
+                        <TooltipProvider delayDuration={200}>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <span className={cn(
+                                "text-xs font-medium cursor-help",
+                                contract.overall_risk === "high" ? "text-red-500" :
+                                contract.overall_risk === "medium" ? "text-amber-500" :
+                                "text-green-500"
+                              )}>
+                                {contract.overall_risk === "high" ? "High Risk" : contract.overall_risk === "medium" ? "Medium" : "Low Risk"}
+                              </span>
+                            </TooltipTrigger>
+                            <TooltipContent
+                              side="top"
+                              className="max-w-[250px] bg-primary text-primary-foreground border-primary"
+                            >
+                              <p className="text-xs">{riskTooltips[contract.overall_risk]}</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
                       </>
                     )}
                     {contractShares[contract.id] && (
@@ -523,8 +637,12 @@ export default function DashboardPage() {
                     >
                       {/* Contract Name */}
                       <div className="col-span-3 flex items-center gap-3 min-w-0">
-                        <FileText className="w-4 h-4 text-muted-foreground shrink-0" />
-                        <p className="text-sm text-foreground truncate">{contract.title}</p>
+                        <HugeiconsIcon
+                          icon={getContractIcon(contract.contract_type)}
+                          size={16}
+                          className="text-muted-foreground shrink-0"
+                        />
+                        <p className="text-sm text-foreground truncate">{getContractDisplayTitle(contract)}</p>
                         {contractShares[contract.id] && (
                           <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-purple-500/10 text-purple-500 flex items-center gap-1 shrink-0">
                             <Share2 className="w-2.5 h-2.5" />
@@ -549,14 +667,26 @@ export default function DashboardPage() {
                       {/* Risk */}
                       <div className="col-span-2">
                         {contract.overall_risk && (
-                          <span className={cn(
-                            "text-xs font-semibold px-2 py-1 rounded",
-                            contract.overall_risk === "high" ? "bg-red-100 text-red-600" :
-                            contract.overall_risk === "medium" ? "bg-amber-100 text-amber-600" :
-                            "bg-green-100 text-green-600"
-                          )}>
-                            {contract.overall_risk === "high" ? "High" : contract.overall_risk === "medium" ? "Medium" : "Low"}
-                          </span>
+                          <TooltipProvider delayDuration={200}>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <span className={cn(
+                                  "text-xs font-semibold px-2 py-1 rounded cursor-help",
+                                  contract.overall_risk === "high" ? "bg-red-100 text-red-600" :
+                                  contract.overall_risk === "medium" ? "bg-amber-100 text-amber-600" :
+                                  "bg-green-100 text-green-600"
+                                )}>
+                                  {contract.overall_risk === "high" ? "High" : contract.overall_risk === "medium" ? "Medium" : "Low"}
+                                </span>
+                              </TooltipTrigger>
+                              <TooltipContent
+                                side="top"
+                                className="max-w-[250px] bg-primary text-primary-foreground border-primary"
+                              >
+                                <p className="text-xs">{riskTooltips[contract.overall_risk]}</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
                         )}
                       </div>
 

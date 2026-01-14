@@ -1,6 +1,7 @@
 "use client";
 
 import { ReactNode, useState, useEffect } from "react";
+import { Toaster } from "sonner";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/components/providers/AuthProvider";
@@ -500,13 +501,13 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   }
 
   const mainNav = [
-    { title: "Home", icon: <HugeiconsIcon icon={Home01BulkIcon} size={16} className="text-muted-foreground" />, href: "/dashboard" },
-    { title: "Chat", icon: <HugeiconsIcon icon={ChatSearch01Icon} size={16} className="text-muted-foreground" />, href: "/dashboard/chat" },
-    { title: "Contracts", icon: <HugeiconsIcon icon={DocumentAttachmentIcon} size={16} className="text-muted-foreground" />, href: "/dashboard/contracts" },
-    { title: "Shared", icon: <HugeiconsIcon icon={FolderShared02Icon} size={16} className="text-muted-foreground" />, href: "/dashboard/shared" },
-    { title: "Upload Contract", icon: <HugeiconsIcon icon={FileUploadBulkIcon} size={16} className="text-muted-foreground" />, href: "/dashboard/upload-contract" },
-    { title: "Compare", icon: <HugeiconsIcon icon={GitCompareBulkIcon} size={16} className="text-muted-foreground" />, href: "/dashboard/compare" },
-    { title: "Templates", icon: <HugeiconsIcon icon={LayoutGridIcon} size={16} className="text-muted-foreground" />, href: "/dashboard/templates" },
+    { title: "Home", icon: Home01BulkIcon, href: "/dashboard" },
+    { title: "Chat", icon: ChatSearch01Icon, href: "/dashboard/chat" },
+    { title: "Contracts", icon: DocumentAttachmentIcon, href: "/dashboard/contracts" },
+    { title: "Shared", icon: FolderShared02Icon, href: "/dashboard/shared" },
+    { title: "Upload Contract", icon: FileUploadBulkIcon, href: "/dashboard/upload-contract" },
+    { title: "Compare", icon: GitCompareBulkIcon, href: "/dashboard/compare" },
+    { title: "Templates", icon: LayoutGridIcon, href: "/dashboard/templates" },
   ];
 
   return (
@@ -548,7 +549,14 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                         className="h-auto py-1.5 px-3 text-[13px] font-medium text-sidebar-foreground"
                       >
                         <Link href={item.href}>
-                          {item.icon}
+                          <HugeiconsIcon
+                            icon={item.icon}
+                            size={16}
+                            className={cn(
+                              "transition-colors duration-200",
+                              isActive ? "text-purple-400" : "text-muted-foreground"
+                            )}
+                          />
                           <span>{item.title}</span>
                         </Link>
                       </SidebarMenuButton>
@@ -714,7 +722,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
         </main>
 
         {/* Dashboard Footer - Fixed at bottom */}
-        <footer className="fixed bottom-0 left-0 right-0 border-t border-border px-6 py-3 bg-background/95 backdrop-blur-sm z-40 ml-[var(--sidebar-width)]">
+        <footer className="fixed bottom-0 left-0 right-0 border-t border-border px-6 py-3 bg-background z-40 md:ml-[var(--sidebar-width)]">
           <div className="flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-muted-foreground">
             <p>
               EasyTerms provides informational analysis only and is not a substitute for professional legal advice.
@@ -730,6 +738,16 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
           </div>
         </footer>
       </SidebarInset>
+      <Toaster
+        position="bottom-right"
+        toastOptions={{
+          style: {
+            background: 'var(--card)',
+            border: '1px solid var(--border)',
+            color: 'var(--foreground)',
+          },
+        }}
+      />
     </SidebarProvider>
   );
 }

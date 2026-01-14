@@ -325,6 +325,14 @@ const ChatUI = () => {
   const contractPickerRef = useRef<HTMLDivElement>(null);
   const supabase = createClient();
 
+  // Disable page-level scrolling - only chat messages should scroll
+  useEffect(() => {
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, []);
+
   // Fetch user's contracts
   useEffect(() => {
     const fetchContracts = async () => {
@@ -635,7 +643,7 @@ const ChatUI = () => {
     >
       <div
         className={cn(
-          "bg-background flex h-full w-full items-center justify-center relative transition-colors",
+          "bg-background flex h-full w-full flex-col relative transition-colors overflow-hidden",
           isDragging && "bg-purple-500/5"
         )}
         onDragOver={handleDragOver}
@@ -669,8 +677,9 @@ const ChatUI = () => {
           className="hidden"
         />
 
-        {/* Chat Messages Container */}
-        <motion.div className="no-scroll flex h-full max-w-3xl flex-1 flex-col overflow-y-auto scroll-smooth px-3 pt-4 pb-52">
+        {/* Chat Messages Container - mb accounts for fixed input height */}
+        <motion.div className={cn("flex-1 w-full max-w-3xl mx-auto overflow-y-auto scroll-smooth px-3", attachedContracts.length > 0 ? "mb-52" : "mb-44")}>
+          <div className="min-h-full flex flex-col justify-end pt-4">
           {chatMessages.length === 0 && (
             <div
               className="flex-1 flex flex-col items-center justify-center gap-4 cursor-pointer"
@@ -742,13 +751,18 @@ const ChatUI = () => {
             </motion.div>
           )}
           <div ref={messageEndRef} />
+          </div>
         </motion.div>
 
-        {/* Input Container */}
+        {/* Input Container - positioned above footer (48px) */}
         <div
           ref={inputContainerRef}
-          className="fixed bottom-12 w-full max-w-3xl px-3 pb-4"
+          className={cn(
+            "absolute bottom-12 left-0 right-0 flex justify-center px-3 pb-4 bg-gradient-to-t from-background from-85% to-transparent",
+            attachedContracts.length > 0 ? "pt-6" : "pt-0"
+          )}
         >
+          <div className="w-full max-w-3xl">
           {/* Suggestion Pills */}
           {chatMessages.length === 0 && (
             <div className="flex flex-wrap gap-2 mb-3 justify-center">
@@ -967,6 +981,7 @@ const ChatUI = () => {
                 Powered by EasyTerms
               </p>
             </div>
+          </div>
           </div>
         </div>
       </div>

@@ -72,6 +72,7 @@ import dynamic from "next/dynamic";
 import { FinancialCalculator } from "@/components/FinancialCalculator";
 import { MusicLoader } from "@/components/MusicLoader";
 import { DownloadIcon as AnimatedDownloadIcon, DownloadHandle } from "@/components/DownloadIcon";
+import { UploadIcon as AnimatedUploadIcon, UploadHandle } from "@/components/UploadIcon";
 import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "@/components/animate-ui/components/animate/tooltip";
 import { DocumentScanner } from "@/components/DocumentScanner";
 import { Camera } from "lucide-react";
@@ -196,10 +197,10 @@ export default function UploadContractPage() {
   // Handle role selection with animation
   const handleRoleSelect = (role: "recipient" | "sender") => {
     setSelectedRole(role);
-    // Show upload modal after expansion animation
+    // Show upload modal AFTER panel push animation completes
     setTimeout(() => {
       setShowUploadModal(true);
-    }, 400);
+    }, 500);
   };
 
   // Core state
@@ -249,6 +250,16 @@ export default function UploadContractPage() {
       setShowDocument(true);
     }
   }, []);
+
+  // Disable scroll on role selection screen
+  useEffect(() => {
+    if (status === "idle") {
+      document.body.style.overflow = "hidden";
+      return () => {
+        document.body.style.overflow = "";
+      };
+    }
+  }, [status]);
 
   useEffect(() => {
     if (status === "uploading" || status === "analyzing") {
@@ -313,6 +324,7 @@ export default function UploadContractPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const versionInputRef = useRef<HTMLInputElement>(null);
   const downloadIconRef = useRef<DownloadHandle>(null);
+  const uploadIconRef = useRef<UploadHandle>(null);
 
   // Document scanner state
   const [showScanner, setShowScanner] = useState(false);
@@ -699,13 +711,13 @@ export default function UploadContractPage() {
   if (status === "idle") {
     return (
       <>
-      <div className="h-full flex flex-col md:flex-row bg-card overflow-hidden">
+      <div className="flex flex-col md:flex-row bg-card" style={{ height: 'calc(100vh - 48px)' }}>
         {/* Recipient Side */}
         <motion.div
-          initial={{ opacity: 0, x: -20 }}
+          initial={{ opacity: 1, x: 0 }}
           animate={{
             opacity: selectedRole === "sender" ? 0 : 1,
-            x: selectedRole === "sender" ? -100 : 0,
+            x: selectedRole === "sender" ? -200 : 0,
             flex: selectedRole === "recipient" ? 1 : selectedRole === "sender" ? 0 : 1
           }}
           transition={{ duration: 0.4, ease: [0.4, 0, 0.2, 1] }}
@@ -713,11 +725,31 @@ export default function UploadContractPage() {
           onMouseEnter={() => !selectedRole && downloadIconRef.current?.startAnimation()}
           onMouseLeave={() => downloadIconRef.current?.stopAnimation()}
           className={cn(
-            "flex flex-col items-center justify-center transition-all relative overflow-hidden min-h-[45vh] md:min-h-0",
-            !selectedRole && "cursor-pointer hover:bg-muted/50 border-b md:border-b-0 md:border-r border-dashed border-foreground/10 group"
+            "flex flex-col items-center justify-center relative overflow-hidden min-h-[45vh] md:min-h-0",
+            !selectedRole && "cursor-pointer border-b md:border-b-0 md:border-r border-border group"
           )}
           style={{ flex: selectedRole === "recipient" ? 1 : selectedRole === "sender" ? 0 : 1 }}
         >
+          {/* Dotted logo watermark */}
+          <div
+            className="absolute inset-0 flex items-center justify-center pointer-events-none"
+          >
+            <div
+              className="w-[600px] h-[600px] opacity-20 group-hover:opacity-40 transition-opacity duration-500 ease-out"
+              style={{
+                backgroundImage: 'radial-gradient(circle, rgba(168, 85, 247, 0.8) 1.5px, transparent 1.5px)',
+                backgroundSize: '8px 8px',
+                WebkitMaskImage: 'url(/darkModeS.svg)',
+                WebkitMaskSize: 'contain',
+                WebkitMaskRepeat: 'no-repeat',
+                WebkitMaskPosition: 'center',
+                maskImage: 'url(/darkModeS.svg)',
+                maskSize: 'contain',
+                maskRepeat: 'no-repeat',
+                maskPosition: 'center'
+              }}
+            />
+          </div>
 
           {/* Role selection content - hide when selected */}
           <AnimatePresence>
@@ -727,16 +759,18 @@ export default function UploadContractPage() {
                 transition={{ duration: 0.3 }}
                 className="flex flex-col items-center gap-6 max-w-sm text-center"
               >
-                <div className="w-20 h-20 rounded-2xl bg-purple-500/10 flex items-center justify-center group-hover:bg-purple-500/20 transition-colors">
-                  <AnimatedDownloadIcon ref={downloadIconRef} size={40} className="text-purple-500" />
-                </div>
-                <div className="space-y-2">
-                  <h2 className="text-xl font-semibold text-foreground">I received a contract</h2>
+                <div className="space-y-3">
+                  <div className="flex items-center justify-center gap-3">
+                    <span className="px-3 py-1 text-xs font-medium rounded-full bg-purple-500/20 text-purple-400 border border-purple-500/50">
+                      Recipient
+                    </span>
+                    <h2 className="text-xl font-semibold text-foreground">I received a contract</h2>
+                  </div>
                   <p className="text-sm text-muted-foreground">
                     Upload a contract you&apos;ve received to analyze terms, identify risks, and get recommendations
                   </p>
                 </div>
-                <div className="flex items-center gap-2 text-purple-500 font-medium text-sm group-hover:gap-3 transition-all">
+                <div className="flex items-center gap-2 text-muted-foreground font-medium text-sm group-hover:gap-3 group-hover:text-purple-400 transition-all">
                   <span>Get started</span>
                   <ChevronRight className="w-4 h-4" />
                 </div>
@@ -765,7 +799,8 @@ export default function UploadContractPage() {
                   <button
                     onClick={() => {
                       setShowUploadModal(false);
-                      setTimeout(() => setSelectedRole(null), 400);
+                      // Reset role AFTER upload fully slides down
+                      setTimeout(() => setSelectedRole(null), 450);
                     }}
                     className="flex items-center gap-1.5 px-3 py-2 text-xs font-medium text-muted-foreground hover:text-foreground border border-border hover:bg-muted rounded-lg transition-colors"
                   >
@@ -789,7 +824,7 @@ export default function UploadContractPage() {
                   onMouseLeave={() => setIsHovering(false)}
                   className="w-full max-w-4xl p-12 md:p-32 text-center transition-all cursor-pointer rounded-xl"
                   style={{
-                    border: `1.5px dashed ${isHovering ? '#8b5cf6' : 'var(--border)'}`,
+                    border: `2px dashed ${isHovering ? '#8b5cf6' : 'var(--border)'}`,
                     backgroundColor: isHovering ? 'rgba(139, 92, 246, 0.05)' : 'transparent',
                     transition: 'all 0.2s ease',
                   }}
@@ -802,14 +837,11 @@ export default function UploadContractPage() {
                     className="hidden"
                   />
                   <div className="flex flex-col items-center gap-3">
-                    <div className="w-14 h-14 rounded-full flex items-center justify-center transition-all bg-white">
+                    <div className="w-14 h-14 rounded-full flex items-center justify-center transition-all bg-purple-500/20">
                       <HugeiconsIcon
                         icon={FileUploadIcon}
                         size={28}
-                        style={{
-                          color: isHovering ? '#8b5cf6' : 'var(--muted-foreground)',
-                          transition: 'color 0.2s ease'
-                        }}
+                        className="text-purple-500"
                       />
                     </div>
                     <div className="space-y-1">
@@ -826,7 +858,7 @@ export default function UploadContractPage() {
                   </div>
                 </motion.div>
 
-                {/* Scan Document Button - Mobile Only */}
+                {/* Mobile scan option */}
                 {isMobile && (
                   <button
                     type="button"
@@ -846,20 +878,42 @@ export default function UploadContractPage() {
 
         {/* Sender Side */}
         <motion.div
-          initial={{ opacity: 0, x: 20 }}
+          initial={{ opacity: 1, x: 0 }}
           animate={{
             opacity: selectedRole === "recipient" ? 0 : 1,
-            x: selectedRole === "recipient" ? 100 : 0,
+            x: selectedRole === "recipient" ? 200 : 0,
             flex: selectedRole === "sender" ? 1 : selectedRole === "recipient" ? 0 : 1
           }}
-          transition={{ duration: 0.4, ease: [0.4, 0, 0.2, 1], delay: 0.1 }}
+          transition={{ duration: 0.4, ease: [0.4, 0, 0.2, 1] }}
           onClick={() => !selectedRole && handleRoleSelect("sender")}
+          onMouseEnter={() => !selectedRole && uploadIconRef.current?.startAnimation()}
+          onMouseLeave={() => uploadIconRef.current?.stopAnimation()}
           className={cn(
-            "flex flex-col items-center justify-center transition-all relative overflow-hidden min-h-[45vh] md:min-h-0",
-            !selectedRole && "cursor-pointer hover:bg-muted/50 group"
+            "flex flex-col items-center justify-center relative overflow-hidden min-h-[45vh] md:min-h-0",
+            !selectedRole && "cursor-pointer group"
           )}
           style={{ flex: selectedRole === "sender" ? 1 : selectedRole === "recipient" ? 0 : 1 }}
         >
+          {/* Dotted logo watermark */}
+          <div
+            className="absolute inset-0 flex items-center justify-center pointer-events-none"
+          >
+            <div
+              className="w-[600px] h-[600px] opacity-20 group-hover:opacity-40 transition-opacity duration-500 ease-out"
+              style={{
+                backgroundImage: 'radial-gradient(circle, rgba(59, 130, 246, 0.8) 1.5px, transparent 1.5px)',
+                backgroundSize: '8px 8px',
+                WebkitMaskImage: 'url(/darkModeS.svg)',
+                WebkitMaskSize: 'contain',
+                WebkitMaskRepeat: 'no-repeat',
+                WebkitMaskPosition: 'center',
+                maskImage: 'url(/darkModeS.svg)',
+                maskSize: 'contain',
+                maskRepeat: 'no-repeat',
+                maskPosition: 'center'
+              }}
+            />
+          </div>
           {/* Role selection content - hide when selected */}
           <AnimatePresence>
             {!selectedRole && (
@@ -868,16 +922,18 @@ export default function UploadContractPage() {
                 transition={{ duration: 0.3 }}
                 className="flex flex-col items-center gap-6 max-w-sm text-center"
               >
-                <div className="w-20 h-20 rounded-2xl bg-blue-500/10 flex items-center justify-center group-hover:bg-blue-500/20 transition-colors">
-                  <Upload className="w-10 h-10 text-blue-500" />
-                </div>
-                <div className="space-y-2">
-                  <h2 className="text-xl font-semibold text-foreground">I&apos;m sending a contract</h2>
+                <div className="space-y-3">
+                  <div className="flex items-center justify-center gap-3">
+                    <span className="px-3 py-1 text-xs font-medium rounded-full bg-blue-500/20 text-blue-400 border border-blue-500/50">
+                      Sender
+                    </span>
+                    <h2 className="text-xl font-semibold text-foreground">I&apos;m sending a contract</h2>
+                  </div>
                   <p className="text-sm text-muted-foreground">
                     Upload a contract you&apos;re sending to check for completeness, enforceability, and missing protections
                   </p>
                 </div>
-                <div className="flex items-center gap-2 text-blue-500 font-medium text-sm group-hover:gap-3 transition-all">
+                <div className="flex items-center gap-2 text-muted-foreground font-medium text-sm group-hover:gap-3 group-hover:text-blue-400 transition-all">
                   <span>Get started</span>
                   <ChevronRight className="w-4 h-4" />
                 </div>
@@ -906,7 +962,8 @@ export default function UploadContractPage() {
                   <button
                     onClick={() => {
                       setShowUploadModal(false);
-                      setTimeout(() => setSelectedRole(null), 400);
+                      // Reset role AFTER upload fully slides down
+                      setTimeout(() => setSelectedRole(null), 450);
                     }}
                     className="flex items-center gap-1.5 px-3 py-2 text-xs font-medium text-muted-foreground hover:text-foreground border border-border hover:bg-muted rounded-lg transition-colors"
                   >
@@ -930,7 +987,7 @@ export default function UploadContractPage() {
                   onMouseLeave={() => setIsHovering(false)}
                   className="w-full max-w-4xl p-12 md:p-32 text-center transition-all cursor-pointer rounded-xl"
                   style={{
-                    border: `1.5px dashed ${isHovering ? '#3b82f6' : 'var(--border)'}`,
+                    border: `2px dashed ${isHovering ? '#3b82f6' : 'var(--border)'}`,
                     backgroundColor: isHovering ? 'rgba(59, 130, 246, 0.05)' : 'transparent',
                     transition: 'all 0.2s ease',
                   }}
@@ -943,14 +1000,11 @@ export default function UploadContractPage() {
                     className="hidden"
                   />
                   <div className="flex flex-col items-center gap-3">
-                    <div className="w-14 h-14 rounded-full flex items-center justify-center transition-all bg-white">
+                    <div className="w-14 h-14 rounded-full flex items-center justify-center transition-all bg-blue-500/20">
                       <HugeiconsIcon
                         icon={FileUploadIcon}
                         size={28}
-                        style={{
-                          color: isHovering ? '#3b82f6' : 'var(--muted-foreground)',
-                          transition: 'color 0.2s ease'
-                        }}
+                        className="text-blue-500"
                       />
                     </div>
                     <div className="space-y-1">

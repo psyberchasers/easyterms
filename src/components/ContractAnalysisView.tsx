@@ -18,6 +18,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuTrigger,
+} from "@/components/animate-ui/components/radix/dropdown-menu";
+import { ChevronDown } from "lucide-react";
 import { ContractAnalysis } from "@/types/contract";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -29,7 +37,6 @@ import {
   Eye,
   Download,
   Upload,
-  History,
   Calendar,
   Plus,
   Trash2,
@@ -43,8 +50,11 @@ import { HugeiconsIcon } from "@hugeicons/react";
 import {
   Alert02Icon,
   HelpSquareIcon,
+  FolderClockIcon,
 } from "@hugeicons-pro/core-duotone-rounded";
 import { ViewIcon } from "@hugeicons-pro/core-stroke-rounded";
+import { SentIcon, Comment01Icon, SignatureIcon } from "@hugeicons-pro/core-bulk-rounded";
+import { AiVisionIcon } from "@/components/icons/AiVisionIcon";
 import { cn } from "@/lib/utils";
 import dynamic from "next/dynamic";
 import { FinancialCalculator } from "@/components/FinancialCalculator";
@@ -366,41 +376,44 @@ export function ContractAnalysisView({
                 <span className="text-sm font-medium text-foreground">{fileName}</span>
                 {/* Version Selector in PDF Header */}
                 {versions.length > 0 && (
-                  <Select
-                    value={selectedVersionId || "original"}
-                    onValueChange={(value) => setSelectedVersionId(value === "original" ? null : value)}
-                  >
-                    <SelectTrigger className="h-7 w-auto px-2 text-xs border-border bg-muted/50 gap-1">
-                      <SelectValue>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <button className="h-7 px-2 text-xs border border-border bg-muted/50 rounded-md flex items-center gap-1 focus:outline-none focus:border-purple-500 transition-colors">
                         <span className={cn(
                           "font-medium",
                           selectedVersionId ? "text-purple-400" : "text-muted-foreground"
                         )}>
                           V{activeVersionNumber}
                         </span>
-                      </SelectValue>
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="original">
-                        <span className="flex items-center gap-2">
-                          V1 <span className="text-muted-foreground/60">(Original)</span>
-                        </span>
-                      </SelectItem>
-                      {versions.map((v) => (
-                        <SelectItem key={v.id} value={v.id}>
+                        <ChevronDown className="h-3 w-3 text-muted-foreground" />
+                      </button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="start" className="rounded-xl">
+                      <DropdownMenuRadioGroup
+                        value={selectedVersionId || "original"}
+                        onValueChange={(value) => setSelectedVersionId(value === "original" ? null : value)}
+                      >
+                        <DropdownMenuRadioItem value="original">
                           <span className="flex items-center gap-2">
-                            V{v.version_number}
-                            <span className="text-muted-foreground/60 text-[10px]">
-                              {new Date(v.created_at).toLocaleDateString()}
-                            </span>
+                            V1 <span className="text-muted-foreground/60">(Original)</span>
                           </span>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                        </DropdownMenuRadioItem>
+                        {versions.map((v) => (
+                          <DropdownMenuRadioItem key={v.id} value={v.id}>
+                            <span className="flex items-center gap-2">
+                              V{v.version_number}
+                              <span className="text-muted-foreground/60 text-[10px]">
+                                {new Date(v.created_at).toLocaleDateString()}
+                              </span>
+                            </span>
+                          </DropdownMenuRadioItem>
+                        ))}
+                      </DropdownMenuRadioGroup>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 )}
                 {highlightedClause && (
-                  <span className="text-xs text-muted-foreground/60 px-2 py-0.5 border border-border">Highlighting</span>
+                  <span className="text-xs text-muted-foreground/60 px-2 py-0.5 border border-border rounded-lg">Highlighting</span>
                 )}
               </div>
               <div className="flex items-center gap-2">
@@ -476,6 +489,9 @@ export function ContractAnalysisView({
 
             {/* Right: Actions */}
             <div className="flex items-center gap-1.5 shrink-0 flex-wrap">
+              <span className="text-[10px] font-medium text-purple-400 bg-purple-500/10 border border-purple-500/30 px-2 py-1 rounded-md">
+                V{activeVersionNumber}
+              </span>
               <button
                 onClick={() => setShowDocument(!showDocument)}
                 className="h-7 px-2 text-[11px] text-muted-foreground hover:text-foreground border border-border hover:bg-muted flex items-center gap-1.5 transition-colors rounded-md"
@@ -1400,68 +1416,97 @@ export function ContractAnalysisView({
 
           {/* Version History Tab */}
           {contractId && (
-            <TabsContent value="versions" className="space-y-2">
-              <div className="flex items-center justify-between mb-3">
-                <h4 className="text-xs font-medium text-foreground">Version History</h4>
-                {onUploadVersion && (
-                  <button
-                    onClick={() => versionInputRef.current?.click()}
-                    disabled={uploadingVersion}
-                    className="h-7 px-3 text-xs text-muted-foreground hover:text-foreground border border-border hover:border-purple-400/60 rounded-md flex items-center gap-1.5 transition-colors disabled:opacity-50"
-                  >
-                    {uploadingVersion ? (
-                      <Loader2 className="w-3 h-3 animate-spin" />
-                    ) : (
-                      <Upload className="w-3 h-3" />
-                    )}
-                    Upload New Version
-                  </button>
-                )}
+            <TabsContent value="versions" className="space-y-0 -mx-6 -mt-6 min-w-[calc(100%+48px)] block">
+              <div className="bg-purple-500/5 overflow-hidden">
+                <div className="flex items-center justify-between px-6 py-2.5" style={{ backgroundColor: 'rgba(168, 85, 247, 0.08)' }}>
+                  <div className="flex items-center gap-2">
+                    <HugeiconsIcon icon={FolderClockIcon} size={16} className="text-purple-400" />
+                    <span className="text-xs font-medium text-purple-400 leading-none">Version History</span>
+                  </div>
+                  {onUploadVersion && (
+                    <button
+                      onClick={() => versionInputRef.current?.click()}
+                      disabled={uploadingVersion}
+                      className="h-7 px-3 text-xs text-purple-400 hover:text-purple-300 border border-purple-500/30 hover:border-purple-400/60 rounded-lg flex items-center gap-1.5 transition-colors disabled:opacity-50 bg-purple-500/10 hover:bg-purple-500/20"
+                    >
+                      {uploadingVersion ? (
+                        <Loader2 className="w-3 h-3 animate-spin" />
+                      ) : (
+                        <Upload className="w-3 h-3" />
+                      )}
+                      Upload New Version
+                    </button>
+                  )}
+                </div>
               </div>
 
               {loadingVersions ? (
-                <div className="flex items-center justify-center py-8">
+                <div className="flex items-center justify-center py-8 px-6">
                   <Loader2 className="w-4 h-4 animate-spin text-muted-foreground/60" />
                 </div>
               ) : versions.length === 0 ? (
-                <div className="text-center py-10 border border-border rounded-lg">
-                  <History className="w-6 h-6 mx-auto text-muted-foreground/60 mb-2" />
+                <div className="text-center py-10 mx-6 border border-dashed border-border rounded-lg">
+                  <div className="flex justify-center mb-2">
+                    <HugeiconsIcon icon={FolderClockIcon} size={24} className="text-muted-foreground/60" />
+                  </div>
                   <p className="text-xs text-muted-foreground mb-1">No version history yet</p>
                   <p className="text-[10px] text-muted-foreground/60">Upload a new version to start tracking changes</p>
                 </div>
               ) : (
-                <div className="space-y-2">
-                  {Array.isArray(versions) && versions.map((version, i) => (
-                    <div key={version.id} className="border border-border rounded-lg p-3">
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="text-xs font-medium">Version {version.version_number}</span>
-                        <span className="text-[10px] text-muted-foreground">
-                          {new Date(version.created_at).toLocaleDateString()}
-                        </span>
+                <div className="relative px-6 pt-4">
+                  {/* Timeline */}
+                  {Array.isArray(versions) && versions.map((version, i) => {
+                    const isLast = i === versions.length - 1;
+                    return (
+                      <div key={version.id} className="relative flex gap-4">
+                        {/* Timeline line and dot */}
+                        <div className="flex flex-col items-center">
+                          <div className="w-3 h-3 rounded-full bg-purple-500 border-2 border-purple-500/30 z-10 shrink-0" />
+                          {!isLast && (
+                            <div className="w-px flex-1 border-l border-dashed border-purple-500/30 -mt-0.5" />
+                          )}
+                        </div>
+
+                        {/* Content */}
+                        <div className={cn("flex-1 pb-6", isLast && "pb-0")}>
+                          {/* Header */}
+                          <div className="flex items-center justify-between mb-1">
+                            <span className="text-sm font-medium text-foreground">Version {version.version_number}</span>
+                            <span className="text-[10px] text-muted-foreground">
+                              {new Date(version.created_at).toLocaleDateString()}
+                            </span>
+                          </div>
+
+                          {/* Changes Summary */}
+                          {version.changes_summary && (
+                            <p className="text-xs text-muted-foreground mb-3 leading-relaxed">{version.changes_summary}</p>
+                          )}
+
+                          {/* Pills */}
+                          <div className="space-y-2">
+                            {version.analysis?.improvements && version.analysis.improvements.length > 0 && (
+                              <div className="flex flex-wrap gap-1.5">
+                                {version.analysis.improvements.map((imp, idx) => (
+                                  <span key={idx} className="inline-flex items-center gap-1 text-[10px] text-green-600 bg-green-500/10 px-2.5 py-1 rounded-full">
+                                    <ArrowUpRight className="w-3 h-3" /> {imp}
+                                  </span>
+                                ))}
+                              </div>
+                            )}
+                            {version.analysis?.regressions && version.analysis.regressions.length > 0 && (
+                              <div className="flex flex-wrap gap-1.5">
+                                {version.analysis.regressions.map((reg, idx) => (
+                                  <span key={idx} className="inline-flex items-center gap-1 text-[10px] text-amber-500 bg-amber-500/10 px-2.5 py-1 rounded-full">
+                                    <ArrowDownRight className="w-3 h-3" /> {reg}
+                                  </span>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        </div>
                       </div>
-                      {version.changes_summary && (
-                        <p className="text-xs text-muted-foreground mb-2">{version.changes_summary}</p>
-                      )}
-                      {version.analysis?.improvements && version.analysis.improvements.length > 0 && (
-                        <div className="flex flex-wrap gap-1 mb-1">
-                          {version.analysis.improvements.map((imp, idx) => (
-                            <span key={idx} className="inline-flex items-center gap-1 text-[10px] text-green-600 bg-green-500/10 px-2 py-0.5 rounded-full">
-                              <ArrowUpRight className="w-3 h-3" /> {imp}
-                            </span>
-                          ))}
-                        </div>
-                      )}
-                      {version.analysis?.regressions && version.analysis.regressions.length > 0 && (
-                        <div className="flex flex-wrap gap-1">
-                          {version.analysis.regressions.map((reg, idx) => (
-                            <span key={idx} className="inline-flex items-center gap-1 text-[10px] text-red-600 bg-red-500/10 px-2 py-0.5 rounded-full">
-                              <ArrowDownRight className="w-3 h-3" /> {reg}
-                            </span>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </TabsContent>
@@ -1589,16 +1634,21 @@ export function ContractAnalysisView({
           setShareSuccess(false);
         }
       }}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Share Contract</DialogTitle>
-            <DialogDescription>
-              Invite someone to view, comment on, or sign this contract
-            </DialogDescription>
-          </DialogHeader>
+        <DialogContent className="sm:max-w-md rounded-xl overflow-hidden p-0" showCloseButton={false}>
+          <div className="bg-muted/50 px-6 py-4 border-b border-dashed border-border">
+            <DialogHeader className="gap-1">
+              <div className="flex items-center gap-2">
+                <Share2 className="w-4 h-4 text-purple-400" />
+                <DialogTitle className="text-base font-medium">Share Contract</DialogTitle>
+              </div>
+              <DialogDescription>
+                Invite someone to view, comment on, or sign this contract
+              </DialogDescription>
+            </DialogHeader>
+          </div>
 
           {shareSuccess ? (
-            <div className="py-8 text-center">
+            <div className="py-8 px-6 text-center">
               <div className="w-12 h-12 rounded-full bg-green-500/10 flex items-center justify-center mx-auto mb-3">
                 <CheckCircle2 className="w-6 h-6 text-green-500" />
               </div>
@@ -1608,7 +1658,7 @@ export function ContractAnalysisView({
               </p>
             </div>
           ) : (
-            <div className="space-y-4 pt-2">
+            <div className="space-y-4 px-6 py-6">
               {/* Email Input */}
               <div className="space-y-2">
                 <label className="text-xs font-medium text-foreground">Email address</label>
@@ -1617,38 +1667,50 @@ export function ContractAnalysisView({
                   placeholder="colleague@example.com"
                   value={shareEmail}
                   onChange={(e) => setShareEmail(e.target.value)}
-                  className="text-sm"
+                  className="text-sm rounded-md"
+                  data-rounded="true"
                 />
               </div>
 
               {/* Permission Selector */}
               <div className="space-y-2">
                 <label className="text-xs font-medium text-foreground">Permission</label>
-                <Select value={sharePermission} onValueChange={(v: "view" | "comment" | "sign") => setSharePermission(v)}>
-                  <SelectTrigger className="text-sm">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="view">
-                      <div className="flex items-center gap-2">
-                        <Eye className="w-3.5 h-3.5 text-muted-foreground" />
-                        <span>Can view</span>
-                      </div>
-                    </SelectItem>
-                    <SelectItem value="comment">
-                      <div className="flex items-center gap-2">
-                        <FileText className="w-3.5 h-3.5 text-muted-foreground" />
-                        <span>Can comment</span>
-                      </div>
-                    </SelectItem>
-                    <SelectItem value="sign">
-                      <div className="flex items-center gap-2">
-                        <Send className="w-3.5 h-3.5 text-muted-foreground" />
-                        <span>Request signature</span>
-                      </div>
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <button
+                      className="w-full h-9 flex items-center justify-between gap-2 border border-border rounded-md bg-background px-3 text-sm text-left focus:outline-none focus:border-purple-500 transition-colors"
+                    >
+                      <span className="flex items-center gap-2">
+                        {sharePermission === "view" && <AiVisionIcon size={14} className="text-muted-foreground" />}
+                        {sharePermission === "comment" && <HugeiconsIcon icon={Comment01Icon} size={14} className="text-muted-foreground" />}
+                        {sharePermission === "sign" && <HugeiconsIcon icon={SignatureIcon} size={14} className="text-muted-foreground" />}
+                        {sharePermission === "view" && "Can view"}
+                        {sharePermission === "comment" && "Can comment"}
+                        {sharePermission === "sign" && "Request signature"}
+                      </span>
+                      <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                    </button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="start" className="min-w-[var(--radix-dropdown-menu-trigger-width)]">
+                    <DropdownMenuRadioGroup
+                      value={sharePermission}
+                      onValueChange={(v) => setSharePermission(v as "view" | "comment" | "sign")}
+                    >
+                      <DropdownMenuRadioItem value="view" className="flex items-center gap-2">
+                        <AiVisionIcon size={14} className="text-muted-foreground" />
+                        Can view
+                      </DropdownMenuRadioItem>
+                      <DropdownMenuRadioItem value="comment" className="flex items-center gap-2">
+                        <HugeiconsIcon icon={Comment01Icon} size={14} className="text-muted-foreground" />
+                        Can comment
+                      </DropdownMenuRadioItem>
+                      <DropdownMenuRadioItem value="sign" className="flex items-center gap-2">
+                        <HugeiconsIcon icon={SignatureIcon} size={14} className="text-muted-foreground" />
+                        Request signature
+                      </DropdownMenuRadioItem>
+                    </DropdownMenuRadioGroup>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
 
               {/* Optional Message */}
@@ -1684,13 +1746,13 @@ export function ContractAnalysisView({
                 <button
                   onClick={handleShare}
                   disabled={!shareEmail || sharing}
-                  className="flex-1 h-9 text-sm bg-purple-600 hover:bg-purple-700 text-white rounded-md flex items-center justify-center gap-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex-1 h-9 text-sm font-medium bg-purple-600 hover:bg-purple-700 text-white rounded-md flex items-center justify-center gap-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {sharing ? (
                     <Loader2 className="w-4 h-4 animate-spin" />
                   ) : (
                     <>
-                      <Send className="w-3.5 h-3.5" />
+                      <HugeiconsIcon icon={SentIcon} size={14} />
                       Send Invitation
                     </>
                   )}

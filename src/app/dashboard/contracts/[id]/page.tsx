@@ -2,6 +2,7 @@
 
 import { useState, useCallback, useEffect } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
+import { toast } from "sonner";
 import { ContractAnalysis } from "@/types/contract";
 import { Contract } from "@/types/database";
 import { useAuth } from "@/components/providers/AuthProvider";
@@ -167,9 +168,10 @@ export default function ContractDetailPage() {
       });
       if (response.ok) {
         fetchVersions();
+        toast.success("New version uploaded successfully");
       } else {
         const data = await response.json();
-        alert(data.error || "Failed to upload version");
+        toast.error(data.error || "Failed to upload version");
       }
     } catch (err) {
       console.error("Error uploading version:", err);

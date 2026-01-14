@@ -163,10 +163,10 @@
     @apply border-border outline-ring/50;
   }
   html {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground min-h-screen;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground min-h-screen;
   }
 
   /* Purple text selection highlight */
@@ -191,7 +191,7 @@
   }
 
   /* All inputs: no radius, yellow focus border (except rounded inputs) */
-  input:not([data-rounded]), textarea, select, [role="combobox"], [data-slot="select-trigger"] {
+  input:not([data-rounded]), textarea, select:not([data-rounded]), [role="combobox"]:not([data-rounded]), [data-slot="select-trigger"]:not([data-rounded]) {
     border-radius: 0 !important;
   }
 
@@ -232,6 +232,7 @@ body[data-scroll-locked] {
 html, body {
   -ms-overflow-style: none;
   scrollbar-width: none;
+  height: 100%;
 }
 
 /* Animated gradient background */
@@ -401,6 +402,20 @@ input[type="number"] {
   padding: 2px 6px;
   border-radius: 4px;
   font-weight: 500;
+}
+
+/* Sidebar active state - text/icon animate to purple */
+[data-sidebar="menu-button"][data-active="true"] {
+  transition: color 0.2s ease-out;
+}
+
+[data-sidebar="menu-button"][data-active="true"] span {
+  color: #c084fc !important;
+  transition: color 0.2s ease-out;
+}
+
+[data-theme="light"] [data-sidebar="menu-button"][data-active="true"] span {
+  color: #9333ea !important;
 }
 
 .dark {

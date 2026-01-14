@@ -13,6 +13,7 @@ import {
   CheckCircle2,
   ChevronRight,
   Sparkles,
+  User,
 } from "lucide-react";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { FolderShared02Icon, FileAttachmentIcon } from "@hugeicons-pro/core-stroke-rounded";
@@ -191,7 +192,7 @@ export default function SharedPage() {
   };
 
   return (
-    <div className="p-6 max-w-4xl">
+    <div className="p-6">
       {/* Header */}
       <div className="mb-8">
         <div className="flex items-center gap-3 mb-2">
@@ -218,8 +219,8 @@ export default function SharedPage() {
           </p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {shares.map((share) => {
+        <div className="border border-border rounded-xl overflow-hidden bg-card">
+          {shares.map((share, index) => {
             const permission = getPermissionConfig(share.permission);
             const status = getStatusConfig(share.status);
             const risk = getRiskConfig(share.contract?.overall_risk ?? null);
@@ -231,79 +232,63 @@ export default function SharedPage() {
                 href={`/dashboard/shared/${share.contract_id}`}
                 className="group block"
               >
-                <div className="relative bg-card border border-border rounded-2xl p-5 hover:border-purple-500/30 hover:bg-muted/30 transition-all h-full">
-                  {/* Status indicator dot */}
-                  {status && share.status === "pending" && (
-                    <div className={cn("absolute top-4 right-4 w-2 h-2 rounded-full", status.dotColor)} />
-                  )}
+                <div className={cn(
+                  "flex items-center gap-4 px-5 py-4 hover:bg-muted/50 transition-colors",
+                  index !== shares.length - 1 && "border-b border-border"
+                )}>
+                  {/* Avatar */}
+                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-purple-600 flex items-center justify-center text-white font-semibold text-sm shrink-0">
+                    {getInitials(share.owner?.full_name ?? null, share.owner?.email ?? null) === "?" ? (
+                      <User className="w-5 h-5" />
+                    ) : (
+                      getInitials(share.owner?.full_name ?? null, share.owner?.email ?? null)
+                    )}
+                  </div>
 
-                  <div className="flex flex-col h-full">
-                    {/* Header with avatar and badges */}
-                    <div className="flex items-start justify-between gap-3 mb-4">
-                      {/* Avatar */}
-                      <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-500 to-purple-600 flex items-center justify-center text-white font-semibold text-sm shrink-0">
-                        {getInitials(share.owner?.full_name ?? null, share.owner?.email ?? null)}
-                      </div>
-
-                      {/* Badges */}
-                      <div className="flex items-center gap-2">
-                        {/* Risk indicator */}
-                        {share.contract?.overall_risk && (
-                          <div className={cn(
-                            "w-2 h-2 rounded-full",
-                            risk.color
-                          )} title={risk.label} />
-                        )}
-
-                        {/* Status badge */}
-                        {status && (
-                          <div className={cn(
-                            "flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium",
-                            status.bgColor,
-                            status.textColor
-                          )}>
-                            <status.icon className="w-3 h-3" />
-                            {status.label}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Content */}
-                    <div className="flex-1">
-                      {/* Title */}
-                      <h3 className="text-base font-medium text-foreground mb-1 line-clamp-2">
+                  {/* Main content */}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-0.5">
+                      <h3 className="text-sm font-medium text-foreground truncate">
                         {share.contract?.title || "Untitled Contract"}
                       </h3>
-
-                      {/* Meta row */}
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground mb-2">
-                        <span className="truncate">From {share.owner?.full_name || share.owner?.email || "Unknown"}</span>
-                      </div>
-
-                      {/* Message */}
-                      {share.message && (
-                        <p className="text-sm text-muted-foreground/70 line-clamp-2 italic">
-                          "{share.message}"
-                        </p>
+                      {share.contract?.overall_risk && (
+                        <div className={cn("w-1.5 h-1.5 rounded-full shrink-0", risk.color)} />
                       )}
                     </div>
+                    <p className="text-xs text-muted-foreground truncate">
+                      {share.owner?.full_name || share.owner?.email ? (
+                        <>From {share.owner?.full_name || share.owner?.email}</>
+                      ) : null}
+                      {share.message && `${share.owner?.full_name || share.owner?.email ? " · " : ""}"${share.message}"`}
+                    </p>
+                  </div>
 
-                    {/* Footer */}
-                    <div className="flex items-center justify-between mt-4 pt-4 border-t border-border/50">
-                      <span className="text-xs text-muted-foreground">{formatDate(share.created_at)}</span>
-
-                      <div className="flex items-center gap-2">
-                        {/* Permission badge */}
-                        <div className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium bg-muted text-muted-foreground">
-                          <PermissionIcon className="w-3 h-3" />
-                          {permission.label}
-                        </div>
-
-                        {/* Arrow */}
-                        <ChevronRight className="w-4 h-4 text-muted-foreground/30 group-hover:text-muted-foreground group-hover:translate-x-0.5 transition-all" />
+                  {/* Right side */}
+                  <div className="flex items-center gap-3 shrink-0">
+                    {/* Status badge */}
+                    {status && (
+                      <div className={cn(
+                        "flex items-center gap-1 px-2 py-1 rounded-md text-[11px] font-medium",
+                        status.bgColor,
+                        status.textColor
+                      )}>
+                        <status.icon className="w-3 h-3" />
+                        {status.label}
                       </div>
+                    )}
+
+                    {/* Permission */}
+                    <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                      <PermissionIcon className="w-3.5 h-3.5" />
                     </div>
+
+                    {/* Time */}
+                    <span className="text-xs text-muted-foreground w-16 text-right">
+                      {formatDate(share.created_at)}
+                    </span>
+
+                    {/* Arrow */}
+                    <ChevronRight className="w-4 h-4 text-muted-foreground/30 group-hover:text-muted-foreground transition-colors" />
                   </div>
                 </div>
               </Link>
