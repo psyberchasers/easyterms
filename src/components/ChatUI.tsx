@@ -1,9 +1,9 @@
 "use client";
 
-import { ArrowUp, BookOpen, Upload, FileText, AlertTriangle, CheckCircle2, X, Paperclip, PanelLeftClose, PanelLeft } from "lucide-react";
+import { ArrowUp, BookOpen, Upload, FileText, AlertTriangle, CheckCircle2, X, Paperclip, PanelLeft } from "lucide-react";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { AiCloudIcon, CloudUploadIcon, AttachmentIcon } from "@hugeicons-pro/core-stroke-rounded";
-import { AiEditingIcon, Chat01Icon, Delete02Icon } from "@hugeicons-pro/core-bulk-rounded";
+import { AiCloudIcon, CloudUploadIcon, AttachmentIcon, PanelRightIcon } from "@hugeicons-pro/core-stroke-rounded";
+import { AiEditingIcon, Chat01Icon, Delete02Icon, TransactionHistoryIcon } from "@hugeicons-pro/core-bulk-rounded";
 import {
   AnimatePresence,
   motion,
@@ -888,19 +888,16 @@ const ChatUI = () => {
               className="h-full bg-muted/30 border-r border-border flex flex-col overflow-hidden"
             >
               {/* Sidebar Header */}
-              <div className="flex items-center justify-between p-3 border-b border-border">
-                <button
-                  onClick={startNewChat}
-                  className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-purple-500 hover:bg-purple-600 text-white text-xs font-semibold transition-colors"
-                >
-                  <HugeiconsIcon icon={AiEditingIcon} size={14} />
-                  New Chat
-                </button>
+              <div className="flex items-center justify-between py-3 pl-4 pr-1 border-b border-border">
+                <div className="flex items-center gap-1.5 text-muted-foreground">
+                  <HugeiconsIcon icon={TransactionHistoryIcon} size={16} />
+                  <span className="text-xs font-semibold">Chat History</span>
+                </div>
                 <button
                   onClick={() => setIsSidebarOpen(false)}
                   className="p-2 rounded-lg hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
                 >
-                  <PanelLeftClose className="w-4 h-4" />
+                  <HugeiconsIcon icon={PanelRightIcon} size={14} />
                 </button>
               </div>
 
@@ -1217,6 +1214,13 @@ const ChatUI = () => {
             </div>
             <div className="flex h-10 items-center justify-between px-1.5">
               <div className="flex items-center gap-1">
+                <button
+                  onClick={startNewChat}
+                  className="text-muted-foreground hover:bg-background/50 hover:text-foreground flex items-center gap-2 rounded-lg px-2 py-1.5 transition-all duration-100 active:scale-95"
+                >
+                  <HugeiconsIcon icon={AiEditingIcon} size={16} />
+                  <span className="text-xs font-medium">New</span>
+                </button>
                 <button
                   onClick={() => fileInputRef.current?.click()}
                   className="text-muted-foreground hover:bg-background/50 hover:text-foreground flex items-center gap-2 rounded-lg px-2 py-1.5 transition-all duration-100 active:scale-95"
