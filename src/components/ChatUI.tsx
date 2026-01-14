@@ -1,8 +1,9 @@
 "use client";
 
-import { ArrowUp, BookOpen, Upload, FileText, AlertTriangle, CheckCircle2, X, Paperclip } from "lucide-react";
+import { ArrowUp, BookOpen, Upload, FileText, AlertTriangle, CheckCircle2, X, Paperclip, PanelLeftClose, PanelLeft } from "lucide-react";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { AiCloudIcon, CloudUploadIcon, AttachmentIcon } from "@hugeicons-pro/core-stroke-rounded";
+import { AiEditingIcon, Chat01Icon, Delete02Icon } from "@hugeicons-pro/core-bulk-rounded";
 import {
   AnimatePresence,
   motion,
@@ -23,6 +24,25 @@ interface AttachableContract {
   overall_risk: "high" | "medium" | "low" | null;
   contract_type: string | null;
   analysis: ContractAnalysis | null;
+}
+
+// Conversation types
+interface Conversation {
+  id: string;
+  title: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+interface StoredMessage {
+  id: string;
+  content: string;
+  is_from_user: boolean;
+  message_type: string;
+  file_name: string | null;
+  analysis: ContractAnalysis | null;
+  attached_contract_ids: string[] | null;
+  created_at: string;
 }
 
 // Animation constants
@@ -325,6 +345,12 @@ const ChatUI = () => {
   const contractPickerRef = useRef<HTMLDivElement>(null);
   const supabase = createClient();
 
+  // Sidebar and conversation state
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [conversations, setConversations] = useState<Conversation[]>([]);
+  const [currentConversationId, setCurrentConversationId] = useState<string | null>(null);
+  const [isLoadingConversations, setIsLoadingConversations] = useState(true);
+
   // Disable page-level scrolling - only chat messages should scroll
   useEffect(() => {
     document.body.style.overflow = "hidden";
@@ -433,8 +459,173 @@ const ChatUI = () => {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  // Fetch conversations on mount
+  useEffect(() => {
+    const fetchConversations = async () => {
+      try {
+        const res = await fetch("/api/chat/conversations");
+        if (res.ok) {
+          const data = await res.json();
+          setConversations(data.conversations || []);
+        }
+      } catch (err) {
+        console.error("Failed to fetch conversations:", err);
+      } finally {
+        setIsLoadingConversations(false);
+      }
+    };
+    fetchConversations();
+  }, []);
+
+  // Load conversation messages when switching
+  const loadConversation = useCallback(async (conversationId: string) => {
+    try {
+      const res = await fetch(`/api/chat/conversations/${conversationId}`);
+      if (res.ok) {
+        const data = await res.json();
+        // Convert stored messages to ChatMessage format
+        const messages: ChatMessage[] = (data.messages || []).map((m: StoredMessage, idx: number) => ({
+          id: idx,
+          message: m.content,
+          isFromUser: m.is_from_user,
+          type: m.message_type as "text" | "file" | "analysis",
+          fileName: m.file_name || undefined,
+          analysis: m.analysis || undefined,
+        }));
+        setChatMessages(messages);
+        setCurrentConversationId(conversationId);
+        setMessageIndex(messages.length);
+      }
+    } catch (err) {
+      console.error("Failed to load conversation:", err);
+    }
+  }, []);
+
+  // Create new conversation
+  const createNewConversation = useCallback(async (title?: string) => {
+    try {
+      const res = await fetch("/api/chat/conversations", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title: title || "New Chat" }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setConversations(prev => [data.conversation, ...prev]);
+        setCurrentConversationId(data.conversation.id);
+        setChatMessages([]);
+        setMessageIndex(0);
+        setCurrentAnalysis(null);
+        setAttachedContracts([]);
+        return data.conversation.id;
+      }
+    } catch (err) {
+      console.error("Failed to create conversation:", err);
+    }
+    return null;
+  }, []);
+
+  // Save message to database
+  const saveMessage = useCallback(async (
+    conversationId: string,
+    content: string,
+    isFromUser: boolean,
+    messageType: string = "text",
+    fileName?: string,
+    analysis?: ContractAnalysis,
+    attachedContractIds?: string[]
+  ) => {
+    try {
+      await fetch(`/api/chat/conversations/${conversationId}/messages`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          content,
+          isFromUser,
+          messageType,
+          fileName,
+          analysis,
+          attachedContractIds,
+        }),
+      });
+    } catch (err) {
+      console.error("Failed to save message:", err);
+    }
+  }, []);
+
+  // Generate and update conversation title based on first message using AI
+  const generateTitle = useCallback(async (conversationId: string, firstMessage: string) => {
+    try {
+      // Use AI to generate a concise title
+      const response = await fetch("/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          message: `Generate a very short title (3-5 words max) for a conversation that starts with: "${firstMessage}". Reply with ONLY the title, no quotes or punctuation.`,
+          history: [],
+        }),
+      });
+
+      const data = await response.json();
+      let title = data.response?.trim() || firstMessage.substring(0, 30);
+
+      // Clean up the title - remove quotes and limit length
+      title = title.replace(/^["']|["']$/g, '').substring(0, 40);
+
+      await fetch(`/api/chat/conversations/${conversationId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title }),
+      });
+      setConversations(prev =>
+        prev.map(c => c.id === conversationId ? { ...c, title } : c)
+      );
+    } catch (err) {
+      console.error("Failed to generate title:", err);
+      // Fallback to simple truncation
+      const fallbackTitle = firstMessage.length > 30 ? firstMessage.substring(0, 30) + "..." : firstMessage;
+      setConversations(prev =>
+        prev.map(c => c.id === conversationId ? { ...c, title: fallbackTitle } : c)
+      );
+    }
+  }, []);
+
+  // Delete conversation
+  const deleteConversation = useCallback(async (conversationId: string) => {
+    try {
+      const res = await fetch(`/api/chat/conversations/${conversationId}`, {
+        method: "DELETE",
+      });
+      if (res.ok) {
+        setConversations(prev => prev.filter(c => c.id !== conversationId));
+        if (currentConversationId === conversationId) {
+          setCurrentConversationId(null);
+          setChatMessages([]);
+          setMessageIndex(0);
+        }
+      }
+    } catch (err) {
+      console.error("Failed to delete conversation:", err);
+    }
+  }, [currentConversationId]);
+
+  // Start a new chat
+  const startNewChat = useCallback(() => {
+    setCurrentConversationId(null);
+    setChatMessages([]);
+    setMessageIndex(0);
+    setCurrentAnalysis(null);
+    setAttachedContracts([]);
+  }, []);
+
   // Handle file analysis
   const handleFileAnalysis = useCallback(async (file: File) => {
+    // Create conversation if needed
+    let convId = currentConversationId;
+    if (!convId) {
+      convId = await createNewConversation(`Analysis: ${file.name}`);
+    }
+
     // Add user message showing file upload
     const fileMessage: ChatMessage = {
       id: Date.now(),
@@ -445,6 +636,11 @@ const ChatUI = () => {
     };
     setChatMessages((prev) => [...prev, fileMessage]);
     setMessageIndex((i) => i + 1);
+
+    // Save user message
+    if (convId) {
+      saveMessage(convId, `Analyzing: ${file.name}`, true, "file", file.name);
+    }
 
     // Show thinking state
     setIsThinking(true);
@@ -481,6 +677,11 @@ const ChatUI = () => {
       };
       setChatMessages((prev) => [...prev, analysisMessage]);
       setMessageIndex((i) => i + 1);
+
+      // Save analysis message
+      if (convId) {
+        saveMessage(convId, data.analysis.summary || "", false, "analysis", file.name, data.analysis);
+      }
     } catch (err) {
       // Add error message
       const errorMessage: ChatMessage = {
@@ -490,11 +691,16 @@ const ChatUI = () => {
         type: "text",
       };
       setChatMessages((prev) => [...prev, errorMessage]);
+
+      // Save error message
+      if (convId) {
+        saveMessage(convId, `Failed to analyze contract: ${err instanceof Error ? err.message : "Unknown error"}`, false, "text");
+      }
     } finally {
       setIsThinking(false);
       setThinkingMessage("Thinking...");
     }
-  }, []);
+  }, [currentConversationId, createNewConversation, saveMessage]);
 
   // Drag handlers
   const handleDragOver = useCallback((e: React.DragEvent) => {
@@ -543,6 +749,13 @@ const ChatUI = () => {
       currentIndex === 0 ? currentIndex + 1 : currentIndex + 2,
     );
 
+    // Create conversation if needed
+    let convId = currentConversationId;
+    const isFirstMessage = chatMessages.length === 0;
+    if (!convId) {
+      convId = await createNewConversation();
+    }
+
     // Add user message
     const userMessage: ChatMessage = {
       id: Date.now(),
@@ -551,6 +764,16 @@ const ChatUI = () => {
       type: "text",
     };
     setChatMessages((prev) => [...prev, userMessage]);
+
+    // Save user message
+    const attachedIds = attachedContracts.map(c => c.id);
+    if (convId) {
+      saveMessage(convId, currentInput, true, "text", undefined, undefined, attachedIds.length > 0 ? attachedIds : undefined);
+      // Generate title from first message
+      if (isFirstMessage) {
+        generateTitle(convId, currentInput);
+      }
+    }
 
     // Scroll to bottom immediately after sending
     setTimeout(() => {
@@ -591,24 +814,36 @@ const ChatUI = () => {
       });
 
       const data = await response.json();
+      const responseText = data.response || "I'm sorry, I couldn't process that. Please try again.";
 
       // Add bot response
       const botMessage: ChatMessage = {
         id: Date.now() + 1,
-        message: data.response || "I'm sorry, I couldn't process that. Please try again.",
+        message: responseText,
         isFromUser: false,
         type: "text",
       };
       setChatMessages((prev) => [...prev, botMessage]);
+
+      // Save bot response
+      if (convId) {
+        saveMessage(convId, responseText, false, "text");
+      }
     } catch (err) {
+      const errorText = "Sorry, I encountered an error. Please try again.";
       // Add error message
       const errorMessage: ChatMessage = {
         id: Date.now() + 1,
-        message: "Sorry, I encountered an error. Please try again.",
+        message: errorText,
         isFromUser: false,
         type: "text",
       };
       setChatMessages((prev) => [...prev, errorMessage]);
+
+      // Save error message
+      if (convId) {
+        saveMessage(convId, errorText, false, "text");
+      }
     } finally {
       setIsThinking(false);
       setIsSubmit(false);
@@ -641,44 +876,130 @@ const ChatUI = () => {
         damping: 30,
       }}
     >
-      <div
-        className={cn(
-          "bg-background flex h-full w-full flex-col relative transition-colors overflow-hidden",
-          isDragging && "bg-purple-500/5"
-        )}
-        onDragOver={handleDragOver}
-        onDragLeave={handleDragLeave}
-        onDrop={handleDrop}
-      >
-        {/* Drag overlay */}
-        <AnimatePresence>
-          {isDragging && (
+      <div className="flex h-full w-full overflow-hidden">
+        {/* Collapsible Sidebar */}
+        <AnimatePresence mode="wait">
+          {isSidebarOpen && (
             <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="absolute inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm"
+              initial={{ width: 0, opacity: 0 }}
+              animate={{ width: 280, opacity: 1 }}
+              exit={{ width: 0, opacity: 0 }}
+              transition={{ type: "spring", stiffness: 300, damping: 30 }}
+              className="h-full bg-muted/30 border-r border-border flex flex-col overflow-hidden"
             >
-              <div className="flex flex-col items-center gap-3 p-8 rounded-2xl border-2 border-dashed border-purple-500/50">
-                <Upload className="w-12 h-12 text-purple-500" />
-                <p className="text-lg font-medium text-foreground">Drop your contract here</p>
-                <p className="text-sm text-muted-foreground">PDF, Word, or TXT files</p>
+              {/* Sidebar Header */}
+              <div className="flex items-center justify-between p-3 border-b border-border">
+                <button
+                  onClick={startNewChat}
+                  className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-purple-500 hover:bg-purple-600 text-white text-xs font-semibold transition-colors"
+                >
+                  <HugeiconsIcon icon={AiEditingIcon} size={14} />
+                  New Chat
+                </button>
+                <button
+                  onClick={() => setIsSidebarOpen(false)}
+                  className="p-2 rounded-lg hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
+                >
+                  <PanelLeftClose className="w-4 h-4" />
+                </button>
+              </div>
+
+              {/* Conversation List */}
+              <div className="flex-1 overflow-y-auto p-2">
+                {isLoadingConversations ? (
+                  <div className="flex items-center justify-center py-8">
+                    <div className="w-5 h-5 border-2 border-purple-500 border-t-transparent rounded-full animate-spin" />
+                  </div>
+                ) : conversations.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center py-8 text-center px-4">
+                    <HugeiconsIcon icon={Chat01Icon} size={32} className="text-muted-foreground/30 mb-2" />
+                    <p className="text-sm text-muted-foreground">No conversations yet</p>
+                    <p className="text-xs text-muted-foreground/60 mt-1">Start a new chat to get started</p>
+                  </div>
+                ) : (
+                  <div className="space-y-1">
+                    {conversations.map((conv) => (
+                      <div
+                        key={conv.id}
+                        className={cn(
+                          "group flex items-center gap-2 px-3 py-2.5 rounded-lg cursor-pointer transition-colors",
+                          currentConversationId === conv.id
+                            ? "bg-purple-500/10 text-foreground"
+                            : "hover:bg-muted text-muted-foreground hover:text-foreground"
+                        )}
+                        onClick={() => loadConversation(conv.id)}
+                      >
+                        <HugeiconsIcon icon={Chat01Icon} size={16} className="shrink-0" />
+                        <span className="flex-1 text-sm truncate">
+                          {conv.title || "New Chat"}
+                        </span>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            deleteConversation(conv.id);
+                          }}
+                          className="opacity-0 group-hover:opacity-100 p-1 rounded text-red-400 hover:bg-red-500/10 hover:text-red-500 transition-all"
+                        >
+                          <HugeiconsIcon icon={Delete02Icon} size={14} />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             </motion.div>
           )}
         </AnimatePresence>
 
-        {/* Hidden file input */}
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept=".pdf,.doc,.docx,.txt"
-          onChange={handleFileInput}
-          className="hidden"
-        />
+        {/* Main Chat Area */}
+        <div
+          className={cn(
+            "flex-1 bg-background flex h-full w-full flex-col relative transition-colors overflow-hidden",
+            isDragging && "bg-purple-500/5"
+          )}
+          onDragOver={handleDragOver}
+          onDragLeave={handleDragLeave}
+          onDrop={handleDrop}
+        >
+          {/* Sidebar toggle when closed */}
+          {!isSidebarOpen && (
+            <button
+              onClick={() => setIsSidebarOpen(true)}
+              className="absolute top-3 left-3 z-10 p-2 rounded-lg bg-muted hover:bg-muted/80 transition-colors text-muted-foreground hover:text-foreground"
+            >
+              <PanelLeft className="w-4 h-4" />
+            </button>
+          )}
 
-        {/* Chat Messages Container - mb accounts for fixed input height */}
-        <motion.div className={cn("flex-1 w-full max-w-3xl mx-auto overflow-y-auto scroll-smooth px-3", attachedContracts.length > 0 ? "mb-52" : "mb-44")}>
+          {/* Drag overlay */}
+          <AnimatePresence>
+            {isDragging && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="absolute inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm"
+              >
+                <div className="flex flex-col items-center gap-3 p-8 rounded-2xl border-2 border-dashed border-purple-500/50">
+                  <Upload className="w-12 h-12 text-purple-500" />
+                  <p className="text-lg font-medium text-foreground">Drop your contract here</p>
+                  <p className="text-sm text-muted-foreground">PDF, Word, or TXT files</p>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* Hidden file input */}
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".pdf,.doc,.docx,.txt"
+            onChange={handleFileInput}
+            className="hidden"
+          />
+
+          {/* Chat Messages Container - mb accounts for fixed input height */}
+          <motion.div className={cn("flex-1 w-full max-w-3xl mx-auto overflow-y-auto scroll-smooth px-3", attachedContracts.length > 0 ? "mb-52" : "mb-44")}>
           <div className="min-h-full flex flex-col justify-end pt-4">
           {chatMessages.length === 0 && (
             <div
@@ -983,6 +1304,7 @@ const ChatUI = () => {
             </div>
           </div>
           </div>
+        </div>
         </div>
       </div>
     </MotionConfig>

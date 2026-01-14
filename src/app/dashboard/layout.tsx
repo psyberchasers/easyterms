@@ -146,7 +146,7 @@ function DashboardHeader({
       return (
         <>
           <HugeiconsIcon icon={ChatSearch01Icon} size={16} className="text-muted-foreground" />
-          <span className="text-sm font-medium text-foreground">Chat</span>
+          <span className="text-sm font-semibold text-foreground">Chat</span>
         </>
       );
     }
@@ -154,7 +154,7 @@ function DashboardHeader({
       return (
         <>
           <HugeiconsIcon icon={LayoutGridIcon} size={16} className="text-muted-foreground" />
-          <span className="text-sm font-medium text-foreground">Templates</span>
+          <span className="text-sm font-semibold text-foreground">Templates</span>
         </>
       );
     }
@@ -165,7 +165,7 @@ function DashboardHeader({
             <HugeiconsIcon icon={FileUploadBulkIcon} size={16} className="text-muted-foreground" />
             <Link href="/dashboard/upload-contract" className="text-sm text-muted-foreground/60 hover:text-muted-foreground transition-colors">Upload Contract</Link>
             <span className="text-sm text-muted-foreground/60">/</span>
-            <span className="text-sm font-medium text-foreground">Recipient</span>
+            <span className="text-sm font-semibold text-foreground">Recipient</span>
           </>
         );
       }
@@ -175,14 +175,14 @@ function DashboardHeader({
             <HugeiconsIcon icon={FileUploadBulkIcon} size={16} className="text-muted-foreground" />
             <Link href="/dashboard/upload-contract" className="text-sm text-muted-foreground/60 hover:text-muted-foreground transition-colors">Upload Contract</Link>
             <span className="text-sm text-muted-foreground/60">/</span>
-            <span className="text-sm font-medium text-foreground">Sender</span>
+            <span className="text-sm font-semibold text-foreground">Sender</span>
           </>
         );
       }
       return (
         <>
           <HugeiconsIcon icon={FileUploadBulkIcon} size={16} className="text-muted-foreground" />
-          <span className="text-sm font-medium text-foreground">Upload Contract</span>
+          <span className="text-sm font-semibold text-foreground">Upload Contract</span>
         </>
       );
     }
@@ -190,7 +190,7 @@ function DashboardHeader({
       return (
         <>
           <HugeiconsIcon icon={DocumentAttachmentIcon} size={16} className="text-muted-foreground" />
-          <span className="text-sm font-medium text-foreground">Contracts</span>
+          <span className="text-sm font-semibold text-foreground">Contracts</span>
         </>
       );
     }
@@ -198,7 +198,7 @@ function DashboardHeader({
       return (
         <>
           <HugeiconsIcon icon={GitCompareBulkIcon} size={16} className="text-muted-foreground" />
-          <span className="text-sm font-medium text-foreground">Compare</span>
+          <span className="text-sm font-semibold text-foreground">Compare</span>
         </>
       );
     }
@@ -206,14 +206,14 @@ function DashboardHeader({
       return (
         <>
           <HugeiconsIcon icon={FolderShared02Icon} size={16} className="text-muted-foreground" />
-          <span className="text-sm font-medium text-foreground">Shared</span>
+          <span className="text-sm font-semibold text-foreground">Shared</span>
         </>
       );
     }
     return (
       <>
         <HugeiconsIcon icon={Home01BulkIcon} size={16} className="text-muted-foreground" />
-        <span className="text-sm font-medium text-foreground">Home</span>
+        <span className="text-sm font-semibold text-foreground">Home</span>
       </>
     );
   };
@@ -263,7 +263,7 @@ function DashboardHeader({
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-80 bg-card border-border p-0">
           <div className="flex items-center justify-between px-3 py-2 border-b border-border">
-            <span className="text-sm font-medium text-foreground">Notifications</span>
+            <span className="text-sm font-semibold text-foreground">Notifications</span>
             {unreadCount > 0 && (
               <button
                 onClick={markAllAsRead}
@@ -307,7 +307,7 @@ function DashboardHeader({
                       )} />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-foreground truncate">
+                      <p className="text-sm font-semibold text-foreground truncate">
                         {notification.title}
                       </p>
                       {notification.message && (
