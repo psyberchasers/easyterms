@@ -413,15 +413,6 @@ export default function DashboardPage() {
                   </p>
                 </div>
 
-                {/* Tags - versions only */}
-                {contractVersions[contract.id]?.length > 0 && (
-                  <div className="px-4 pb-3 flex gap-2">
-                    <span className="text-[10px] font-medium px-2 py-0.5 rounded-lg bg-muted text-muted-foreground">
-                      {contractVersions[contract.id].length + 1} versions
-                    </span>
-                  </div>
-                )}
-
                 {/* Action Footer */}
                 <Link
                   href={`/dashboard/contracts/${contract.id}`}
@@ -430,6 +421,14 @@ export default function DashboardPage() {
                 >
                   <div className="flex items-center gap-2">
                     <span className="text-sm text-muted-foreground">View contract</span>
+                    {contractVersions[contract.id]?.length > 0 && (
+                      <>
+                        <span className="text-muted-foreground/40">•</span>
+                        <span className="text-xs font-medium text-muted-foreground">
+                          V{contractVersions[contract.id].length + 1}
+                        </span>
+                      </>
+                    )}
                     {contract.overall_risk && (
                       <>
                         <span className="text-muted-foreground/40">•</span>

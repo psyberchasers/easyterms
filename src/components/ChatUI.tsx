@@ -670,7 +670,7 @@ const ChatUI = () => {
         />
 
         {/* Chat Messages Container */}
-        <motion.div className="no-scroll flex h-full max-w-3xl flex-1 flex-col overflow-y-auto scroll-smooth px-3 pt-4 pb-40">
+        <motion.div className="no-scroll flex h-full max-w-3xl flex-1 flex-col overflow-y-auto scroll-smooth px-3 pt-4 pb-52">
           {chatMessages.length === 0 && (
             <div
               className="flex-1 flex flex-col items-center justify-center gap-4 cursor-pointer"
@@ -747,7 +747,7 @@ const ChatUI = () => {
         {/* Input Container */}
         <div
           ref={inputContainerRef}
-          className="fixed bottom-0 w-full max-w-3xl px-3 pb-4"
+          className="fixed bottom-12 w-full max-w-3xl px-3 pb-4"
         >
           {/* Suggestion Pills */}
           {chatMessages.length === 0 && (

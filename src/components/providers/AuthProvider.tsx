@@ -110,6 +110,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUser(null);
     setProfile(null);
     setSession(null);
+    // Always redirect to login page
+    window.location.href = '/login';
   };
 
   return (

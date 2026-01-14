@@ -188,7 +188,7 @@ export function ContractAnalysisView({
   const [showDocument, setShowDocument] = useState(false);
   const [highlightedClause, setHighlightedClause] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState(initialTab);
-  const [expandedTerm, setExpandedTerm] = useState<number | null>(0);
+  const [expandedTerm, setExpandedTerm] = useState<number | null>(null);
   const [selectedFinancial, setSelectedFinancial] = useState<string | null>(null);
   const [downloading, setDownloading] = useState(false);
   const [exporting, setExporting] = useState(false);
@@ -832,9 +832,9 @@ export function ContractAnalysisView({
                 <div
                   key={i}
                   className={cn(
-                    "border-b border-dashed border-border transition-all overflow-hidden",
-                    i === 0 && "border-t border-dashed",
-                    isExpanded && "border-b-0"
+                    "border-b border-dashed transition-all overflow-hidden duration-300",
+                    i === 0 ? "border-t border-dashed" : "",
+                    isExpanded ? "border-purple-500/50 border-t border-t-purple-500/50 border-b-purple-500/50" : "border-border"
                   )}
                 >
                   <button
@@ -931,15 +931,319 @@ export function ContractAnalysisView({
             })}
           </TabsContent>
 
-          {/* Financial Calculator Tab */}
-          <TabsContent value="financial">
-            <FinancialCalculator
-              contractData={{
-                royaltyRate: analysis.financialTerms?.royaltyRate,
-                advanceAmount: analysis.financialTerms?.advanceAmount,
-                termLength: analysis.termLength,
-              }}
-            />
+          {/* Financial Terms Tab */}
+          <TabsContent value="financial" className="space-y-0 -mx-6 -mt-6 min-w-[calc(100%+48px)] block">
+            {(() => {
+              const financialTerms: { id: string; title: string; value: string; explanation: string; industryContext: string; questionsToAsk: string[] }[] = [];
+
+              // Detect contract type for context-aware explanations
+              const contractType = (analysis.contractType || '').toLowerCase();
+              const isSyncLicense = contractType.includes('sync') || contractType.includes('license');
+              const isRecordingDeal = contractType.includes('recording') || contractType.includes('record deal');
+              const isPublishing = contractType.includes('publishing') || contractType.includes('songwriter');
+              const isProducer = contractType.includes('producer');
+              const isDistribution = contractType.includes('distribution');
+
+              if (analysis.financialTerms?.royaltyRate) {
+                let explanation = 'The percentage of revenue you receive from sales or streams of your work.';
+                let industryContext = 'Standard royalties range from 12-20% for new artists, while established artists may negotiate 20-25% or higher.';
+                let questions = [
+                  'Is this royalty calculated on gross or net revenue?',
+                  'What deductions are taken before royalties are calculated?',
+                  'Does the rate escalate based on sales milestones?',
+                ];
+
+                if (isPublishing) {
+                  explanation = 'Your share of income from mechanical royalties, sync placements, and performance royalties collected by PROs.';
+                  industryContext = 'Standard publishing splits are 50/50 to 75/25 (in artist favor). Co-publishing deals typically offer 75% of publisher share.';
+                  questions = [
+                    'Does this include all income streams (mechanical, sync, performance)?',
+                    'What is the split on sync licensing income specifically?',
+                    'Are there different rates for different uses?',
+                  ];
+                } else if (isProducer) {
+                  explanation = 'Points or percentage of revenue paid to the producer, typically calculated after recoupment.';
+                  industryContext = 'Producer royalties typically range from 2-4 points (percentage of retail/wholesale price). Top producers may get 4-5 points.';
+                  questions = [
+                    'Are producer points calculated on the same base as artist royalties?',
+                    'Is the producer paid from record one or after recoupment?',
+                    'What happens to producer royalties if the project is shelved?',
+                  ];
+                }
+
+                financialTerms.push({
+                  id: 'royalty',
+                  title: 'Royalty Rate',
+                  value: renderValue(analysis.financialTerms.royaltyRate),
+                  explanation,
+                  industryContext,
+                  questionsToAsk: questions,
+                });
+              }
+
+              if (analysis.financialTerms?.advanceAmount) {
+                let title = 'Advance';
+                let explanation = 'An upfront payment that is recoupable from your future royalties. You keep the advance, but won\'t receive royalty payments until it\'s paid back.';
+                let industryContext = 'Advances vary widely based on the artist\'s track record, genre, and label. They can range from $10,000 for new artists to millions for established acts.';
+                let questions = [
+                  'What expenses are recoupable against this advance?',
+                  'Is the advance cross-collateralized with other agreements?',
+                  'What happens to unrecouped advances at the end of the term?',
+                ];
+
+                // Check if this is actually a license fee (sync deals)
+                if (isSyncLicense) {
+                  title = 'License Fee';
+                  explanation = 'A flat fee paid for the right to use your music in visual media. Unlike an advance, this is NOT recoupable - it\'s yours to keep regardless of the project\'s success.';
+                  industryContext = 'Sync license fees vary dramatically: $500-5,000 for indie films, $10,000-50,000 for TV shows, $50,000-500,000+ for major film/commercial placements. Fees depend on usage, media, territory, and term.';
+                  questions = [
+                    'Does this fee cover all the uses specified, or are there additional fees for expanded use?',
+                    'Is there a "most favored nations" clause ensuring you\'re paid equally to other artists?',
+                    'What happens if the production budget increases or the placement gets more prominent?',
+                  ];
+                } else if (isProducer) {
+                  title = 'Producer Fee';
+                  explanation = 'An upfront payment for production services. This may or may not be recoupable from royalties depending on the deal structure.';
+                  industryContext = 'Producer fees range from $1,000-5,000 per track for emerging producers to $25,000-100,000+ per track for top-tier producers.';
+                  questions = [
+                    'Is the producer fee in addition to royalty points, or all-in?',
+                    'Is any portion of the fee recoupable from producer royalties?',
+                    'When is payment due (on delivery, on release, etc.)?',
+                  ];
+                }
+
+                financialTerms.push({
+                  id: 'advance',
+                  title,
+                  value: renderValue(analysis.financialTerms.advanceAmount),
+                  explanation,
+                  industryContext,
+                  questionsToAsk: questions,
+                });
+              }
+
+              if (analysis.termLength) {
+                let explanation = 'The duration of the agreement. This determines how long the other party has rights to your work.';
+                let industryContext = 'Major label deals typically span 5-7 albums or 7-10 years. Shorter terms give you more flexibility to renegotiate.';
+                let questions = [
+                  'Can the term be extended, and under what conditions?',
+                  'What triggers the start of each option period?',
+                  'What happens to unreleased material at the end of the term?',
+                ];
+
+                if (isSyncLicense) {
+                  explanation = 'How long the licensee can use your music in their production. After this period, they must renew or stop using it.';
+                  industryContext = 'Sync licenses often run 1-5 years for TV, or "in perpetuity" for film. Perpetual licenses should command higher fees.';
+                  questions = [
+                    'Does the term include automatic renewal clauses?',
+                    'What is the renewal fee if they want to extend?',
+                    'Is the term tied to the production\'s distribution window?',
+                  ];
+                } else if (isDistribution) {
+                  explanation = 'How long the distributor controls your releases. Shorter terms let you renegotiate or switch distributors more easily.';
+                  industryContext = 'Distribution deals range from 1-3 years for digital-only to 5-7 years for full service deals. Avoid perpetual distribution terms.';
+                  questions = [
+                    'What happens to your catalog when the term ends?',
+                    'Is there a minimum release commitment during the term?',
+                    'Can you terminate early if performance benchmarks aren\'t met?',
+                  ];
+                }
+
+                financialTerms.push({
+                  id: 'term',
+                  title: 'Contract Term',
+                  value: renderValue(analysis.termLength),
+                  explanation,
+                  industryContext,
+                  questionsToAsk: questions,
+                });
+              }
+
+              if (analysis.financialTerms?.paymentSchedule) {
+                financialTerms.push({
+                  id: 'payment',
+                  title: 'Payment Schedule',
+                  value: renderValue(analysis.financialTerms.paymentSchedule),
+                  explanation: 'When and how often you receive payments. This affects your cash flow and ability to plan financially.',
+                  industryContext: 'Industry standard is semi-annual (twice yearly) royalty statements, though some deals offer quarterly. Payment usually follows 45-90 days after the statement period.',
+                  questionsToAsk: [
+                    'How soon after the accounting period do payments arrive?',
+                    'Is there a minimum threshold before payment is issued?',
+                    'Can you request more frequent statements or audits?',
+                  ],
+                });
+              }
+
+              // Territory (especially important for sync/licensing)
+              if (analysis.rightsAndOwnership?.territorialRights) {
+                let explanation = 'The geographic regions where the agreement applies.';
+                let industryContext = 'Worldwide rights are standard but may not be necessary. Retaining certain territories can be valuable for separate deals.';
+                let questions = [
+                  'Can you carve out specific territories for separate deals?',
+                  'Are there different fee structures for different territories?',
+                  'What happens if the work is used outside licensed territories?',
+                ];
+
+                if (isSyncLicense) {
+                  explanation = 'Where the licensee can distribute productions containing your music. Broader territories should mean higher fees.';
+                  industryContext = '"Universe" or "Worldwide" is common for major studio releases. Limited territories (e.g., "North America only") should have lower fees but allow separate licensing elsewhere.';
+                  questions = [
+                    'Is the fee appropriate for the territory scope?',
+                    'Can you license to other productions in non-covered territories?',
+                    'Are there step-ups if territory expands later?',
+                  ];
+                }
+
+                financialTerms.push({
+                  id: 'territory',
+                  title: 'Territory',
+                  value: renderValue(analysis.rightsAndOwnership.territorialRights),
+                  explanation,
+                  industryContext,
+                  questionsToAsk: questions,
+                });
+              }
+
+              // Rights Reversion
+              if (analysis.rightsAndOwnership?.reversion) {
+                financialTerms.push({
+                  id: 'reversion',
+                  title: 'Rights Reversion',
+                  value: renderValue(analysis.rightsAndOwnership.reversion),
+                  explanation: 'When and if the rights to your work return to you. This is crucial for long-term ownership of your creative output.',
+                  industryContext: 'Life-of-copyright deals are common but unfavorable. Better deals include reversion after 15-35 years or based on recoupment.',
+                  questionsToAsk: [
+                    'Is there a sunset clause for rights reversion?',
+                    'What triggers early reversion (e.g., full recoupment)?',
+                    'Do rights revert automatically or require written notice?',
+                  ],
+                });
+              }
+
+              // Exclusivity (financial impact)
+              if (analysis.rightsAndOwnership?.exclusivity) {
+                financialTerms.push({
+                  id: 'exclusivity',
+                  title: 'Exclusivity',
+                  value: renderValue(analysis.rightsAndOwnership.exclusivity),
+                  explanation: 'Whether this deal prevents you from working with others or licensing your work elsewhere. Exclusivity has significant financial implications.',
+                  industryContext: 'Exclusive deals should pay significantly more than non-exclusive. If granting exclusivity, ensure the compensation reflects the opportunity cost.',
+                  questionsToAsk: [
+                    'Is exclusivity necessary for this type of deal?',
+                    'Can you negotiate carve-outs for certain uses or platforms?',
+                    'What is the premium being paid for exclusivity vs. non-exclusive?',
+                  ],
+                });
+              }
+
+              return (
+                <>
+                  {/* Financial Summary Header */}
+                  <div className="bg-emerald-500/5 overflow-hidden">
+                    <div className="px-6 py-2.5 flex items-center gap-2" style={{ backgroundColor: 'rgba(16, 185, 129, 0.08)' }}>
+                      <span className="text-xs font-medium text-emerald-400 leading-none">{financialTerms.length} Financial Terms</span>
+                    </div>
+                  </div>
+
+                  {financialTerms.length === 0 ? (
+                    <div className="border-y border-border p-8 text-center">
+                      <FileText className="w-6 h-6 text-muted-foreground/60 mx-auto mb-2" />
+                      <p className="text-xs text-muted-foreground">No financial terms extracted</p>
+                    </div>
+                  ) : (
+                    financialTerms.map((term, i) => {
+                      const isExpanded = selectedFinancial === term.id;
+                      return (
+                        <div
+                          key={term.id}
+                          className={cn(
+                            "border-b border-dashed transition-all overflow-hidden duration-300",
+                            i === 0 ? "border-t border-dashed" : "",
+                            isExpanded ? "border-emerald-500/50 border-t border-t-emerald-500/50 border-b-emerald-500/50" : "border-border"
+                          )}
+                        >
+                          <button
+                            onClick={() => setSelectedFinancial(isExpanded ? null : term.id)}
+                            className="w-full px-6 py-3 flex items-center gap-3 text-left transition-colors"
+                            style={{ backgroundColor: 'var(--muted)' }}
+                          >
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2 mb-1">
+                                <span className="text-xs text-foreground font-medium">{term.title}</span>
+                              </div>
+                              <p className="text-xs text-muted-foreground line-clamp-1">{term.value}</p>
+                            </div>
+                            <div className={cn(
+                              "text-muted-foreground/60 transition-transform shrink-0",
+                              isExpanded && "rotate-180"
+                            )}>
+                              <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                                <path d="M2.5 4.5L6 8L9.5 4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                              </svg>
+                            </div>
+                          </button>
+                          <AnimatePresence>
+                            {isExpanded && (
+                              <motion.div
+                                key="financial-content"
+                                initial={{ height: 0, opacity: 0, '--mask-stop': '0%', y: 20 } as any}
+                                animate={{ height: 'auto', opacity: 1, '--mask-stop': '100%', y: 0 } as any}
+                                exit={{ height: 0, opacity: 0, '--mask-stop': '0%', y: 20 } as any}
+                                transition={{ duration: 0.35, ease: 'easeInOut' }}
+                                style={{
+                                  maskImage: 'linear-gradient(black var(--mask-stop), transparent var(--mask-stop))',
+                                  WebkitMaskImage: 'linear-gradient(black var(--mask-stop), transparent var(--mask-stop))',
+                                  overflow: 'hidden',
+                                }}
+                                className="bg-card"
+                              >
+                                <div className="border-t border-dashed border-border">
+                                  <div className="px-6 py-3 space-y-4">
+                                    <div>
+                                      <p className="text-[10px] text-muted-foreground/60 uppercase tracking-wider mb-1">Value</p>
+                                      <p className="text-sm text-foreground font-medium">{term.value}</p>
+                                    </div>
+                                    <div>
+                                      <p className="text-[10px] text-muted-foreground/60 uppercase tracking-wider mb-1">What This Means</p>
+                                      <p className="text-xs text-foreground">{term.explanation}</p>
+                                    </div>
+                                    <div>
+                                      <p className="text-[10px] text-muted-foreground/60 uppercase tracking-wider mb-1">Industry Context</p>
+                                      <p className="text-xs text-muted-foreground">{term.industryContext}</p>
+                                    </div>
+                                    <div>
+                                      <p className="text-[10px] text-muted-foreground/60 uppercase tracking-wider mb-1">Questions to Ask</p>
+                                      <ul className="text-xs text-muted-foreground space-y-2">
+                                        {term.questionsToAsk.map((q, idx) => (
+                                          <li key={idx} className="flex items-center gap-2">
+                                            <span className="w-1 h-1 rounded-full bg-muted-foreground/40 shrink-0" />
+                                            <span className="leading-none">{q}</span>
+                                          </li>
+                                        ))}
+                                      </ul>
+                                    </div>
+                                  </div>
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleClauseClick(term.value);
+                                    }}
+                                    className="w-full px-6 py-2.5 text-xs font-semibold text-muted-foreground hover:text-foreground flex items-center justify-center gap-1.5 transition-colors"
+                                    style={{ backgroundColor: 'var(--muted)' }}
+                                  >
+                                    <HugeiconsIcon icon={ViewIcon} size={14} /> View in contract
+                                  </button>
+                                </div>
+                              </motion.div>
+                            )}
+                          </AnimatePresence>
+                        </div>
+                      );
+                    })
+                  )}
+                </>
+              );
+            })()}
           </TabsContent>
 
           {/* Advice Tab */}

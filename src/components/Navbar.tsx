@@ -44,6 +44,7 @@ interface NavbarProps {
   showNewAnalysis?: boolean;
   showBorder?: boolean;
   showSearch?: boolean;
+  transparent?: boolean;
 }
 
 interface Contract {
@@ -69,7 +70,7 @@ interface Notification {
   };
 }
 
-export function Navbar({ showNewAnalysis = true, showBorder = false, showSearch = true }: NavbarProps) {
+export function Navbar({ showNewAnalysis = true, showBorder = false, showSearch = true, transparent = false }: NavbarProps) {
   const { user, profile, loading, signOut } = useAuth();
   const { theme } = useTheme();
   const router = useRouter();
@@ -203,7 +204,7 @@ export function Navbar({ showNewAnalysis = true, showBorder = false, showSearch 
 
   return (
     <>
-      <header className={`fixed top-0 left-0 right-0 z-50 bg-background ${showBorder ? 'border-b border-border' : ''}`}>
+      <header className={`fixed top-0 left-0 right-0 z-50 ${transparent ? 'bg-transparent' : 'bg-background'} ${showBorder ? 'border-b border-border' : ''}`}>
         <div className="max-w-full mx-auto px-6 h-14 grid grid-cols-3 items-center">
           {/* Left - Logo */}
           <Link href="/" className="flex items-center gap-2">
@@ -242,7 +243,12 @@ export function Navbar({ showNewAnalysis = true, showBorder = false, showSearch 
               )}
               <Link
                 href="/dashboard"
-                className="h-8 px-3 text-[13px] font-semibold text-muted-foreground hover:bg-muted border border-border rounded-md flex items-center gap-2 transition-colors"
+                className={cn(
+                  "h-8 px-3 text-[13px] font-semibold rounded-md flex items-center gap-2 transition-colors border",
+                  transparent
+                    ? "text-white border-white/30 hover:bg-white/10"
+                    : "text-muted-foreground border-border hover:bg-muted"
+                )}
               >
                 <HugeiconsIcon icon={DashboardSquare01Icon} size={14} />
                 Dashboard
@@ -251,8 +257,13 @@ export function Navbar({ showNewAnalysis = true, showBorder = false, showSearch 
               {/* Notifications Bell */}
               <DropdownMenu open={notificationsOpen} onOpenChange={setNotificationsOpen}>
                 <DropdownMenuTrigger asChild>
-                  <button className="relative h-8 px-2.5 border border-border rounded-md flex items-center justify-center hover:bg-muted transition-colors">
-                    <Bell className="w-4 h-4 text-muted-foreground" />
+                  <button className={cn(
+                      "relative h-8 px-2.5 border rounded-md flex items-center justify-center transition-colors",
+                      transparent
+                        ? "border-white/30 hover:bg-white/10"
+                        : "border-border hover:bg-muted"
+                    )}>
+                    <Bell className={cn("w-4 h-4", transparent ? "text-white" : "text-muted-foreground")} />
                     {unreadCount > 0 && (
                       <span className="absolute -top-1 -right-1 w-4 h-4 bg-purple-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
                         {unreadCount > 9 ? "9+" : unreadCount}
@@ -363,11 +374,16 @@ export function Navbar({ showNewAnalysis = true, showBorder = false, showSearch 
               {/* User Profile */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <button className="h-8 px-2.5 border border-border rounded-md flex items-center justify-center hover:bg-muted transition-colors">
-                    <HugeiconsIcon icon={UserFullViewIcon} size={14} className="text-muted-foreground" />
+                  <button className={cn(
+                      "h-8 px-2.5 border rounded-md flex items-center justify-center transition-colors",
+                      transparent
+                        ? "border-white/30 hover:bg-white/10"
+                        : "border-border hover:bg-muted"
+                    )}>
+                    <HugeiconsIcon icon={UserFullViewIcon} size={14} className={transparent ? "text-white" : "text-muted-foreground"} />
                   </button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56 bg-card border-border rounded-none">
+                <DropdownMenuContent align="end" className="w-56 bg-card border-border rounded-xl">
                   <div className="px-3 py-2">
                     <p className="text-sm font-medium text-foreground">{profile?.full_name || "User"}</p>
                     <p className="text-xs text-muted-foreground/60">{user.email}</p>
@@ -405,7 +421,12 @@ export function Navbar({ showNewAnalysis = true, showBorder = false, showSearch 
             <>
               <Link
                 href="/login"
-                className="h-8 px-4 text-[13px] font-semibold text-muted-foreground hover:bg-muted border border-border rounded-md flex items-center gap-2 transition-colors whitespace-nowrap"
+                className={cn(
+                  "h-8 px-4 text-[13px] font-semibold rounded-md flex items-center gap-2 transition-colors whitespace-nowrap border",
+                  transparent
+                    ? "text-white border-white/30 hover:bg-white/10"
+                    : "text-muted-foreground border-border hover:bg-muted"
+                )}
               >
                 <HugeiconsIcon icon={Login01Icon} size={14} className="hidden sm:block" />
                 Log In

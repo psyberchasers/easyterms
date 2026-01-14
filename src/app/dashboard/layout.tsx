@@ -51,9 +51,19 @@ import {
 } from "@hugeicons-pro/core-stroke-rounded";
 import { MusicLoader } from "@/components/MusicLoader";
 import { useTheme } from "@/components/providers/ThemeProvider";
-import { IconMsgs, IconHouse, IconFiles, IconAppStack, IconUsers, IconStackPerspective } from "nucleo-glass";
-import { GlassyHomeIcon } from "@/components/icons/GlassyIcons";
-import { CommandMenu } from "@/components/CommandMenu";
+import {
+  Home01Icon as Home01BulkIcon,
+  ChatSearch01Icon,
+  FileUploadIcon as FileUploadBulkIcon,
+  DocumentAttachmentIcon,
+  FolderShared02Icon,
+  GitCompareIcon as GitCompareBulkIcon,
+  LayoutGridIcon,
+  ChatQuestion01Icon,
+  Book01Icon,
+  News01Icon,
+} from "@hugeicons-pro/core-bulk-rounded";
+import { SearchCommand } from "@/components/SearchCommand";
 import { motion } from "framer-motion";
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
@@ -94,7 +104,6 @@ function SidebarToggleButton() {
 }
 
 interface DashboardHeaderProps {
-  onSearchClick: () => void;
   theme: string;
   toggleTheme: () => void;
   notifications: Notification[];
@@ -107,7 +116,6 @@ interface DashboardHeaderProps {
 }
 
 function DashboardHeader({
-  onSearchClick,
   theme,
   toggleTheme,
   notifications,
@@ -136,16 +144,16 @@ function DashboardHeader({
     if (isChatPage) {
       return (
         <>
-          <HugeiconsIcon icon={ChatSparkIcon} size={16} className="text-muted-foreground" />
-          <span className="text-sm font-medium text-muted-foreground">Chat</span>
+          <HugeiconsIcon icon={ChatSearch01Icon} size={16} className="text-muted-foreground" />
+          <span className="text-sm font-medium text-foreground">Chat</span>
         </>
       );
     }
     if (isTemplatesPage) {
       return (
         <>
-          <HugeiconsIcon icon={GridViewIcon} size={16} className="text-muted-foreground" />
-          <span className="text-sm font-medium text-muted-foreground">Templates</span>
+          <HugeiconsIcon icon={LayoutGridIcon} size={16} className="text-muted-foreground" />
+          <span className="text-sm font-medium text-foreground">Templates</span>
         </>
       );
     }
@@ -153,58 +161,58 @@ function DashboardHeader({
       if (isRecipientPage) {
         return (
           <>
-            <HugeiconsIcon icon={FileUploadIcon} size={16} className="text-muted-foreground" />
+            <HugeiconsIcon icon={FileUploadBulkIcon} size={16} className="text-muted-foreground" />
             <Link href="/dashboard/upload-contract" className="text-sm text-muted-foreground/60 hover:text-muted-foreground transition-colors">Upload Contract</Link>
             <span className="text-sm text-muted-foreground/60">/</span>
-            <span className="text-sm font-medium text-muted-foreground">Recipient</span>
+            <span className="text-sm font-medium text-foreground">Recipient</span>
           </>
         );
       }
       if (isSenderPage) {
         return (
           <>
-            <HugeiconsIcon icon={FileUploadIcon} size={16} className="text-muted-foreground" />
+            <HugeiconsIcon icon={FileUploadBulkIcon} size={16} className="text-muted-foreground" />
             <Link href="/dashboard/upload-contract" className="text-sm text-muted-foreground/60 hover:text-muted-foreground transition-colors">Upload Contract</Link>
             <span className="text-sm text-muted-foreground/60">/</span>
-            <span className="text-sm font-medium text-muted-foreground">Sender</span>
+            <span className="text-sm font-medium text-foreground">Sender</span>
           </>
         );
       }
       return (
         <>
-          <HugeiconsIcon icon={FileUploadIcon} size={16} className="text-muted-foreground" />
-          <span className="text-sm font-medium text-muted-foreground">Upload Contract</span>
+          <HugeiconsIcon icon={FileUploadBulkIcon} size={16} className="text-muted-foreground" />
+          <span className="text-sm font-medium text-foreground">Upload Contract</span>
         </>
       );
     }
     if (isContractsPage) {
       return (
         <>
-          <HugeiconsIcon icon={ContractsIcon} size={16} className="text-muted-foreground" />
-          <span className="text-sm font-medium text-muted-foreground">Contracts</span>
+          <HugeiconsIcon icon={DocumentAttachmentIcon} size={16} className="text-muted-foreground" />
+          <span className="text-sm font-medium text-foreground">Contracts</span>
         </>
       );
     }
     if (isComparePage) {
       return (
         <>
-          <HugeiconsIcon icon={GitCompareIcon} size={16} className="text-muted-foreground" />
-          <span className="text-sm font-medium text-muted-foreground">Compare</span>
+          <HugeiconsIcon icon={GitCompareBulkIcon} size={16} className="text-muted-foreground" />
+          <span className="text-sm font-medium text-foreground">Compare</span>
         </>
       );
     }
     if (isSharedPage) {
       return (
         <>
-          <HugeiconsIcon icon={Share01Icon} size={16} className="text-muted-foreground" />
-          <span className="text-sm font-medium text-muted-foreground">Shared</span>
+          <HugeiconsIcon icon={FolderShared02Icon} size={16} className="text-muted-foreground" />
+          <span className="text-sm font-medium text-foreground">Shared</span>
         </>
       );
     }
     return (
       <>
-        <HugeiconsIcon icon={Home01Icon} size={16} className="text-muted-foreground" />
-        <span className="text-sm font-medium text-muted-foreground">Home</span>
+        <HugeiconsIcon icon={Home01BulkIcon} size={16} className="text-muted-foreground" />
+        <span className="text-sm font-medium text-foreground">Home</span>
       </>
     );
   };
@@ -326,14 +334,8 @@ function DashboardHeader({
         </DropdownMenuContent>
       </DropdownMenu>
 
-      {/* Search - icon only on mobile */}
-      <button
-        onClick={onSearchClick}
-        className="h-8 w-8 sm:w-auto sm:px-3 flex items-center justify-center sm:justify-start gap-2 border border-border hover:bg-muted transition-colors rounded-md text-[13px] font-semibold text-muted-foreground"
-      >
-        <HugeiconsIcon icon={AiSearch02Icon} size={14} />
-        <span className="hidden sm:inline">Search</span>
-      </button>
+      {/* Search Command */}
+      <SearchCommand />
 
       {/* Settings - hidden on mobile */}
       <button
@@ -374,7 +376,6 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   const router = useRouter();
   const { user, profile, loading: authLoading, signOut } = useAuth();
   const { theme, toggleTheme } = useTheme();
-  const [commandMenuOpen, setCommandMenuOpen] = useState(false);
   const [sidebarContracts, setSidebarContracts] = useState<SidebarContract[]>([]);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
@@ -489,17 +490,6 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
     };
   }, [user, supabase]);
 
-  // ⌘K keyboard shortcut
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key === "k") {
-        e.preventDefault();
-        setCommandMenuOpen(true);
-      }
-    };
-    document.addEventListener("keydown", handleKeyDown);
-    return () => document.removeEventListener("keydown", handleKeyDown);
-  }, []);
 
   if (authLoading) {
     return (
@@ -510,13 +500,13 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   }
 
   const mainNav = [
-    { title: "Home", icon: null, customIcon: <GlassyHomeIcon size={16} />, href: "/dashboard" },
-    { title: "Chat", icon: null, customIcon: <IconMsgs size={16} className="text-muted-foreground" />, href: "/dashboard/chat" },
-    { title: "Contracts", icon: null, customIcon: <IconFiles size={16} className="text-muted-foreground" />, href: "/dashboard/contracts" },
-    { title: "Shared", icon: null, customIcon: <IconUsers size={16} className="text-muted-foreground" />, href: "/dashboard/shared" },
-    { title: "Upload Contract", icon: FileUploadIcon, href: "/dashboard/upload-contract" },
-    { title: "Compare", icon: null, customIcon: <IconStackPerspective size={16} className="text-muted-foreground" />, href: "/dashboard/compare" },
-    { title: "Templates", icon: null, customIcon: <IconAppStack size={16} className="text-muted-foreground" />, href: "/dashboard/templates" },
+    { title: "Home", icon: <HugeiconsIcon icon={Home01BulkIcon} size={16} className="text-muted-foreground" />, href: "/dashboard" },
+    { title: "Chat", icon: <HugeiconsIcon icon={ChatSearch01Icon} size={16} className="text-muted-foreground" />, href: "/dashboard/chat" },
+    { title: "Contracts", icon: <HugeiconsIcon icon={DocumentAttachmentIcon} size={16} className="text-muted-foreground" />, href: "/dashboard/contracts" },
+    { title: "Shared", icon: <HugeiconsIcon icon={FolderShared02Icon} size={16} className="text-muted-foreground" />, href: "/dashboard/shared" },
+    { title: "Upload Contract", icon: <HugeiconsIcon icon={FileUploadBulkIcon} size={16} className="text-muted-foreground" />, href: "/dashboard/upload-contract" },
+    { title: "Compare", icon: <HugeiconsIcon icon={GitCompareBulkIcon} size={16} className="text-muted-foreground" />, href: "/dashboard/compare" },
+    { title: "Templates", icon: <HugeiconsIcon icon={LayoutGridIcon} size={16} className="text-muted-foreground" />, href: "/dashboard/templates" },
   ];
 
   return (
@@ -558,7 +548,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                         className="h-auto py-1.5 px-3 text-[13px] font-medium text-sidebar-foreground"
                       >
                         <Link href={item.href}>
-                          {item.customIcon ? item.customIcon : <HugeiconsIcon icon={item.icon} size={16} className="text-muted-foreground" />}
+                          {item.icon}
                           <span>{item.title}</span>
                         </Link>
                       </SidebarMenuButton>
@@ -577,7 +567,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
             transition={{ duration: 0.3, delay: 0.2 }}
           />
 
-          {/* Contracts Section - hidden when collapsed */}
+          {/* Additional Info Section - hidden when collapsed */}
           <motion.div
             initial={{ opacity: 0, x: -10 }}
             animate={{ opacity: 1, x: 0 }}
@@ -588,38 +578,47 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
               <SidebarGroupLabel
                 className="h-auto py-1.5 px-3 text-[11px] font-medium uppercase tracking-wider text-sidebar-foreground/70"
               >
-                Contracts
+                Additional Info
               </SidebarGroupLabel>
               <SidebarGroupContent>
-                {sidebarContracts.length === 0 ? (
-                  <p className="px-3 py-2 text-[11px] text-sidebar-foreground/50 group-data-[collapsible=icon]:hidden">
-                    Your contracts will appear here
-                  </p>
-                ) : (
-                  <SidebarMenu className="gap-0.5">
-                    {sidebarContracts.map((contract) => {
-                      const isActive = pathname === `/dashboard/contracts/${contract.id}`;
-                      const riskColor = contract.overall_risk === "high" ? "bg-red-500" :
-                                       contract.overall_risk === "medium" ? "bg-yellow-500" :
-                                       contract.overall_risk === "low" ? "bg-green-500" : "bg-muted-foreground/30";
-                      return (
-                        <SidebarMenuItem key={contract.id}>
-                          <SidebarMenuButton
-                            asChild
-                            isActive={isActive}
-                            tooltip={contract.title}
-                            className="h-auto py-1.5 px-3 text-[12px] font-normal text-sidebar-foreground/80"
-                          >
-                            <Link href={`/dashboard/contracts/${contract.id}`}>
-                              <span className={`w-1.5 h-1.5 rounded-full ${riskColor} shrink-0`} />
-                              <span className="truncate">{contract.title}</span>
-                            </Link>
-                          </SidebarMenuButton>
-                        </SidebarMenuItem>
-                      );
-                    })}
-                  </SidebarMenu>
-                )}
+                <SidebarMenu className="gap-0.5">
+                  <SidebarMenuItem>
+                    <SidebarMenuButton
+                      asChild
+                      tooltip="FAQ"
+                      className="h-auto py-1.5 px-3 text-[12px] font-normal text-sidebar-foreground/80"
+                    >
+                      <Link href="/faq">
+                        <HugeiconsIcon icon={ChatQuestion01Icon} size={16} className="text-muted-foreground" />
+                        <span>FAQ</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                  <SidebarMenuItem>
+                    <SidebarMenuButton
+                      asChild
+                      tooltip="Resources"
+                      className="h-auto py-1.5 px-3 text-[12px] font-normal text-sidebar-foreground/80"
+                    >
+                      <Link href="/resources">
+                        <HugeiconsIcon icon={Book01Icon} size={16} className="text-muted-foreground" />
+                        <span>Resources</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                  <SidebarMenuItem>
+                    <SidebarMenuButton
+                      asChild
+                      tooltip="Blog"
+                      className="h-auto py-1.5 px-3 text-[12px] font-normal text-sidebar-foreground/80"
+                    >
+                      <Link href="/blog">
+                        <HugeiconsIcon icon={News01Icon} size={16} className="text-muted-foreground" />
+                        <span>Blog</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                </SidebarMenu>
               </SidebarGroupContent>
             </SidebarGroup>
           </motion.div>
@@ -698,7 +697,6 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
       <SidebarInset className="flex flex-col min-h-screen bg-background">
         {/* Top bar - FIXED */}
         <DashboardHeader
-          onSearchClick={() => setCommandMenuOpen(true)}
           theme={theme}
           toggleTheme={toggleTheme}
           notifications={notifications}
@@ -710,14 +708,28 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
           onNotificationClick={handleNotificationClick}
         />
 
-        {/* Main content - offset for fixed header */}
-        <main className="flex-1 overflow-auto pt-12">
+        {/* Main content - offset for fixed header and footer */}
+        <main className="flex-1 overflow-auto pt-12 pb-12">
           {children}
         </main>
-      </SidebarInset>
 
-      {/* Command Menu */}
-      <CommandMenu open={commandMenuOpen} onOpenChange={setCommandMenuOpen} />
+        {/* Dashboard Footer - Fixed at bottom */}
+        <footer className="fixed bottom-0 left-0 right-0 border-t border-border px-6 py-3 bg-background/95 backdrop-blur-sm z-40 ml-[var(--sidebar-width)]">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-muted-foreground">
+            <p>
+              EasyTerms provides informational analysis only and is not a substitute for professional legal advice.
+            </p>
+            <div className="flex items-center gap-4">
+              <Link href="/terms" className="hover:text-foreground transition-colors">
+                Terms of Service
+              </Link>
+              <Link href="/privacy" className="hover:text-foreground transition-colors">
+                Privacy Policy
+              </Link>
+            </div>
+          </div>
+        </footer>
+      </SidebarInset>
     </SidebarProvider>
   );
 }
