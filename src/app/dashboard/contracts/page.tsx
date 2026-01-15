@@ -7,7 +7,7 @@ import { createClient } from "@/lib/supabase/client";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { Contract } from "@/types/database";
 import { Button } from "@/components/ui/button";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -435,7 +435,14 @@ export default function ContractsPage() {
         </motion.div>
 
         {/* Table Body */}
-        <div key={activeTab}>
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={activeTab}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            transition={{ duration: 0.2 }}
+          >
           {filteredContracts.map((contract, index) => {
             const isSelected = selectedContracts.has(contract.id);
             return (
@@ -607,7 +614,8 @@ export default function ContractsPage() {
             </motion.div>
           );
           })}
-        </div>
+          </motion.div>
+        </AnimatePresence>
 
         {/* Empty filtered state */}
         {filteredContracts.length === 0 && activeContracts.length > 0 && (

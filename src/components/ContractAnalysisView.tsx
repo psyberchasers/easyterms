@@ -1670,7 +1670,7 @@ export function ContractAnalysisView({
           ) : (
             <div className="space-y-4 px-6 pt-1 pb-4">
               {/* Email Input */}
-              <div className="space-y-2">
+              <div className="space-y-2.5">
                 <label className="text-xs font-medium text-foreground">Email address</label>
                 <Input
                   type="email"
@@ -1683,7 +1683,7 @@ export function ContractAnalysisView({
               </div>
 
               {/* Permission Selector */}
-              <div className="space-y-2">
+              <div className="space-y-2.5">
                 <label className="text-xs font-medium text-foreground">Permission</label>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
@@ -1724,7 +1724,7 @@ export function ContractAnalysisView({
               </div>
 
               {/* Optional Message */}
-              <div className="space-y-2">
+              <div className="space-y-2.5">
                 <label className="text-xs font-medium text-foreground">
                   Message <span className="text-muted-foreground font-normal">(optional)</span>
                 </label>
