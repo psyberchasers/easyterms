@@ -63,6 +63,7 @@ import {
   ChatQuestion01Icon,
   Book01Icon,
   News01Icon,
+  CreditCardIcon as CreditCardBulkIcon,
 } from "@hugeicons-pro/core-bulk-rounded";
 import { SearchCommand } from "@/components/SearchCommand";
 import { motion } from "framer-motion";
@@ -137,6 +138,8 @@ function DashboardHeader({
   const isTemplatesPage = pathname.startsWith("/dashboard/templates");
   const isComparePage = pathname.startsWith("/dashboard/compare");
   const isSharedPage = pathname.startsWith("/dashboard/shared");
+  const isBillingPage = pathname.startsWith("/dashboard/billing");
+  const isSettingsPage = pathname.startsWith("/dashboard/settings");
   const isRecipientPage = pathname.includes("/recipient");
   const isSenderPage = pathname.includes("/sender");
 
@@ -207,6 +210,22 @@ function DashboardHeader({
         <>
           <HugeiconsIcon icon={FolderShared02Icon} size={16} className="text-muted-foreground" />
           <span className="text-sm font-semibold text-foreground">Shared</span>
+        </>
+      );
+    }
+    if (isBillingPage) {
+      return (
+        <>
+          <HugeiconsIcon icon={CreditCardBulkIcon} size={16} className="text-muted-foreground" />
+          <span className="text-sm font-semibold text-foreground">Billing</span>
+        </>
+      );
+    }
+    if (isSettingsPage) {
+      return (
+        <>
+          <HugeiconsIcon icon={Settings02Icon} size={16} className="text-muted-foreground" />
+          <span className="text-sm font-semibold text-foreground">Settings</span>
         </>
       );
     }
@@ -666,13 +685,13 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem asChild>
-                    <Link href="/settings/billing">
+                    <Link href="/dashboard/billing">
                       <HugeiconsIcon icon={CreditCardIcon} size={16} className="mr-2" />
                       Billing
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
-                    <Link href="/settings">
+                    <Link href="/dashboard/settings">
                       <HugeiconsIcon icon={Settings02Icon} size={16} className="mr-2" />
                       Settings
                     </Link>

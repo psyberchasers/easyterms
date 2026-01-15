@@ -351,7 +351,7 @@ export default function DashboardPage() {
 
           <div className="flex-1" />
 
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-1.5 -mr-2">
             <Button
               variant="outline"
               size="sm"
@@ -391,12 +391,6 @@ export default function DashboardPage() {
               <Share2 className="w-3 h-3 mr-1" />
               Shared
             </Button>
-            <Link href="/analyze">
-              <Button variant="outline" size="sm" style={{ borderRadius: '6px' }} className="h-7 px-3 text-xs border-border bg-transparent hover:bg-muted">
-                <HugeiconsIcon icon={AiSheetsIcon} size={12} className="mr-1" />
-                New
-              </Button>
-            </Link>
           </div>
         </motion.div>
 
