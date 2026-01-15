@@ -64,6 +64,9 @@ import {
   Book01Icon,
   News01Icon,
   CreditCardIcon as CreditCardBulkIcon,
+  Invoice04Icon,
+  Setting06Icon,
+  Logout02Icon,
 } from "@hugeicons-pro/core-bulk-rounded";
 import { SearchCommand } from "@/components/SearchCommand";
 import { motion } from "framer-motion";
@@ -216,7 +219,7 @@ function DashboardHeader({
     if (isBillingPage) {
       return (
         <>
-          <HugeiconsIcon icon={CreditCardBulkIcon} size={16} className="text-muted-foreground" />
+          <HugeiconsIcon icon={Invoice04Icon} size={16} className="text-muted-foreground" />
           <span className="text-sm font-semibold text-foreground">Billing</span>
         </>
       );
@@ -224,7 +227,7 @@ function DashboardHeader({
     if (isSettingsPage) {
       return (
         <>
-          <HugeiconsIcon icon={Settings02Icon} size={16} className="text-muted-foreground" />
+          <HugeiconsIcon icon={Setting06Icon} size={16} className="text-muted-foreground" />
           <span className="text-sm font-semibold text-foreground">Settings</span>
         </>
       );
@@ -392,6 +395,33 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
 
   // Calculate unread count
   const unreadCount = notifications.filter((n) => !n.read).length;
+
+  // Generate avatar gradient from name
+  const getAvatarGradient = (name: string) => {
+    const gradients = [
+      'linear-gradient(135deg, #a855f7 0%, #ec4899 100%)',
+      'linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)',
+      'linear-gradient(135deg, #10b981 0%, #3b82f6 100%)',
+      'linear-gradient(135deg, #f59e0b 0%, #ef4444 100%)',
+      'linear-gradient(135deg, #ec4899 0%, #f59e0b 100%)',
+      'linear-gradient(135deg, #8b5cf6 0%, #06b6d4 100%)',
+    ];
+    const index = (name?.charCodeAt(0) || 0) % gradients.length;
+    return gradients[index];
+  };
+
+  // Get initials from name
+  const getInitials = (name: string) => {
+    if (!name) return "?";
+    const parts = name.trim().split(" ");
+    if (parts.length >= 2) {
+      return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+    }
+    return name.slice(0, 2).toUpperCase();
+  };
+
+  const avatarGradient = getAvatarGradient(profile?.full_name || user?.email || "");
+  const userInitials = getInitials(profile?.full_name || user?.email?.split("@")[0] || "");
 
   // Fetch notifications
   const fetchNotifications = useCallback(async () => {
@@ -655,9 +685,11 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                       className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
                     >
                     <div
-                      className="h-8 w-8 rounded-lg shrink-0"
-                      style={{ background: 'linear-gradient(135deg, #f97316 0%, #ec4899 100%)' }}
-                    />
+                      className="h-8 w-8 rounded-lg shrink-0 flex items-center justify-center text-white text-xs font-semibold"
+                      style={{ background: avatarGradient }}
+                    >
+                      {userInitials}
+                    </div>
                     <div className="grid flex-1 text-left text-sm leading-tight">
                       <span className="truncate font-semibold">{profile?.full_name || "User"}</span>
                       <span className="truncate text-xs text-muted-foreground">{user?.email || "user@example.com"}</span>
@@ -674,9 +706,11 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                   <DropdownMenuItem className="p-0 font-normal">
                     <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
                       <div
-                        className="h-8 w-8 rounded-lg shrink-0"
-                        style={{ background: 'linear-gradient(135deg, #f97316 0%, #ec4899 100%)' }}
-                      />
+                        className="h-8 w-8 rounded-lg shrink-0 flex items-center justify-center text-white text-xs font-semibold"
+                        style={{ background: avatarGradient }}
+                      >
+                        {userInitials}
+                      </div>
                       <div className="grid flex-1 text-left text-sm leading-tight">
                         <span className="truncate font-semibold">{profile?.full_name || "User"}</span>
                         <span className="truncate text-xs text-muted-foreground">{user?.email || "user@example.com"}</span>
@@ -686,19 +720,19 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                   <DropdownMenuSeparator />
                   <DropdownMenuItem asChild>
                     <Link href="/dashboard/billing">
-                      <HugeiconsIcon icon={CreditCardIcon} size={16} className="mr-2" />
+                      <HugeiconsIcon icon={Invoice04Icon} size={16} className="mr-2" />
                       Billing
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
                     <Link href="/dashboard/settings">
-                      <HugeiconsIcon icon={Settings02Icon} size={16} className="mr-2" />
+                      <HugeiconsIcon icon={Setting06Icon} size={16} className="mr-2" />
                       Settings
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={() => signOut()}>
-                    <LogOut className="w-4 h-4 mr-2" />
+                    <HugeiconsIcon icon={Logout02Icon} size={16} className="mr-2" />
                     Log out
                   </DropdownMenuItem>
                 </DropdownMenuContent>

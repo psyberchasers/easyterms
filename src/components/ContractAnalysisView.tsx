@@ -53,6 +53,7 @@ import {
   FolderClockIcon,
 } from "@hugeicons-pro/core-duotone-rounded";
 import { ViewIcon } from "@hugeicons-pro/core-stroke-rounded";
+import { SpamIcon, Money03Icon, CalendarFavorite01Icon } from "@hugeicons-pro/core-bulk-rounded";
 import { SentIcon, Comment01Icon, SignatureIcon } from "@hugeicons-pro/core-bulk-rounded";
 import { AiVisionIcon } from "@/components/icons/AiVisionIcon";
 import { cn } from "@/lib/utils";
@@ -489,9 +490,11 @@ export function ContractAnalysisView({
 
             {/* Right: Actions */}
             <div className="flex items-center gap-1.5 shrink-0 flex-wrap">
-              <span className="text-[10px] font-medium text-purple-400 bg-purple-500/10 border border-purple-500/30 px-2 py-1 rounded-md">
-                V{activeVersionNumber}
-              </span>
+              {versions.length > 0 && (
+                <span className="text-[10px] font-medium text-purple-400 bg-purple-500/10 border border-purple-500/30 px-2 py-1 rounded-md">
+                  V{activeVersionNumber}
+                </span>
+              )}
               <button
                 onClick={() => setShowDocument(!showDocument)}
                 className="h-7 px-2 text-[11px] text-muted-foreground hover:text-foreground border border-border hover:bg-muted flex items-center gap-1.5 transition-colors rounded-md"
@@ -863,6 +866,7 @@ export function ContractAnalysisView({
                     className="px-6 py-2.5 flex items-center gap-2"
                     style={{ backgroundColor: headerColors.bg }}
                   >
+                    <HugeiconsIcon icon={SpamIcon} size={16} className={colorScheme.text} />
                     <span className={`text-xs font-medium ${colorScheme.text} leading-none`}>{activeAnalysis.potentialConcerns.length} Concerns to Address</span>
                   </div>
                   <ul className="px-6 py-4 space-y-2">
@@ -1225,6 +1229,7 @@ export function ContractAnalysisView({
                   {/* Financial Summary Header */}
                   <div className="bg-emerald-500/5 overflow-hidden">
                     <div className="px-6 py-2.5 flex items-center gap-2" style={{ backgroundColor: 'rgba(16, 185, 129, 0.08)' }}>
+                      <HugeiconsIcon icon={Money03Icon} size={16} className="text-emerald-400" />
                       <span className="text-xs font-medium text-emerald-400 leading-none">{financialTerms.length} Financial Terms</span>
                     </div>
                   </div>
@@ -1445,7 +1450,7 @@ export function ContractAnalysisView({
                   <Loader2 className="w-4 h-4 animate-spin text-muted-foreground/60" />
                 </div>
               ) : versions.length === 0 ? (
-                <div className="text-center py-10 mx-6 border border-dashed border-border rounded-lg">
+                <div className="text-center py-10 mx-6 mt-4 border border-dashed border-border rounded-lg">
                   <div className="flex justify-center mb-2">
                     <HugeiconsIcon icon={FolderClockIcon} size={24} className="text-muted-foreground/60" />
                   </div>
@@ -1514,16 +1519,20 @@ export function ContractAnalysisView({
 
           {/* Dates Tab */}
           {contractId && (
-            <TabsContent value="dates" className="space-y-2">
-              <div className="flex items-center justify-between mb-3">
-                <h4 className="text-xs font-medium text-foreground">Key Dates</h4>
-                <Dialog open={showAddDate} onOpenChange={setShowAddDate}>
-                  <DialogTrigger asChild>
-                    <button className="h-7 px-3 text-xs text-muted-foreground hover:text-foreground border border-border hover:border-purple-400/60 rounded-md flex items-center gap-1.5 transition-colors">
-                      <Plus className="w-3 h-3" />
-                      Add Date
-                    </button>
-                  </DialogTrigger>
+            <TabsContent value="dates" className="space-y-0 -mx-6 -mt-6 min-w-[calc(100%+48px)] block">
+              <div className="bg-orange-500/5 overflow-hidden">
+                <div className="flex items-center justify-between px-6 py-2.5" style={{ backgroundColor: 'rgba(249, 115, 22, 0.08)' }}>
+                  <div className="flex items-center gap-2">
+                    <HugeiconsIcon icon={CalendarFavorite01Icon} size={16} className="text-orange-400" />
+                    <span className="text-xs font-medium text-orange-400 leading-none">Key Dates</span>
+                  </div>
+                  <Dialog open={showAddDate} onOpenChange={setShowAddDate}>
+                    <DialogTrigger asChild>
+                      <button className="h-7 px-3 text-xs text-orange-400 hover:text-orange-300 border border-orange-500/30 hover:border-orange-400/60 rounded-lg flex items-center gap-1.5 transition-colors bg-orange-500/10 hover:bg-orange-500/20">
+                        <Plus className="w-3 h-3" />
+                        Add Date
+                      </button>
+                    </DialogTrigger>
                   <DialogContent>
                     <DialogHeader>
                       <DialogTitle>Add Key Date</DialogTitle>
@@ -1571,20 +1580,21 @@ export function ContractAnalysisView({
                     </div>
                   </DialogContent>
                 </Dialog>
+                </div>
               </div>
 
               {loadingDates ? (
-                <div className="flex items-center justify-center py-8">
+                <div className="flex items-center justify-center py-8 px-6">
                   <Loader2 className="w-4 h-4 animate-spin text-muted-foreground/60" />
                 </div>
               ) : dates.length === 0 ? (
-                <div className="text-center py-10 border border-border rounded-lg">
+                <div className="text-center py-10 mx-6 mt-4 border border-dashed border-border rounded-lg">
                   <Calendar className="w-6 h-6 mx-auto text-muted-foreground/60 mb-2" />
                   <p className="text-xs text-muted-foreground mb-1">No key dates tracked</p>
                   <p className="text-[10px] text-muted-foreground/60">Add important deadlines and milestones</p>
                 </div>
               ) : (
-                <div className="space-y-2">
+                <div className="space-y-2 px-6 pt-4">
                   {Array.isArray(dates) && dates.map((date) => (
                     <div key={date.id} className="border border-border rounded-lg p-3 flex items-center justify-between">
                       <div>

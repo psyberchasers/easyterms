@@ -41,7 +41,17 @@ import {
   ShieldUserIcon,
   Agreement01Icon,
   AiIdeaIcon,
+  ArrowDataTransferHorizontalIcon,
 } from "@hugeicons-pro/core-stroke-rounded";
+import {
+  DashboardCircleIcon,
+  Money01Icon,
+  LockKeyIcon,
+  TimeQuarterPassIcon,
+  ShieldEnergyIcon,
+  TaskDone01Icon,
+  File02Icon,
+} from "@hugeicons-pro/core-bulk-rounded";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -151,25 +161,36 @@ const ExpandedTemplateCard = ({
   template,
   onUse,
   index = 0,
+  totalCount = 8,
 }: {
   template: ContractTemplate;
   onUse: () => void;
   index?: number;
+  totalCount?: number;
 }) => {
   const icon = iconMap[template.icon];
+  // Reverse the exit delay so first items exit first, creating a cascade effect
+  const exitDelay = index * 0.05;
 
   return (
     <motion.div
+      layout
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: 30 }}
+      exit={{ opacity: 0, scale: 0.95, y: -10 }}
       transition={{
-        duration: 0.4,
-        delay: index * 0.08,
-        ease: "easeOut"
+        duration: 0.3,
+        delay: index * 0.06,
+        ease: [0.4, 0, 0.2, 1],
+        exit: {
+          duration: 0.25,
+          delay: exitDelay,
+          ease: [0.4, 0, 1, 1]
+        }
       }}
       onClick={onUse}
-      className="border border-border rounded-2xl overflow-hidden hover:border-purple-500/50 transition-all cursor-pointer"
+      style={{ willChange: 'transform, opacity' }}
+      className="border border-dashed border-border rounded-2xl overflow-hidden hover:border-purple-500/50 transition-all cursor-pointer"
     >
       {/* Title section with different background */}
       <div className="flex items-center gap-3 p-5 bg-muted/30 border-b border-dashed border-border">
@@ -177,9 +198,11 @@ const ExpandedTemplateCard = ({
           {icon && <HugeiconsIcon icon={icon} size={24} className="text-purple-400" />}
         </div>
         <div className="flex-1 min-w-0 flex items-center gap-3">
-          <h3 className="font-semibold text-base">{template.name}</h3>
-          <span className="inline-flex items-center text-xs text-muted-foreground bg-muted px-2.5 py-1 rounded-full">
-            {template.parties.party1} ↔ {template.parties.party2}
+          <h3 className="font-normal text-base">{template.name}</h3>
+          <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground bg-muted px-2.5 py-1 rounded-full">
+            {template.parties.party1}
+            <HugeiconsIcon icon={ArrowDataTransferHorizontalIcon} size={12} />
+            {template.parties.party2}
           </span>
         </div>
       </div>
@@ -748,7 +771,7 @@ export default function TemplatesPage() {
       setPdfUrl(null);
       setBuilderStep(2); // Go directly to Step 2 (Select Clauses)
       setIsTransitioning(false);
-    }, 800); // Wait for stagger exit animation to fully complete
+    }, 500); // Wait for exit animations to complete
   }, []);
 
   // Handle template query parameter from command menu
@@ -966,13 +989,13 @@ export default function TemplatesPage() {
 
   // Clause categories
   const clauseCategories = [
-    { id: "all", label: "All", icon: GridViewIcon },
-    { id: "financial", label: "Financial", icon: DollarCircleIcon },
-    { id: "rights", label: "Rights", icon: KeyIcon },
-    { id: "term", label: "Term", icon: Clock01Icon },
-    { id: "protection", label: "Protection", icon: SecurityCheckIcon },
-    { id: "obligations", label: "Obligations", icon: TaskDone02Icon },
-    { id: "general", label: "General", icon: FileExportIcon },
+    { id: "all", label: "All", icon: DashboardCircleIcon },
+    { id: "financial", label: "Financial", icon: Money01Icon },
+    { id: "rights", label: "Rights", icon: LockKeyIcon },
+    { id: "term", label: "Term", icon: TimeQuarterPassIcon },
+    { id: "protection", label: "Protection", icon: ShieldEnergyIcon },
+    { id: "obligations", label: "Obligations", icon: TaskDone01Icon },
+    { id: "general", label: "General", icon: File02Icon },
   ];
 
   return (
@@ -1025,13 +1048,15 @@ export default function TemplatesPage() {
       {builderStep === 1 && (
         <div className="space-y-6">
           {/* Info notice */}
-          <AnimatePresence mode="wait">
+          <AnimatePresence mode="popLayout">
             {!isTransitioning && (
               <motion.div
+                layout
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: 10 }}
-                transition={{ duration: 0.3 }}
+                exit={{ opacity: 0, scale: 0.98 }}
+                transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1] }}
+                style={{ willChange: 'transform, opacity' }}
                 className="rounded-2xl border border-purple-500/30 bg-purple-500/5 px-5 py-4 flex items-center gap-3"
               >
                 <HugeiconsIcon icon={AiIdeaIcon} size={20} className="text-purple-400 shrink-0" />
@@ -1044,12 +1069,13 @@ export default function TemplatesPage() {
 
           {/* Template cards */}
           <div className="grid md:grid-cols-2 gap-4">
-            <AnimatePresence>
+            <AnimatePresence mode="popLayout">
               {!isTransitioning && contractTemplates.map((template, index) => (
                 <ExpandedTemplateCard
                   key={template.id}
                   template={template}
                   index={index}
+                  totalCount={contractTemplates.length}
                   onUse={() => startWithTemplate(template)}
                 />
               ))}

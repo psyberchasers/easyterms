@@ -926,7 +926,6 @@ const ChatUI = () => {
                         )}
                         onClick={() => loadConversation(conv.id)}
                       >
-                        <HugeiconsIcon icon={Chat01Icon} size={16} className="shrink-0" />
                         <span className="flex-1 text-sm truncate">
                           {conv.title || "New Chat"}
                         </span>
