@@ -1637,11 +1637,14 @@ export function ContractAnalysisView({
       <Dialog open={showShareModal} onOpenChange={(open) => {
         setShowShareModal(open);
         if (!open) {
-          setShareEmail("");
-          setShareMessage("");
-          setSharePermission("view");
-          setShareError(null);
-          setShareSuccess(false);
+          // Delay reset to allow close animation to complete
+          setTimeout(() => {
+            setShareEmail("");
+            setShareMessage("");
+            setSharePermission("view");
+            setShareError(null);
+            setShareSuccess(false);
+          }, 200);
         }
       }}>
         <DialogContent className="sm:max-w-md rounded-xl overflow-hidden p-0" showCloseButton={false}>
