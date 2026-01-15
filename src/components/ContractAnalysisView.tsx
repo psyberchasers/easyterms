@@ -1668,27 +1668,27 @@ export function ContractAnalysisView({
               </p>
             </div>
           ) : (
-            <div className="space-y-4 px-6 py-6">
+            <div className="space-y-4 px-6 pt-4 pb-6">
               {/* Email Input */}
-              <div className="space-y-2">
+              <div className="space-y-1.5">
                 <label className="text-xs font-medium text-foreground">Email address</label>
                 <Input
                   type="email"
                   placeholder="colleague@example.com"
                   value={shareEmail}
                   onChange={(e) => setShareEmail(e.target.value)}
-                  className="text-sm rounded-md"
+                  className="text-sm rounded-lg"
                   data-rounded="true"
                 />
               </div>
 
               {/* Permission Selector */}
-              <div className="space-y-2">
+              <div className="space-y-1.5">
                 <label className="text-xs font-medium text-foreground">Permission</label>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <button
-                      className="w-full h-9 flex items-center justify-between gap-2 border border-border rounded-md bg-background px-3 text-sm text-left focus:outline-none focus:border-purple-500 transition-colors"
+                      className="w-full h-9 flex items-center justify-between gap-2 border border-border rounded-lg bg-background px-3 text-sm text-left focus:outline-none focus:border-purple-500 transition-colors"
                     >
                       <span className="flex items-center gap-2">
                         {sharePermission === "view" && <AiVisionIcon size={14} className="text-muted-foreground" />}
@@ -1724,7 +1724,7 @@ export function ContractAnalysisView({
               </div>
 
               {/* Optional Message */}
-              <div className="space-y-2">
+              <div className="space-y-1.5">
                 <label className="text-xs font-medium text-foreground">
                   Message <span className="text-muted-foreground font-normal">(optional)</span>
                 </label>
@@ -1733,7 +1733,7 @@ export function ContractAnalysisView({
                   value={shareMessage}
                   onChange={(e) => setShareMessage(e.target.value)}
                   rows={3}
-                  className="w-full px-3 py-2 text-sm bg-background border border-border rounded-md resize-none focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500/50"
+                  className="w-full px-3 py-2 text-sm bg-background border border-border rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500/50"
                 />
               </div>
 
@@ -1749,14 +1749,14 @@ export function ContractAnalysisView({
               <div className="flex gap-2 pt-2">
                 <button
                   onClick={() => setShowShareModal(false)}
-                  className="flex-1 h-9 text-sm text-muted-foreground hover:text-foreground border border-border hover:bg-muted rounded-md transition-colors"
+                  className="flex-1 h-9 text-sm text-muted-foreground hover:text-foreground border border-border hover:bg-muted rounded-lg transition-colors"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={handleShare}
                   disabled={!shareEmail || sharing}
-                  className="flex-1 h-9 text-sm font-medium bg-purple-600 hover:bg-purple-700 text-white rounded-md flex items-center justify-center gap-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex-1 h-9 text-sm font-medium bg-purple-600 hover:bg-purple-700 text-white rounded-lg flex items-center justify-center gap-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {sharing ? (
                     <Loader2 className="w-4 h-4 animate-spin" />
