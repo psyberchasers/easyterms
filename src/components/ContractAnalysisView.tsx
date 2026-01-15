@@ -1668,7 +1668,7 @@ export function ContractAnalysisView({
               </p>
             </div>
           ) : (
-            <div className="space-y-4 px-6 pt-2 pb-6">
+            <div className="space-y-4 px-6 py-4">
               {/* Email Input */}
               <div className="space-y-2">
                 <label className="text-xs font-medium text-foreground">Email address</label>

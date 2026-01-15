@@ -191,7 +191,7 @@
   }
 
   /* All inputs: no radius, yellow focus border (except rounded inputs) */
-  input:not([data-rounded]), textarea, select:not([data-rounded]), [role="combobox"]:not([data-rounded]), [data-slot="select-trigger"]:not([data-rounded]) {
+  input:not([data-rounded]), textarea:not([data-rounded]), select:not([data-rounded]), [role="combobox"]:not([data-rounded]), [data-slot="select-trigger"]:not([data-rounded]) {
     border-radius: 0 !important;
   }
 
