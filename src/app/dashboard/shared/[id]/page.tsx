@@ -54,16 +54,17 @@ export default function SharedContractPage() {
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
   const [pdfError, setPdfError] = useState<string | null>(null);
 
-  const shareId = params.id as string;
+  const contractId = params.id as string;
 
   // Fetch share and contract data
   const fetchShareData = useCallback(async () => {
     try {
-      // First get the share
+      // First get the share by contract_id (not share id)
       const { data: shareData, error: shareError } = await supabase
         .from("contract_shares")
         .select("*")
-        .eq("id", shareId)
+        .eq("contract_id", contractId)
+        .or(`shared_with_user_id.eq.${user?.id},shared_with_email.eq.${user?.email}`)
         .single();
 
       if (shareError || !shareData) {
@@ -109,7 +110,7 @@ export default function SharedContractPage() {
         await supabase
           .from("contract_shares")
           .update({ status: "viewed" })
-          .eq("id", shareId);
+          .eq("id", shareData.id);
       }
 
       // Fetch PDF URL if available
@@ -122,7 +123,7 @@ export default function SharedContractPage() {
     } finally {
       setLoading(false);
     }
-  }, [shareId, user, supabase]);
+  }, [contractId, user, supabase]);
 
   const fetchPdfUrl = async (contractId: string) => {
     try {
@@ -144,10 +145,10 @@ export default function SharedContractPage() {
   };
 
   useEffect(() => {
-    if (!authLoading) {
+    if (!authLoading && user) {
       fetchShareData();
     }
-  }, [authLoading, fetchShareData]);
+  }, [authLoading, user, fetchShareData]);
 
   if (authLoading || loading) {
     return (
