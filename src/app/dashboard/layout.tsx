@@ -140,7 +140,6 @@ function DashboardHeader({
   const isChatPage = pathname.startsWith("/dashboard/chat");
   const isTemplatesPage = pathname.startsWith("/dashboard/templates");
   const isComparePage = pathname.startsWith("/dashboard/compare");
-  const isSharedPage = pathname.startsWith("/dashboard/shared");
   const isBillingPage = pathname.startsWith("/dashboard/billing");
   const isSettingsPage = pathname.startsWith("/dashboard/settings");
   const isRecipientPage = pathname.includes("/recipient");
@@ -205,14 +204,6 @@ function DashboardHeader({
         <>
           <HugeiconsIcon icon={GitCompareBulkIcon} size={16} className="text-muted-foreground" />
           <span className="text-sm font-semibold text-foreground">Compare</span>
-        </>
-      );
-    }
-    if (isSharedPage) {
-      return (
-        <>
-          <HugeiconsIcon icon={FolderShared02Icon} size={16} className="text-muted-foreground" />
-          <span className="text-sm font-semibold text-foreground">Shared</span>
         </>
       );
     }
@@ -542,7 +533,6 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
     { title: "Home", icon: Home01BulkIcon, href: "/dashboard" },
     { title: "Chat", icon: ChatSearch01Icon, href: "/dashboard/chat" },
     { title: "Contracts", icon: DocumentAttachmentIcon, href: "/dashboard/contracts" },
-    { title: "Shared", icon: FolderShared02Icon, href: "/dashboard/shared" },
     { title: "Compare", icon: GitCompareBulkIcon, href: "/dashboard/compare" },
     { title: "Templates", icon: LayoutGridIcon, href: "/dashboard/templates" },
   ];

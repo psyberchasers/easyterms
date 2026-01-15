@@ -15,19 +15,37 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { MoreHorizontal, Star, StarOff, Trash2, Plus, Check, Share2 } from "lucide-react";
+import { MoreHorizontal, Star, StarOff, Trash2, Plus, Check, Share2, User } from "lucide-react";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { ContractsIcon, PlusSignIcon, PlayIcon, FilterIcon, ViewIcon } from "@hugeicons-pro/core-stroke-rounded";
+import { FolderShared02Icon } from "@hugeicons-pro/core-bulk-rounded";
 import { cn } from "@/lib/utils";
 import { MusicLoader } from "@/components/MusicLoader";
 import { DeleteConfirmModal } from "@/components/DeleteConfirmModal";
 import { ContractQuickView } from "@/components/ContractQuickView";
 
+// Shared contract type
+interface SharedContract {
+  id: string;
+  contract_id: string;
+  permission: "view" | "comment" | "sign";
+  status: "pending" | "viewed" | "signed" | "declined";
+  message: string | null;
+  created_at: string;
+  contract: Contract | null;
+  owner: {
+    full_name: string | null;
+    email: string | null;
+  } | null;
+}
+
 export default function ContractsPage() {
   const { user, loading: authLoading } = useAuth();
   const [contracts, setContracts] = useState<Contract[]>([]);
+  const [sharedContracts, setSharedContracts] = useState<SharedContract[]>([]);
   const [loading, setLoading] = useState(false);
   const [initialLoad, setInitialLoad] = useState(true);
+  const [activeTab, setActiveTab] = useState<"my" | "shared">("my");
   const [filter, setFilter] = useState<"all" | "high-risk" | "medium-risk" | "low-risk">("all");
   const [selectedContracts, setSelectedContracts] = useState<Set<string>>(new Set());
   const [contractShares, setContractShares] = useState<Record<string, number>>({});
@@ -83,6 +101,58 @@ export default function ContractsPage() {
     }
   }, [user, supabase]);
 
+  // Fetch shared contracts
+  const fetchSharedContracts = useCallback(async () => {
+    if (!user) return;
+
+    try {
+      const { data, error } = await supabase
+        .from("contract_shares")
+        .select(`
+          id,
+          contract_id,
+          permission,
+          status,
+          message,
+          created_at,
+          owner_id,
+          contract:contracts (*)
+        `)
+        .or(`shared_with_user_id.eq.${user.id},shared_with_email.eq.${user.email}`)
+        .order("created_at", { ascending: false });
+
+      if (!error && data) {
+        // Fetch owner profiles separately
+        const ownerIds = [...new Set(data.map((s: any) => s.owner_id).filter(Boolean))];
+        let ownerProfiles: Record<string, { full_name: string | null; email: string | null }> = {};
+
+        if (ownerIds.length > 0) {
+          const { data: profiles } = await supabase
+            .from("profiles")
+            .select("id, full_name, email")
+            .in("id", ownerIds);
+
+          if (profiles) {
+            ownerProfiles = profiles.reduce((acc: any, p: any) => {
+              acc[p.id] = { full_name: p.full_name, email: p.email };
+              return acc;
+            }, {});
+          }
+        }
+
+        // Transform data
+        const transformed = data.map((s: any) => ({
+          ...s,
+          contract: Array.isArray(s.contract) ? s.contract[0] : s.contract,
+          owner: ownerProfiles[s.owner_id] || null,
+        }));
+        setSharedContracts(transformed);
+      }
+    } catch (err) {
+      console.error("Error fetching shared contracts:", err);
+    }
+  }, [user, supabase]);
+
   useEffect(() => {
     if (!authLoading && !user) {
       router.push("/login");
@@ -91,8 +161,9 @@ export default function ContractsPage() {
 
     if (user && !authLoading && initialLoad) {
       fetchContracts(true);
+      fetchSharedContracts();
     }
-  }, [user, authLoading, router, fetchContracts, initialLoad]);
+  }, [user, authLoading, router, fetchContracts, fetchSharedContracts, initialLoad]);
 
   const toggleStar = async (contractId: string, currentStarred: boolean) => {
     await supabase
@@ -114,12 +185,31 @@ export default function ContractsPage() {
     setContracts((prev) => prev.filter((c) => c.id !== deleteModal.contract?.id));
   };
 
-  const filteredContracts = contracts.filter((contract) => {
+  // Get contracts based on active tab
+  const activeContracts = activeTab === "my" ? contracts : sharedContracts.map(s => s.contract).filter(Boolean) as Contract[];
+
+  const filteredContracts = activeContracts.filter((contract) => {
     if (filter === "high-risk") return contract.overall_risk === "high";
     if (filter === "medium-risk") return contract.overall_risk === "medium";
     if (filter === "low-risk") return contract.overall_risk === "low";
     return true;
   });
+
+  // Get shared info for a contract (when viewing shared tab)
+  const getSharedInfo = (contractId: string) => {
+    return sharedContracts.find(s => s.contract_id === contractId);
+  };
+
+  // Get initials from name
+  const getInitials = (name: string | null, email: string | null) => {
+    if (name) {
+      return name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2);
+    }
+    if (email) {
+      return email[0].toUpperCase();
+    }
+    return "?";
+  };
 
   const getPartyName = (contract: Contract) => {
     const analysis = contract.analysis as { parties?: Record<string, string | string[]> } | null;
@@ -204,12 +294,52 @@ export default function ContractsPage() {
 
   return (
     <div className="h-full flex flex-col w-full bg-background">
+      {/* Tab Switcher */}
+      <motion.div
+        className="flex items-center gap-1 px-4 pt-3 pb-0 w-full"
+        initial={{ opacity: 0, y: -10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3 }}
+      >
+        <button
+          onClick={() => { setActiveTab("my"); setFilter("all"); }}
+          className={cn(
+            "px-4 py-2 rounded-t-lg text-[13px] font-medium transition-colors border-b-2",
+            activeTab === "my"
+              ? "bg-muted/50 text-foreground border-purple-500"
+              : "text-muted-foreground hover:text-foreground border-transparent hover:bg-muted/30"
+          )}
+        >
+          My Contracts
+          <span className="ml-2 text-[11px] px-1.5 py-0.5 rounded-md bg-muted text-muted-foreground">
+            {contracts.length}
+          </span>
+        </button>
+        <button
+          onClick={() => { setActiveTab("shared"); setFilter("all"); }}
+          className={cn(
+            "px-4 py-2 rounded-t-lg text-[13px] font-medium transition-colors border-b-2 flex items-center gap-2",
+            activeTab === "shared"
+              ? "bg-muted/50 text-foreground border-purple-500"
+              : "text-muted-foreground hover:text-foreground border-transparent hover:bg-muted/30"
+          )}
+        >
+          <HugeiconsIcon icon={FolderShared02Icon} size={14} />
+          Shared with Me
+          {sharedContracts.length > 0 && (
+            <span className="text-[11px] px-1.5 py-0.5 rounded-md bg-purple-500/10 text-purple-400">
+              {sharedContracts.length}
+            </span>
+          )}
+        </button>
+      </motion.div>
+
       {/* Toolbar */}
       <motion.div
         className="flex items-center justify-between px-4 py-3 border-b border-border w-full"
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3 }}
+        transition={{ duration: 0.3, delay: 0.05 }}
       >
         <div className="flex items-center gap-3">
           {/* Filter buttons */}
@@ -220,7 +350,7 @@ export default function ContractsPage() {
               filter === "all" ? "bg-muted" : "hover:bg-muted/50"
             )}
           >
-            All ({contracts.length})
+            All ({activeContracts.length})
           </button>
           <button
             onClick={() => setFilter("high-risk")}
@@ -316,7 +446,7 @@ export default function ContractsPage() {
                 isSelected && "bg-purple-500/5"
               )}
               style={{ gridTemplateColumns: '40px 1fr 200px 120px 150px 120px 100px 50px 50px' }}
-              onClick={() => router.push(`/dashboard/contracts/${contract.id}`)}
+              onClick={() => router.push(activeTab === "shared" ? `/dashboard/shared/${contract.id}` : `/dashboard/contracts/${contract.id}`)}
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3, delay: 0.15 + index * 0.05 }}
@@ -338,14 +468,28 @@ export default function ContractsPage() {
 
               {/* Contract Name */}
               <div className="flex items-center gap-2 min-w-0 pr-4">
-                <span className="text-[13px] font-medium truncate text-foreground">
-                  {contract.title}
-                </span>
-                {contractShares[contract.id] && (
-                  <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-purple-500/10 text-purple-500 flex items-center gap-1 shrink-0">
-                    <Share2 className="w-2.5 h-2.5" />
-                  </span>
-                )}
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2">
+                    <span className="text-[13px] font-medium truncate text-foreground">
+                      {contract.title}
+                    </span>
+                    {activeTab === "my" && contractShares[contract.id] && (
+                      <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-purple-500/10 text-purple-500 flex items-center gap-1 shrink-0">
+                        <Share2 className="w-2.5 h-2.5" />
+                      </span>
+                    )}
+                  </div>
+                  {activeTab === "shared" && (() => {
+                    const sharedInfo = getSharedInfo(contract.id);
+                    if (!sharedInfo?.owner) return null;
+                    const ownerName = sharedInfo.owner.full_name || sharedInfo.owner.email;
+                    return (
+                      <p className="text-[11px] text-muted-foreground mt-0.5">
+                        Shared by {ownerName}
+                      </p>
+                    );
+                  })()}
+                </div>
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
@@ -466,10 +610,23 @@ export default function ContractsPage() {
         </div>
 
         {/* Empty filtered state */}
-        {filteredContracts.length === 0 && contracts.length > 0 && (
+        {filteredContracts.length === 0 && activeContracts.length > 0 && (
           <div className="py-12 text-center">
             <p className="text-[13px]" style={{ color: '#565c65' }}>
               No contracts match this filter
+            </p>
+          </div>
+        )}
+
+        {/* Empty shared state */}
+        {activeTab === "shared" && sharedContracts.length === 0 && (
+          <div className="flex flex-col items-center justify-center py-24 text-center">
+            <div className="w-16 h-16 rounded-2xl bg-purple-500/10 flex items-center justify-center mb-4">
+              <HugeiconsIcon icon={FolderShared02Icon} size={32} className="text-purple-400/50" />
+            </div>
+            <h2 className="text-lg font-medium text-foreground mb-2">No shared contracts yet</h2>
+            <p className="text-sm text-muted-foreground max-w-sm">
+              When someone shares a contract with you, it will appear here.
             </p>
           </div>
         )}
