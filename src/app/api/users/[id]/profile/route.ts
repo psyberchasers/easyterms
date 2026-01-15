@@ -1,4 +1,3 @@
-import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { NextResponse } from "next/server";
 
@@ -8,11 +7,10 @@ export async function GET(
 ) {
   try {
     const { id } = await params;
-    const supabase = await createClient();
     const adminClient = createAdminClient();
 
-    // Get profile from profiles table
-    const { data: profile } = await supabase
+    // Get profile from profiles table using admin client to bypass RLS
+    const { data: profile } = await adminClient
       .from("profiles")
       .select("full_name, email")
       .eq("id", id)

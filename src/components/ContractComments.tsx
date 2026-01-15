@@ -5,13 +5,17 @@ import { createClient } from "@/lib/supabase/client";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { cn } from "@/lib/utils";
 import {
-  MessageCircle,
-  Send,
   Loader2,
   Trash2,
-  UserCircle,
 } from "lucide-react";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { Sent02Icon, BubbleChatTemporaryIcon } from "@hugeicons-pro/core-bulk-rounded";
 import { formatDistanceToNow } from "date-fns";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import {
+  AvatarGroup,
+  AvatarGroupTooltip,
+} from "@/components/animate-ui/components/animate/avatar-group";
 
 interface Comment {
   id: string;
@@ -29,11 +33,19 @@ interface Comment {
   } | null;
 }
 
+interface Member {
+  id: string;
+  name: string | null;
+  email: string | null;
+  avatar_url?: string | null;
+}
+
 interface ContractCommentsProps {
   contractId: string;
   isOwner?: boolean;
   canComment?: boolean;
   className?: string;
+  members?: Member[];
 }
 
 export function ContractComments({
@@ -41,6 +53,7 @@ export function ContractComments({
   isOwner = false,
   canComment = true,
   className,
+  members = [],
 }: ContractCommentsProps) {
   const { user } = useAuth();
   const supabase = createClient();
@@ -48,9 +61,7 @@ export function ContractComments({
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
   const [newComment, setNewComment] = useState("");
-  const initialLoadRef = useRef(true);
   const [error, setError] = useState<string | null>(null);
-  const commentsEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
   // Fetch comments
@@ -72,39 +83,43 @@ export function ContractComments({
   useEffect(() => {
     fetchComments();
 
-    // Subscribe to new comments
+    // Subscribe to new comments with better error handling
     const channel = supabase
       .channel(`comments-${contractId}`)
       .on(
         "postgres_changes",
         {
-          event: "*",
+          event: "INSERT",
+          schema: "public",
+          table: "contract_comments",
+          filter: `contract_id=eq.${contractId}`,
+        },
+        (payload) => {
+          console.log("New comment received:", payload);
+          fetchComments();
+        }
+      )
+      .on(
+        "postgres_changes",
+        {
+          event: "DELETE",
           schema: "public",
           table: "contract_comments",
           filter: `contract_id=eq.${contractId}`,
         },
         () => {
-          // Refetch to get the full comment with user data
           fetchComments();
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        console.log("Realtime subscription status:", status);
+      });
 
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [contractId, supabase, fetchComments]);
+  }, [contractId, fetchComments]);
 
-  // Scroll to bottom when new comments arrive (not on initial load)
-  useEffect(() => {
-    if (initialLoadRef.current) {
-      initialLoadRef.current = false;
-      return;
-    }
-    if (commentsEndRef.current && comments.length > 0) {
-      commentsEndRef.current.scrollIntoView({ behavior: "smooth" });
-    }
-  }, [comments.length]);
 
   // Send comment
   const handleSend = async () => {
@@ -163,42 +178,62 @@ export function ContractComments({
   // Get initials for avatar fallback
   const getInitials = (name: string | null, email: string | null) => {
     if (name) {
-      return name
-        .split(" ")
-        .map((n) => n[0])
-        .join("")
-        .toUpperCase()
-        .slice(0, 2);
+      const parts = name.split(" ").filter(n => n.length > 0);
+      if (parts.length >= 2) {
+        return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+      }
+      return name.slice(0, 2).toUpperCase();
     }
     if (email) {
-      return email[0].toUpperCase();
+      // Use first two characters of email before @
+      const username = email.split("@")[0];
+      return username.slice(0, 2).toUpperCase();
     }
     return "?";
   };
 
   return (
-    <div className={cn("flex flex-col h-full", className)}>
-      {/* Header */}
-      <div className="flex items-center gap-2 px-4 py-3 border-b border-border shrink-0">
-        <MessageCircle className="w-4 h-4 text-muted-foreground" />
-        <span className="text-sm font-medium text-foreground">Discussion</span>
-        <span className="text-xs text-muted-foreground">
-          ({comments.length})
-        </span>
-      </div>
+    <div className={cn("relative h-full overflow-hidden", className)}>
+      {/* Members Header */}
+      {members.length > 0 && (
+        <div className="absolute top-0 left-0 right-0 z-10 px-6 pt-1 pb-3 border-b border-border flex items-center gap-3 bg-card">
+          <span className="text-xs text-muted-foreground">Members</span>
+          <AvatarGroup className="h-8 -space-x-2">
+            {members.map((member) => (
+              <Avatar key={member.id} className="w-6 h-6">
+                {member.avatar_url ? (
+                  <AvatarImage src={member.avatar_url} alt={member.name || member.email || ""} />
+                ) : null}
+                <AvatarFallback className="text-[9px] font-medium bg-purple-500 text-white">
+                  {getInitials(member.name, member.email)}
+                </AvatarFallback>
+                <AvatarGroupTooltip className="bg-purple-500 text-white">
+                  {member.name || member.email || "Unknown"}
+                </AvatarGroupTooltip>
+              </Avatar>
+            ))}
+          </AvatarGroup>
+        </div>
+      )}
 
       {/* Comments List */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+      <div className={cn(
+        "absolute top-0 bottom-[200px] left-0 right-0 overflow-y-auto p-4 space-y-4",
+        members.length > 0 && "top-12"
+      )}>
         {loading ? (
-          <div className="flex items-center justify-center py-8">
+          <div className="flex items-center justify-center h-full">
             <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
           </div>
         ) : comments.length === 0 ? (
-          <div className="text-center py-8">
-            <MessageCircle className="w-8 h-8 mx-auto text-muted-foreground/30 mb-2" />
-            <p className="text-sm text-muted-foreground">No comments yet</p>
+          <div className="flex flex-col items-center justify-center h-full">
+            <HugeiconsIcon icon={BubbleChatTemporaryIcon} size={32} className="text-muted-foreground/30 mb-3" />
+            <div className="flex items-center gap-2 mb-1">
+              <span className="text-sm font-medium text-foreground">Discussion</span>
+              <span className="text-xs text-muted-foreground">({comments.length})</span>
+            </div>
             {canComment && (
-              <p className="text-xs text-muted-foreground/60 mt-1">
+              <p className="text-xs text-muted-foreground/60">
                 Start the conversation
               </p>
             )}
@@ -284,13 +319,12 @@ export function ContractComments({
             );
           })
         )}
-        <div ref={commentsEndRef} />
       </div>
 
       {/* Input Area */}
       {canComment ? (
-        <div className="shrink-0 border-t border-border">
-          <div className="p-4 pt-6">
+        <div className="absolute bottom-20 left-0 right-0 z-10 border-y border-border bg-card">
+          <div className="p-4">
             {error && (
               <p className="text-xs text-red-500 mb-2">{error}</p>
             )}
@@ -302,7 +336,7 @@ export function ContractComments({
                 onKeyDown={handleKeyDown}
                 placeholder="Type a message..."
                 rows={1}
-                className="flex-1 px-3 py-2 text-sm bg-muted border-0 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-purple-500/20 placeholder:text-muted-foreground/60"
+                className="flex-1 px-4 py-2 text-sm bg-muted border-0 rounded-2xl resize-none focus:outline-none focus:ring-2 focus:ring-purple-500/20 placeholder:text-muted-foreground/60"
                 style={{ minHeight: "40px", maxHeight: "120px" }}
                 onInput={(e) => {
                   const target = e.target as HTMLTextAreaElement;
@@ -318,7 +352,7 @@ export function ContractComments({
                 {sending ? (
                   <Loader2 className="w-4 h-4 animate-spin" />
                 ) : (
-                  <Send className="w-4 h-4" />
+                  <HugeiconsIcon icon={Sent02Icon} size={16} />
                 )}
               </button>
             </div>
@@ -328,7 +362,7 @@ export function ContractComments({
           </div>
         </div>
       ) : (
-        <div className="shrink-0 p-4 border-t border-border text-center">
+        <div className="absolute bottom-0 left-0 right-0 z-10 p-4 border-t border-border bg-card text-center">
           <p className="text-xs text-muted-foreground">
             You don't have permission to comment
           </p>

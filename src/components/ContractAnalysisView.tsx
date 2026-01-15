@@ -92,6 +92,19 @@ interface ContractDate {
   description: string;
 }
 
+interface ContractShare {
+  id: string;
+  shared_with_email: string;
+  shared_with_user_id: string | null;
+  permission: "view" | "comment" | "sign";
+  status: "pending" | "viewed" | "signed" | "declined";
+  created_at: string;
+  user?: {
+    full_name: string | null;
+    email: string | null;
+  } | null;
+}
+
 interface ContractAnalysisViewProps {
   analysis: ContractAnalysis;
   fileName: string;
@@ -122,6 +135,11 @@ interface ContractAnalysisViewProps {
   isSharedView?: boolean;
   // Initial tab to show (for deep linking from notifications)
   initialTab?: string;
+  // Shares management (for owner view)
+  shares?: ContractShare[];
+  onRemoveShare?: (shareId: string) => Promise<void>;
+  // Discussion members (for shared view to pass owner info)
+  discussionMembers?: { id: string; name: string | null; email: string | null; avatar_url?: string | null }[];
 }
 
 // Helper to safely render values that might be objects
@@ -194,6 +212,9 @@ export function ContractAnalysisView({
   canComment = false,
   isSharedView = false,
   initialTab = "overview",
+  shares = [],
+  onRemoveShare,
+  discussionMembers = [],
 }: ContractAnalysisViewProps) {
   // UI state
   const [showDocument, setShowDocument] = useState(false);
@@ -474,6 +495,11 @@ export function ContractAnalysisView({
             {/* Left: Title + Risk Assessment */}
             <div className="flex items-center gap-2 shrink-0">
               <h1 className="text-sm font-medium text-foreground">{activeAnalysis.contractType || fileName}</h1>
+              {shares.length > 0 && !isSharedView && (
+                <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-purple-500/10 text-purple-500 flex items-center gap-1">
+                  <Share2 className="w-2.5 h-2.5" />
+                </span>
+              )}
               <span className="text-[10px] text-muted-foreground/40">•</span>
               <span className={cn(
                 "text-[10px] uppercase font-medium",
@@ -530,7 +556,7 @@ export function ContractAnalysisView({
                   Download
                 </button>
               )}
-              {contractId && (
+              {contractId && !isSharedView && (
                 <button
                   onClick={() => setShowShareModal(true)}
                   className="h-7 px-2 text-[11px] text-purple-400 hover:text-purple-300 border border-purple-500/30 hover:bg-purple-500/10 flex items-center gap-1.5 transition-colors rounded-md"
@@ -615,10 +641,50 @@ export function ContractAnalysisView({
               ))}
             </div>
           </div>
+
+          {/* Shared WITH Banner (for contract owner) */}
+          {shares.length > 0 && !isSharedView && (
+            <div className={cn(
+              "px-4 py-2 bg-purple-500/5 border-b border-purple-500/10 flex items-center justify-between",
+              !showDocument && "max-w-4xl mx-auto"
+            )}>
+              <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2">
+                  <Share2 className="w-4 h-4 text-purple-500" />
+                  <span className="text-xs text-muted-foreground">Shared with</span>
+                </div>
+                <div className="flex items-center gap-2 flex-wrap">
+                  {shares.map((share) => (
+                    <div
+                      key={share.id}
+                      className="flex items-center gap-1.5 bg-purple-500/10 pl-2.5 pr-1.5 py-1 rounded-md"
+                    >
+                      <span className="text-xs font-medium text-purple-400">
+                        {share.user?.full_name || share.shared_with_email}
+                      </span>
+                      <span className="text-[10px] text-purple-400/60 capitalize">
+                        ({share.permission})
+                      </span>
+                      {onRemoveShare && (
+                        <button
+                          onClick={() => onRemoveShare(share.id)}
+                          className="ml-0.5 p-1 rounded bg-purple-500/20 text-purple-400/60 hover:bg-red-500/20 hover:text-red-400 transition-colors"
+                          title="Remove access"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
         </div>
 
         <main className={cn(
-          "px-6 py-6 pb-24 transition-all duration-300 flex-1 overflow-auto",
+          "px-6 py-6 transition-all duration-300 flex-1 flex flex-col",
+          activeTab === "discussion" ? "overflow-hidden pb-0" : "overflow-auto pb-24",
           showDocument ? "w-full" : "max-w-4xl mx-auto"
         )}>
           {/* Overview Tab */}
@@ -1621,12 +1687,18 @@ export function ContractAnalysisView({
 
           {/* Discussion Tab */}
           {showDiscussionTab && contractId && (
-            <TabsContent value="discussion" className="h-full -mx-6 -mt-6 -mb-24">
+            <TabsContent value="discussion" className="flex-1 -mx-6 -mt-6 overflow-hidden">
               <ContractComments
                 contractId={contractId}
                 isOwner={false}
                 canComment={canComment}
                 className="h-full"
+                members={isSharedView ? discussionMembers : shares.map(s => ({
+                  id: s.id,
+                  name: s.user?.full_name || null,
+                  email: s.user?.email || s.shared_with_email,
+                  avatar_url: null,
+                }))}
               />
             </TabsContent>
           )}

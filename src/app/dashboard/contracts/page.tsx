@@ -8,14 +8,7 @@ import { useAuth } from "@/components/providers/AuthProvider";
 import { Contract } from "@/types/database";
 import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { MoreHorizontal, Star, StarOff, Trash2, Plus, Check, Share2, User } from "lucide-react";
+import { Star, StarOff, Trash2, Check, Share2 } from "lucide-react";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { ContractsIcon, PlusSignIcon, PlayIcon, FilterIcon, ViewIcon } from "@hugeicons-pro/core-stroke-rounded";
 import { FolderShared02Icon } from "@hugeicons-pro/core-bulk-rounded";
@@ -491,9 +484,12 @@ export default function ContractsPage() {
                     if (!sharedInfo?.owner) return null;
                     const ownerName = sharedInfo.owner.full_name || sharedInfo.owner.email;
                     return (
-                      <p className="text-[11px] text-muted-foreground mt-0.5">
-                        Shared by {ownerName}
-                      </p>
+                      <span className="inline-flex items-center gap-1.5 text-[10px] font-medium px-2 py-0.5 rounded-full bg-purple-500/10 text-purple-400 mt-1">
+                        <span className="w-4 h-4 rounded-full bg-purple-500 text-white text-[8px] flex items-center justify-center font-semibold">
+                          {getInitials(sharedInfo.owner.full_name, sharedInfo.owner.email)}
+                        </span>
+                        {ownerName}
+                      </span>
                     );
                   })()}
                 </div>
@@ -575,41 +571,13 @@ export default function ContractsPage() {
 
               {/* Actions */}
               <div className="flex justify-center" onClick={(e) => e.stopPropagation()}>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <button className="p-1 rounded hover:bg-muted opacity-0 group-hover:opacity-100 transition-opacity">
-                      <MoreHorizontal className="w-4 h-4 text-muted-foreground" />
-                    </button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="rounded-lg w-44">
-                    <DropdownMenuItem asChild>
-                      <Link href={`/contract/${contract.id}`}>
-                        View Details
-                      </Link>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => toggleStar(contract.id, contract.is_starred)}>
-                      {contract.is_starred ? (
-                        <>
-                          <StarOff className="w-4 h-4 mr-2" />
-                          Unstar
-                        </>
-                      ) : (
-                        <>
-                          <Star className="w-4 h-4 mr-2" />
-                          Star
-                        </>
-                      )}
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem
-                      onClick={() => setDeleteModal({ open: true, contract })}
-                      className="text-red-500"
-                    >
-                      <Trash2 className="w-4 h-4 mr-2" />
-                      Delete
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                <button
+                  onClick={() => setDeleteModal({ open: true, contract })}
+                  className="p-1.5 rounded hover:bg-red-500/10 opacity-0 group-hover:opacity-100 transition-all"
+                  title="Delete"
+                >
+                  <Trash2 className="w-4 h-4 text-muted-foreground hover:text-red-500 transition-colors" />
+                </button>
               </div>
             </motion.div>
           );
