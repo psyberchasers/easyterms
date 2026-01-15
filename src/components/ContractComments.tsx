@@ -48,6 +48,7 @@ export function ContractComments({
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
   const [newComment, setNewComment] = useState("");
+  const initialLoadRef = useRef(true);
   const [error, setError] = useState<string | null>(null);
   const commentsEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -94,9 +95,13 @@ export function ContractComments({
     };
   }, [contractId, supabase, fetchComments]);
 
-  // Scroll to bottom when new comments arrive
+  // Scroll to bottom when new comments arrive (not on initial load)
   useEffect(() => {
-    if (commentsEndRef.current) {
+    if (initialLoadRef.current) {
+      initialLoadRef.current = false;
+      return;
+    }
+    if (commentsEndRef.current && comments.length > 0) {
       commentsEndRef.current.scrollIntoView({ behavior: "smooth" });
     }
   }, [comments.length]);
