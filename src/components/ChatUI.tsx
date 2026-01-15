@@ -1,9 +1,9 @@
 "use client";
 
-import { ArrowUp, BookOpen, Upload, FileText, AlertTriangle, CheckCircle2, X, Paperclip, PanelLeft } from "lucide-react";
+import { ArrowUp, Upload, FileText, AlertTriangle, CheckCircle2, X, PanelLeft } from "lucide-react";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { AiCloudIcon, CloudUploadIcon, AttachmentIcon, PanelRightIcon } from "@hugeicons-pro/core-stroke-rounded";
-import { AiEditingIcon, Chat01Icon, Delete02Icon, TransactionHistoryIcon } from "@hugeicons-pro/core-bulk-rounded";
+import { AiEditingIcon, Chat01Icon, Delete02Icon, TransactionHistoryIcon, Upload04Icon, Link02Icon, AtIcon } from "@hugeicons-pro/core-bulk-rounded";
 import {
   AnimatePresence,
   motion,
@@ -1224,7 +1224,7 @@ const ChatUI = () => {
                   onClick={() => fileInputRef.current?.click()}
                   className="text-muted-foreground hover:bg-background/50 hover:text-foreground flex items-center gap-2 rounded-lg px-2 py-1.5 transition-all duration-100 active:scale-95"
                 >
-                  <Upload className="size-4" />
+                  <HugeiconsIcon icon={Upload04Icon} size={16} />
                   <span className="text-xs font-medium">Upload</span>
                 </button>
                 <div className="relative" ref={contractPickerRef}>
@@ -1235,7 +1235,7 @@ const ChatUI = () => {
                       showContractPicker && "bg-background/50 text-foreground"
                     )}
                   >
-                    <Paperclip className="size-4" />
+                    <HugeiconsIcon icon={Link02Icon} size={16} />
                     <span className="text-xs font-medium">Attach</span>
                     {attachedContracts.length > 0 && (
                       <span className="flex items-center justify-center min-w-[18px] h-[18px] rounded-full bg-purple-500 text-white text-[10px] font-bold">
@@ -1297,7 +1297,7 @@ const ChatUI = () => {
                   </AnimatePresence>
                 </div>
                 <div className="flex items-center gap-1.5 px-2 py-1.5 text-muted-foreground">
-                  <span className="px-1.5 py-0.5 rounded bg-background/50 font-mono text-[10px]">@</span>
+                  <HugeiconsIcon icon={AtIcon} size={16} />
                   <span className="text-xs font-medium">to mention</span>
                 </div>
               </div>
