@@ -1645,7 +1645,7 @@ export function ContractAnalysisView({
         }
       }}>
         <DialogContent className="sm:max-w-md rounded-xl overflow-hidden p-0" showCloseButton={false}>
-          <div className="bg-muted/50 px-6 py-4 border-b border-dashed border-border">
+          <div className="bg-muted/50 px-6 py-3 border-b border-dashed border-border">
             <DialogHeader className="gap-1">
               <div className="flex items-center gap-2">
                 <Share2 className="w-4 h-4 text-purple-400" />
@@ -1668,7 +1668,7 @@ export function ContractAnalysisView({
               </p>
             </div>
           ) : (
-            <div className="space-y-4 px-6 py-4">
+            <div className="space-y-4 px-6 pt-1 pb-4">
               {/* Email Input */}
               <div className="space-y-2">
                 <label className="text-xs font-medium text-foreground">Email address</label>
