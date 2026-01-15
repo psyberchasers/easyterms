@@ -1668,9 +1668,9 @@ export function ContractAnalysisView({
               </p>
             </div>
           ) : (
-            <div className="space-y-4 px-6 pt-4 pb-6">
+            <div className="space-y-4 px-6 pt-2 pb-6">
               {/* Email Input */}
-              <div className="space-y-1.5">
+              <div className="space-y-2">
                 <label className="text-xs font-medium text-foreground">Email address</label>
                 <Input
                   type="email"
@@ -1683,7 +1683,7 @@ export function ContractAnalysisView({
               </div>
 
               {/* Permission Selector */}
-              <div className="space-y-1.5">
+              <div className="space-y-2">
                 <label className="text-xs font-medium text-foreground">Permission</label>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
@@ -1724,7 +1724,7 @@ export function ContractAnalysisView({
               </div>
 
               {/* Optional Message */}
-              <div className="space-y-1.5">
+              <div className="space-y-2">
                 <label className="text-xs font-medium text-foreground">
                   Message <span className="text-muted-foreground font-normal">(optional)</span>
                 </label>
@@ -1733,6 +1733,7 @@ export function ContractAnalysisView({
                   value={shareMessage}
                   onChange={(e) => setShareMessage(e.target.value)}
                   rows={3}
+                  data-rounded="true"
                   className="w-full px-3 py-2 text-sm bg-background border border-border rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500/50"
                 />
               </div>
