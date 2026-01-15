@@ -435,7 +435,7 @@ export default function ContractsPage() {
         </motion.div>
 
         {/* Table Body */}
-        <div>
+        <div key={activeTab}>
           {filteredContracts.map((contract, index) => {
             const isSelected = selectedContracts.has(contract.id);
             return (
