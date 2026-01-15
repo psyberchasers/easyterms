@@ -5,25 +5,25 @@ import { AuthProvider } from "@/components/providers/AuthProvider";
 import { ThemeProvider } from "@/components/providers/ThemeProvider";
 // Footer removed from root - dashboard has its own layout
 
-const sfProRounded = localFont({
+const circular = localFont({
   src: [
     {
-      path: "../../public/SF-Pro-Rounded-Regular.otf",
+      path: "../../public/lineto-circular-book.ttf",
       weight: "400",
       style: "normal",
     },
     {
-      path: "../../public/SF-Pro-Rounded-Medium.otf",
+      path: "../../public/lineto-circular-medium.ttf",
       weight: "500",
       style: "normal",
     },
     {
-      path: "../../public/SF-Pro-Rounded-Bold.otf",
+      path: "../../public/lineto-circular-bold.ttf",
       weight: "700",
       style: "normal",
     },
   ],
-  variable: "--font-sf-pro-rounded",
+  variable: "--font-circular",
 });
 
 export const metadata: Metadata = {
@@ -56,8 +56,8 @@ export default function RootLayout({
         />
       </head>
       <body
-        className={`${sfProRounded.variable} antialiased min-h-screen flex flex-col`}
-        style={{ fontFamily: 'var(--font-sf-pro-rounded), system-ui, sans-serif' }}
+        className={`${circular.variable} antialiased min-h-screen flex flex-col`}
+        style={{ fontFamily: 'var(--font-circular), system-ui, sans-serif' }}
       >
         <ThemeProvider>
           <AuthProvider>

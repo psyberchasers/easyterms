@@ -161,35 +161,24 @@ const ExpandedTemplateCard = ({
   template,
   onUse,
   index = 0,
-  totalCount = 8,
 }: {
   template: ContractTemplate;
   onUse: () => void;
   index?: number;
-  totalCount?: number;
 }) => {
   const icon = iconMap[template.icon];
-  // Reverse the exit delay so first items exit first, creating a cascade effect
-  const exitDelay = index * 0.05;
 
   return (
     <motion.div
-      layout
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, scale: 0.95, y: -10 }}
+      exit={{ opacity: 0, y: 20 }}
       transition={{
         duration: 0.3,
-        delay: index * 0.06,
-        ease: [0.4, 0, 0.2, 1],
-        exit: {
-          duration: 0.25,
-          delay: exitDelay,
-          ease: [0.4, 0, 1, 1]
-        }
+        delay: index * 0.05,
+        ease: "easeOut"
       }}
       onClick={onUse}
-      style={{ willChange: 'transform, opacity' }}
       className="border border-dashed border-border rounded-2xl overflow-hidden hover:border-purple-500/50 transition-all cursor-pointer"
     >
       {/* Title section with different background */}
@@ -1048,15 +1037,13 @@ export default function TemplatesPage() {
       {builderStep === 1 && (
         <div className="space-y-6">
           {/* Info notice */}
-          <AnimatePresence mode="popLayout">
+          <AnimatePresence>
             {!isTransitioning && (
               <motion.div
-                layout
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.98 }}
-                transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1] }}
-                style={{ willChange: 'transform, opacity' }}
+                exit={{ opacity: 0, y: 10 }}
+                transition={{ duration: 0.3, ease: "easeOut" }}
                 className="rounded-2xl border border-purple-500/30 bg-purple-500/5 px-5 py-4 flex items-center gap-3"
               >
                 <HugeiconsIcon icon={AiIdeaIcon} size={20} className="text-purple-400 shrink-0" />
@@ -1069,13 +1056,12 @@ export default function TemplatesPage() {
 
           {/* Template cards */}
           <div className="grid md:grid-cols-2 gap-4">
-            <AnimatePresence mode="popLayout">
+            <AnimatePresence>
               {!isTransitioning && contractTemplates.map((template, index) => (
                 <ExpandedTemplateCard
                   key={template.id}
                   template={template}
                   index={index}
-                  totalCount={contractTemplates.length}
                   onUse={() => startWithTemplate(template)}
                 />
               ))}
