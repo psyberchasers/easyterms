@@ -111,7 +111,7 @@ export function ContractComments({
           fetchComments();
         }
       )
-      .subscribe((status) => {
+      .subscribe((status: string) => {
         console.log("Realtime subscription status:", status);
       });
 
