@@ -94,7 +94,7 @@ export function ContractComments({
           table: "contract_comments",
           filter: `contract_id=eq.${contractId}`,
         },
-        (payload) => {
+        (payload: { new: Record<string, unknown> }) => {
           console.log("New comment received:", payload);
           fetchComments();
         }
