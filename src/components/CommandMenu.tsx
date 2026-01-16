@@ -24,6 +24,7 @@ import {
 import { Link2, Trash2, Command, Loader2 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { contractTemplates } from "@/config/contract-templates";
+import { Contract } from "@/types/database";
 
 interface CommandMenuProps {
   open: boolean;
@@ -182,7 +183,7 @@ export function CommandMenu({ open, onOpenChange }: CommandMenuProps) {
           return;
         }
 
-        const contractResults: SearchResult[] = (data || []).map((contract) => ({
+        const contractResults: SearchResult[] = (data || []).map((contract: Contract) => ({
           id: contract.id,
           title: contract.title,
           category: "Contracts",
