@@ -564,6 +564,11 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
             transition={{ duration: 0.3, delay: 0.1 }}
           >
             <SidebarGroup className="p-0 pb-4">
+              <SidebarGroupLabel
+                className="h-auto py-1.5 px-3 text-[11px] font-medium uppercase tracking-wider text-sidebar-foreground/70 group-data-[collapsible=icon]:hidden"
+              >
+                Menu
+              </SidebarGroupLabel>
               <SidebarMenu className="gap-0.5">
                 {mainNav.map((item) => {
                   const isActive = pathname === item.href;
