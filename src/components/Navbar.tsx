@@ -173,7 +173,7 @@ export function Navbar({ showNewAnalysis = true, showBorder = false, showSearch 
           table: "notifications",
           filter: `user_id=eq.${user.id}`,
         },
-        (payload) => {
+        (payload: { new: Record<string, unknown> }) => {
           // Fetch fresh to get the joined profile data
           fetchNotifications();
         }
