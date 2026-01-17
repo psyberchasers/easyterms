@@ -40,8 +40,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         .select("*")
         .eq("id", userId)
         .single()
-        .then(r => r.data);
-      
+        .then((r: { data: Profile | null }) => r.data);
+
       const data = await Promise.race([profilePromise, timeoutPromise]);
       
       if (data) {
@@ -65,7 +65,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const timeoutPromise = new Promise<null>((resolve) => 
           setTimeout(() => resolve(null), 3000)
         );
-        const sessionPromise = supabase.auth.getSession().then(r => r.data.session);
+        const sessionPromise = supabase.auth.getSession().then((r: { data: { session: Session | null } }) => r.data.session);
         const session = await Promise.race([sessionPromise, timeoutPromise]);
         
         setSession(session);
@@ -86,7 +86,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
+      async (event: string, session: Session | null) => {
         setSession(session);
         setUser(session?.user ?? null);
         
