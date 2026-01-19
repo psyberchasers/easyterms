@@ -498,7 +498,7 @@ export function ContractAnalysisView({
             !showDocument && "max-w-4xl mx-auto"
           )}>
             {/* Left: Title + Risk Assessment */}
-            <div className="flex items-center gap-2 shrink-0">
+            <div className="flex items-center gap-1 md:gap-2 shrink-0">
               {versions.length > 0 && (
                 <span className="text-[10px] font-medium text-purple-400 bg-purple-500/10 border border-purple-500/30 px-2 py-1 rounded-md">
                   V{activeVersionNumber}
@@ -512,7 +512,7 @@ export function ContractAnalysisView({
               )}
               <span className="text-[10px] text-muted-foreground/40 hidden md:inline">•</span>
               <span className={cn(
-                "text-[10px] uppercase font-medium whitespace-nowrap",
+                "text-[10px] uppercase font-medium whitespace-nowrap leading-none",
                 activeAnalysis.overallRiskAssessment === "low" ? "text-green-600" :
                 activeAnalysis.overallRiskAssessment === "medium" ? "text-yellow-600" :
                 activeAnalysis.overallRiskAssessment === "high" ? "text-red-600" :
