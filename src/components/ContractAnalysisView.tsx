@@ -494,6 +494,11 @@ export function ContractAnalysisView({
           )}>
             {/* Left: Title + Risk Assessment */}
             <div className="flex items-center gap-2 shrink-0">
+              {versions.length > 0 && (
+                <span className="text-[10px] font-medium text-purple-400 bg-purple-500/10 border border-purple-500/30 px-2 py-1 rounded-md">
+                  V{activeVersionNumber}
+                </span>
+              )}
               <h1 className="text-sm font-medium text-foreground">{activeAnalysis.contractType || fileName}</h1>
               {shares.length > 0 && !isSharedView && (
                 <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-purple-500/10 text-purple-500 flex items-center gap-1">
@@ -516,11 +521,6 @@ export function ContractAnalysisView({
 
             {/* Right: Actions */}
             <div className="flex items-center gap-1.5 shrink-0 flex-wrap">
-              {versions.length > 0 && (
-                <span className="text-[10px] font-medium text-purple-400 bg-purple-500/10 border border-purple-500/30 px-2 py-1 rounded-md">
-                  V{activeVersionNumber}
-                </span>
-              )}
               <button
                 onClick={() => setShowDocument(!showDocument)}
                 className="h-7 px-2 text-[11px] text-muted-foreground hover:text-foreground border border-border hover:bg-muted flex items-center gap-1.5 transition-colors rounded-md"

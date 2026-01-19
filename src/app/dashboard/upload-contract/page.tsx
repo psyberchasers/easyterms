@@ -67,6 +67,7 @@ import Lottie from "lottie-react";
 import loadMusicAnimation from "@/../public/loadmusic.json";
 import Link from "next/link";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
+import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import dynamic from "next/dynamic";
 import { MusicLoader } from "@/components/MusicLoader";
@@ -692,9 +693,10 @@ export default function UploadContractPage() {
       });
       if (response.ok) {
         fetchVersions();
+        toast.success("New version uploaded successfully");
       } else {
         const data = await response.json();
-        alert(data.error || "Failed to upload version");
+        toast.error(data.error || "Failed to upload version");
       }
     } catch (err) {
       console.error("Error uploading version:", err);
@@ -2333,84 +2335,95 @@ export default function UploadContractPage() {
 
             {/* Version History Tab - Only for logged in users with saved contract */}
             {savedContractId && (
-              <TabsContent value="versions" className="space-y-2">
-                <div className="flex items-center justify-between mb-3">
-                  <h4 className="text-xs font-medium text-foreground">Version History</h4>
-                  <button
-                    onClick={() => versionInputRef.current?.click()}
-                    disabled={uploadingVersion}
-                    className="h-7 px-3 text-xs text-muted-foreground hover:text-foreground border border-border hover:border-purple-400/60 rounded-md flex items-center gap-1.5 transition-colors disabled:opacity-50"
-                  >
-                    {uploadingVersion ? (
-                      <Loader2 className="w-3 h-3 animate-spin" />
-                    ) : (
-                      <Upload className="w-3 h-3" />
-                    )}
-                    Upload New Version
-                  </button>
+              <TabsContent value="versions" className="space-y-0 -mx-6 -mt-6 min-w-[calc(100%+48px)] block">
+                <div className="bg-purple-500/5 overflow-hidden">
+                  <div className="flex items-center justify-between px-6 py-2.5" style={{ backgroundColor: 'rgba(168, 85, 247, 0.08)' }}>
+                    <div className="flex items-center gap-2">
+                      <History className="w-4 h-4 text-purple-400" />
+                      <span className="text-xs font-medium text-purple-400 leading-none">Version History</span>
+                    </div>
+                    <button
+                      onClick={() => versionInputRef.current?.click()}
+                      disabled={uploadingVersion}
+                      className="h-7 px-3 text-xs text-purple-400 hover:text-purple-300 border border-purple-500/30 hover:border-purple-400/60 rounded-lg flex items-center gap-1.5 transition-colors disabled:opacity-50 bg-purple-500/10 hover:bg-purple-500/20"
+                    >
+                      {uploadingVersion ? (
+                        <Loader2 className="w-3 h-3 animate-spin" />
+                      ) : (
+                        <Upload className="w-3 h-3" />
+                      )}
+                      Upload New Version
+                    </button>
+                  </div>
                 </div>
 
                 {loadingVersions ? (
-                  <div className="flex items-center justify-center py-8">
+                  <div className="flex items-center justify-center py-8 px-6">
                     <Loader2 className="w-4 h-4 animate-spin text-muted-foreground/60" />
                   </div>
                 ) : versions.length === 0 ? (
-                  <div className="text-center py-10 border border-border rounded-lg">
-                    <History className="w-6 h-6 mx-auto text-muted-foreground/60 mb-2" />
+                  <div className="text-center py-10 mx-6 mt-4 border border-dashed border-border rounded-lg">
+                    <div className="flex justify-center mb-2">
+                      <History className="w-6 h-6 text-muted-foreground/60" />
+                    </div>
                     <p className="text-xs text-muted-foreground mb-1">No version history yet</p>
                     <p className="text-[10px] text-muted-foreground/60">Upload a new version to start tracking changes</p>
                   </div>
                 ) : (
-                  <div className="relative">
-                    {/* Timeline line */}
-                    <div className="absolute left-3 top-0 bottom-0 w-px bg-border" />
-
-                    {versions.map((version, i) => (
-                      <div key={version.id} className="relative pl-8 pb-4">
-                        {/* Timeline dot */}
-                        <div className={cn(
-                          "absolute left-1.5 w-4 h-4 flex items-center justify-center",
-                          i === 0 ? "bg-foreground text-background" : "bg-muted border border-border text-muted-foreground"
-                        )}>
-                          <span className="text-[8px] font-bold">{version.version_number + 1}</span>
-                        </div>
-
-                        <div className="p-3 rounded-lg">
-                          <div className="flex items-center justify-between mb-2">
-                            <span className="text-[10px] text-muted-foreground px-2 py-0.5 border border-border rounded-full">
-                              Version {version.version_number + 1}
-                            </span>
-                            <span className="text-[10px] text-muted-foreground/60">
-                              {new Date(version.created_at).toLocaleDateString()}
-                            </span>
+                  <div className="relative px-6 pt-4">
+                    {/* Timeline */}
+                    {versions.map((version, i) => {
+                      const isLast = i === versions.length - 1;
+                      return (
+                        <div key={version.id} className="relative flex gap-4">
+                          {/* Timeline line and dot */}
+                          <div className="flex flex-col items-center">
+                            <div className="w-3 h-3 rounded-full bg-purple-500 border-2 border-purple-500/30 z-10 shrink-0" />
+                            {!isLast && (
+                              <div className="w-px flex-1 border-l border-dashed border-purple-500/30 -mt-0.5" />
+                            )}
                           </div>
 
-                          <p className="text-xs text-muted-foreground mb-2">{version.changes_summary}</p>
-
-                          {version.analysis?.improvements && version.analysis.improvements.length > 0 && (
-                            <div className="space-y-1 mb-2">
-                              {version.analysis.improvements.slice(0, 2).map((imp, j) => (
-                                <div key={j} className="flex items-center gap-1.5 text-[10px] text-green-400">
-                                  <ArrowUpRight className="w-2.5 h-2.5" />
-                                  <span>{imp}</span>
-                                </div>
-                              ))}
+                          {/* Content */}
+                          <div className={cn("flex-1 pb-6", isLast && "pb-0")}>
+                            {/* Header */}
+                            <div className="flex items-center justify-between mb-1">
+                              <span className="text-sm font-medium text-foreground">Version {version.version_number}</span>
+                              <span className="text-[10px] text-muted-foreground">
+                                {new Date(version.created_at).toLocaleDateString()}
+                              </span>
                             </div>
-                          )}
 
-                          {version.analysis?.regressions && version.analysis.regressions.length > 0 && (
-                            <div className="space-y-1">
-                              {version.analysis.regressions.slice(0, 2).map((reg, j) => (
-                                <div key={j} className="flex items-center gap-1.5 text-[10px] text-red-400">
-                                  <ArrowDownRight className="w-2.5 h-2.5" />
-                                  <span>{reg}</span>
+                            {/* Changes Summary */}
+                            {version.changes_summary && (
+                              <p className="text-xs text-muted-foreground mb-3 leading-relaxed">{version.changes_summary}</p>
+                            )}
+
+                            {/* Pills */}
+                            <div className="space-y-2">
+                              {version.analysis?.improvements && version.analysis.improvements.length > 0 && (
+                                <div className="flex flex-wrap gap-1.5">
+                                  {version.analysis.improvements.map((imp, idx) => (
+                                    <span key={idx} className="inline-flex items-center gap-1 text-[10px] text-green-600 bg-green-500/10 px-2.5 py-1 rounded-full">
+                                      <ArrowUpRight className="w-3 h-3" /> {imp}
+                                    </span>
+                                  ))}
                                 </div>
-                              ))}
+                              )}
+                              {version.analysis?.regressions && version.analysis.regressions.length > 0 && (
+                                <div className="flex flex-wrap gap-1.5">
+                                  {version.analysis.regressions.map((reg, idx) => (
+                                    <span key={idx} className="inline-flex items-center gap-1 text-[10px] text-amber-500 bg-amber-500/10 px-2.5 py-1 rounded-full">
+                                      <ArrowDownRight className="w-3 h-3" /> {reg}
+                                    </span>
+                                  ))}
+                                </div>
+                              )}
                             </div>
-                          )}
+                          </div>
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 )}
               </TabsContent>
@@ -2418,16 +2431,20 @@ export default function UploadContractPage() {
 
             {/* Key Dates Tab - Only for logged in users with saved contract */}
             {savedContractId && (
-              <TabsContent value="dates" className="space-y-2">
-                <div className="flex items-center justify-between mb-3">
-                  <h4 className="text-xs font-medium text-foreground">Key Dates & Deadlines</h4>
-                  <Dialog open={showAddDate} onOpenChange={setShowAddDate}>
-                    <DialogTrigger asChild>
-                      <button className="h-7 px-2.5 text-xs text-muted-foreground hover:text-foreground border border-border hover:border-[#404040] flex items-center gap-1.5 transition-colors">
-                        <Plus className="w-3 h-3" />
-                        Add Date
-                      </button>
-                    </DialogTrigger>
+              <TabsContent value="dates" className="space-y-0 -mx-6 -mt-6 min-w-[calc(100%+48px)] block">
+                <div className="bg-orange-500/5 overflow-hidden">
+                  <div className="flex items-center justify-between px-6 py-2.5" style={{ backgroundColor: 'rgba(249, 115, 22, 0.08)' }}>
+                    <div className="flex items-center gap-2">
+                      <Calendar className="w-4 h-4 text-orange-400" />
+                      <span className="text-xs font-medium text-orange-400 leading-none">Key Dates</span>
+                    </div>
+                    <Dialog open={showAddDate} onOpenChange={setShowAddDate}>
+                      <DialogTrigger asChild>
+                        <button className="h-7 px-3 text-xs text-orange-400 hover:text-orange-300 border border-orange-500/30 hover:border-orange-400/60 rounded-lg flex items-center gap-1.5 transition-colors bg-orange-500/10 hover:bg-orange-500/20">
+                          <Plus className="w-3 h-3" />
+                          Add Date
+                        </button>
+                      </DialogTrigger>
                     <DialogContent className="bg-card border-border">
                       <DialogHeader>
                         <DialogTitle className="text-foreground text-sm">Add Key Date</DialogTitle>
@@ -2480,21 +2497,24 @@ export default function UploadContractPage() {
                         Add Date
                       </button>
                     </DialogContent>
-                  </Dialog>
+                    </Dialog>
+                  </div>
                 </div>
 
                 {loadingDates ? (
-                  <div className="flex items-center justify-center py-8">
+                  <div className="flex items-center justify-center py-8 px-6">
                     <Loader2 className="w-4 h-4 animate-spin text-muted-foreground/60" />
                   </div>
                 ) : dates.length === 0 ? (
-                  <div className="text-center py-10 border border-border rounded-lg">
-                    <Calendar className="w-6 h-6 mx-auto text-muted-foreground/60 mb-2" />
+                  <div className="text-center py-10 mx-6 mt-4 border border-dashed border-border rounded-lg">
+                    <div className="flex justify-center mb-2">
+                      <Calendar className="w-6 h-6 text-muted-foreground/60" />
+                    </div>
                     <p className="text-xs text-muted-foreground mb-1">No key dates tracked</p>
                     <p className="text-[10px] text-muted-foreground/60">Add important deadlines to get reminders</p>
                   </div>
                 ) : (
-                  <div className="space-y-1.5">
+                  <div className="space-y-1.5 px-6 pt-4">
                     {dates.map((date) => {
                       const dateObj = new Date(date.date);
                       const today = new Date();

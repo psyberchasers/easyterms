@@ -5,7 +5,7 @@ import React from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Upload, FileText, Loader2, AlertTriangle, X } from "lucide-react";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { FileUploadIcon, GitCompareIcon, File02Icon, MagicWand01Icon, PercentIcon, Calendar03Icon, AlertDiamondIcon, Flag01Icon } from "@hugeicons-pro/core-stroke-rounded";
+import { FileUploadIcon, GitCompareIcon, File02Icon, MagicWand01Icon, PercentIcon, Calendar03Icon, AlertDiamondIcon, Flag01Icon, DollarCircleIcon } from "@hugeicons-pro/core-stroke-rounded";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
@@ -420,28 +420,54 @@ export default function ComparePage() {
                           "Unknown Risk"}
                       </Badge>
 
-                      {/* Quick Stats */}
-                      <div className="w-full grid grid-cols-2 gap-3">
+                      {/* Quick Stats - List format */}
+                      <div className="w-full space-y-2.5 mt-2">
                         {contract.analysis?.financialTerms?.royaltyRate && (
-                          <div className="flex items-start gap-3 p-3 rounded-xl border border-border bg-muted/20">
-                            <div className="w-8 h-8 rounded-lg bg-purple-500/10 flex items-center justify-center shrink-0">
-                              <HugeiconsIcon icon={PercentIcon} size={16} className="text-purple-500" />
-                            </div>
-                            <div className="min-w-0">
-                              <p className="text-[11px] text-muted-foreground mb-0.5">Royalty</p>
-                              <p className="text-sm font-medium leading-tight">{contract.analysis.financialTerms.royaltyRate}</p>
-                            </div>
+                          <div className="flex items-start gap-2">
+                            <HugeiconsIcon icon={PercentIcon} size={14} className="text-muted-foreground shrink-0 mt-0.5" />
+                            <span className="text-xs text-muted-foreground whitespace-nowrap">Royalty</span>
+                            <span className="text-xs text-muted-foreground/50">—</span>
+                            <span className="text-xs font-medium text-foreground">{contract.analysis.financialTerms.royaltyRate}</span>
                           </div>
                         )}
                         {contract.analysis?.termLength && (
-                          <div className="flex items-start gap-3 p-3 rounded-xl border border-border bg-muted/20">
-                            <div className="w-8 h-8 rounded-lg bg-blue-500/10 flex items-center justify-center shrink-0">
-                              <HugeiconsIcon icon={Calendar03Icon} size={16} className="text-blue-500" />
-                            </div>
-                            <div className="min-w-0">
-                              <p className="text-[11px] text-muted-foreground mb-0.5">Term</p>
-                              <p className="text-sm font-medium leading-tight">{contract.analysis.termLength}</p>
-                            </div>
+                          <div className="flex items-start gap-2">
+                            <HugeiconsIcon icon={Calendar03Icon} size={14} className="text-muted-foreground shrink-0 mt-0.5" />
+                            <span className="text-xs text-muted-foreground whitespace-nowrap">Term</span>
+                            <span className="text-xs text-muted-foreground/50">—</span>
+                            <span className="text-xs font-medium text-foreground">{contract.analysis.termLength}</span>
+                          </div>
+                        )}
+                        {contract.analysis?.financialTerms?.advanceAmount && (
+                          <div className="flex items-start gap-2">
+                            <HugeiconsIcon icon={DollarCircleIcon} size={14} className="text-muted-foreground shrink-0 mt-0.5" />
+                            <span className="text-xs text-muted-foreground whitespace-nowrap">Advance</span>
+                            <span className="text-xs text-muted-foreground/50">—</span>
+                            <span className="text-xs font-medium text-foreground">{contract.analysis.financialTerms.advanceAmount}</span>
+                          </div>
+                        )}
+                        {contract.analysis?.rightsAndOwnership?.exclusivity && (
+                          <div className="flex items-start gap-2">
+                            <HugeiconsIcon icon={Flag01Icon} size={14} className="text-muted-foreground shrink-0 mt-0.5" />
+                            <span className="text-xs text-muted-foreground whitespace-nowrap">Exclusivity</span>
+                            <span className="text-xs text-muted-foreground/50">—</span>
+                            <span className="text-xs font-medium text-foreground">{contract.analysis.rightsAndOwnership.exclusivity}</span>
+                          </div>
+                        )}
+                        {contract.analysis?.rightsAndOwnership?.territorialRights && (
+                          <div className="flex items-start gap-2">
+                            <HugeiconsIcon icon={Flag01Icon} size={14} className="text-muted-foreground shrink-0 mt-0.5" />
+                            <span className="text-xs text-muted-foreground whitespace-nowrap">Territory</span>
+                            <span className="text-xs text-muted-foreground/50">—</span>
+                            <span className="text-xs font-medium text-foreground">{contract.analysis.rightsAndOwnership.territorialRights}</span>
+                          </div>
+                        )}
+                        {contract.analysis?.rightsAndOwnership?.masterOwnership && (
+                          <div className="flex items-start gap-2">
+                            <HugeiconsIcon icon={Flag01Icon} size={14} className="text-muted-foreground shrink-0 mt-0.5" />
+                            <span className="text-xs text-muted-foreground whitespace-nowrap">Ownership</span>
+                            <span className="text-xs text-muted-foreground/50">—</span>
+                            <span className="text-xs font-medium text-foreground">{contract.analysis.rightsAndOwnership.masterOwnership}</span>
                           </div>
                         )}
                       </div>
@@ -507,72 +533,108 @@ export default function ComparePage() {
               <p className="text-sm text-muted-foreground">{comparisonResult.recommendation}</p>
             </motion.div>
 
-            {/* Side-by-Side Comparison Table */}
-            <motion.div
-              className="rounded-2xl border border-border overflow-hidden"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3, delay: 0.1 }}
-            >
-              {/* Header */}
-              <div className="grid grid-cols-3 bg-muted/50">
-                <div className="p-4 font-medium border-r border-border">Metric</div>
-                <div className="p-4 font-medium text-center border-r border-border truncate">
-                  {contracts[0]?.file.name}
+            {/* Side-by-Side Comparison */}
+            <div className="grid md:grid-cols-2 gap-6">
+              {/* Contract 1 */}
+              <motion.div
+                className="rounded-2xl border border-border overflow-hidden"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3, delay: 0.1 }}
+              >
+                <div className="p-4 bg-muted/30 border-b border-border">
+                  <p className="font-medium text-sm truncate">{contracts[0]?.file.name}</p>
                 </div>
-                <div className="p-4 font-medium text-center truncate">
-                  {contracts[1]?.file.name}
-                </div>
-              </div>
-
-              {/* Rows */}
-              {comparisonResult.metrics.map((metric, i) => (
-                <motion.div
-                  key={i}
-                  className="grid grid-cols-3 border-t border-border"
-                  initial={{ opacity: 0, x: -10 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ duration: 0.2, delay: 0.15 + i * 0.05 }}
-                >
-                  <div className="p-4 font-medium text-sm border-r border-border bg-muted/20 flex items-center gap-2">
-                    <HugeiconsIcon
-                      icon={
-                        metric.label === "Royalty Rate" ? PercentIcon :
-                        metric.label === "Contract Term" ? Calendar03Icon :
-                        metric.label === "Risk Level" ? AlertDiamondIcon :
-                        Flag01Icon
-                      }
-                      size={16}
-                      className="text-muted-foreground shrink-0"
-                    />
-                    {metric.label}
-                  </div>
-                  {[0, 1].map((j) => {
-                    const isWinner = metric.winner === j;
-                    const isLoser = metric.winner !== null && metric.winner !== j;
-
+                <div className="p-4 space-y-3">
+                  {comparisonResult.metrics.map((metric, i) => {
+                    const isWinner = metric.winner === 0;
+                    const isLoser = metric.winner !== null && metric.winner !== 0;
                     return (
-                      <div
-                        key={j}
-                        className={cn(
-                          "p-4 text-left border-r border-border last:border-r-0",
-                          isWinner && "bg-green-500/10",
-                          isLoser && "bg-red-500/5"
-                        )}
+                      <motion.div
+                        key={i}
+                        className="flex items-center justify-between gap-4"
+                        initial={{ opacity: 0, x: -10 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ duration: 0.2, delay: 0.15 + i * 0.05 }}
                       >
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                          <HugeiconsIcon
+                            icon={
+                              metric.label === "Royalty Rate" ? PercentIcon :
+                              metric.label === "Contract Term" ? Calendar03Icon :
+                              metric.label === "Risk Level" ? AlertDiamondIcon :
+                              Flag01Icon
+                            }
+                            size={14}
+                            className="shrink-0"
+                          />
+                          {metric.label}
+                        </div>
+                        <div className="flex-1 border-b border-dashed border-border mx-2" />
                         <span className={cn(
-                          "text-sm",
-                          isWinner && "text-green-400 font-medium",
-                          isLoser && "text-red-400"
+                          "text-sm font-medium",
+                          isWinner && "text-green-400",
+                          isLoser && "text-red-400",
+                          !isWinner && !isLoser && "text-foreground"
                         )}>
-                          {metric.values[j]}
+                          {metric.values[0]}
                         </span>
-                      </div>
+                      </motion.div>
                     );
                   })}
-                </motion.div>
-              ))}
-            </motion.div>
+                </div>
+              </motion.div>
+
+              {/* Contract 2 */}
+              <motion.div
+                className="rounded-2xl border border-border overflow-hidden"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3, delay: 0.15 }}
+              >
+                <div className="p-4 bg-muted/30 border-b border-border">
+                  <p className="font-medium text-sm truncate">{contracts[1]?.file.name}</p>
+                </div>
+                <div className="p-4 space-y-3">
+                  {comparisonResult.metrics.map((metric, i) => {
+                    const isWinner = metric.winner === 1;
+                    const isLoser = metric.winner !== null && metric.winner !== 1;
+                    return (
+                      <motion.div
+                        key={i}
+                        className="flex items-center justify-between gap-4"
+                        initial={{ opacity: 0, x: -10 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ duration: 0.2, delay: 0.2 + i * 0.05 }}
+                      >
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                          <HugeiconsIcon
+                            icon={
+                              metric.label === "Royalty Rate" ? PercentIcon :
+                              metric.label === "Contract Term" ? Calendar03Icon :
+                              metric.label === "Risk Level" ? AlertDiamondIcon :
+                              Flag01Icon
+                            }
+                            size={14}
+                            className="shrink-0"
+                          />
+                          {metric.label}
+                        </div>
+                        <div className="flex-1 border-b border-dashed border-border mx-2" />
+                        <span className={cn(
+                          "text-sm font-medium",
+                          isWinner && "text-green-400",
+                          isLoser && "text-red-400",
+                          !isWinner && !isLoser && "text-foreground"
+                        )}>
+                          {metric.values[1]}
+                        </span>
+                      </motion.div>
+                    );
+                  })}
+                </div>
+              </motion.div>
+            </div>
 
             {/* Actions */}
             <motion.div

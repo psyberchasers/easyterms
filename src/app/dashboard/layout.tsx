@@ -68,7 +68,6 @@ import {
   Setting06Icon,
   Logout02Icon,
 } from "@hugeicons-pro/core-bulk-rounded";
-import { SearchCommand } from "@/components/SearchCommand";
 import { motion } from "framer-motion";
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
@@ -348,9 +347,6 @@ function DashboardHeader({
         </DropdownMenuContent>
       </DropdownMenu>
 
-      {/* Search Command */}
-      <SearchCommand />
-
       {/* Upload - icon only on mobile */}
       <Link href="/dashboard/upload-contract?new=true">
         <button className="h-8 w-8 sm:w-auto sm:px-3 flex items-center justify-center sm:justify-start gap-2 transition-colors rounded-md text-[13px] font-semibold text-white bg-purple-500 hover:bg-purple-600">
@@ -531,10 +527,10 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
 
   const mainNav = [
     { title: "Home", icon: Home01BulkIcon, href: "/dashboard" },
-    { title: "Chat", icon: ChatSearch01Icon, href: "/dashboard/chat" },
     { title: "Contracts", icon: DocumentAttachmentIcon, href: "/dashboard/contracts" },
     { title: "Compare", icon: GitCompareBulkIcon, href: "/dashboard/compare" },
     { title: "Templates", icon: LayoutGridIcon, href: "/dashboard/templates" },
+    { title: "Chat", icon: ChatSearch01Icon, href: "/dashboard/chat" },
   ];
 
   return (
@@ -542,12 +538,12 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
       <Sidebar collapsible="icon" className="border-border hidden md:flex">
         {/* Header - matches h-12 (48px) of main header with border-b */}
         <motion.div
-          className="flex items-center px-3 h-12 border-b border-sidebar-border group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-2"
+          className="flex items-center px-3 h-12 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-2"
           initial={{ opacity: 0, x: -10 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.3, delay: 0 }}
         >
-          <Link href="/dashboard" className="hover:opacity-80 transition-opacity">
+          <Link href="/" className="hover:opacity-80 transition-opacity">
             <img
               src={theme === "dark" ? "/darkModeS.svg" : "/lightModeS.svg"}
               alt="EasyTerms"
@@ -565,7 +561,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
           >
             <SidebarGroup className="p-0 pb-4">
               <SidebarGroupLabel
-                className="h-auto py-1.5 px-3 text-[11px] font-medium uppercase tracking-wider text-sidebar-foreground/70 group-data-[collapsible=icon]:hidden"
+                className="h-auto pt-4 pb-1.5 px-3 text-[11px] font-medium uppercase tracking-wider text-sidebar-foreground/70 group-data-[collapsible=icon]:hidden"
               >
                 Menu
               </SidebarGroupLabel>

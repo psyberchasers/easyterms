@@ -432,19 +432,11 @@ export default function DashboardPage() {
             <h3 className="text-lg font-medium text-foreground mb-2">
               {contracts.length === 0 ? "No contracts yet" : "No matching contracts"}
             </h3>
-            <p className="text-muted-foreground mb-6">
+            <p className="text-muted-foreground">
               {contracts.length === 0
                 ? "Upload your first contract to get started"
                 : "Try adjusting your search or filters"}
             </p>
-            {contracts.length === 0 && (
-              <Link href="/analyze">
-                <Button className="rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 px-6">
-                  <HugeiconsIcon icon={AiSheetsIcon} size={16} className="mr-2" />
-                  New Analysis
-                </Button>
-              </Link>
-            )}
           </div>
         </div>
       ) : viewMode === "grid" ? (

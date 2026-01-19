@@ -188,7 +188,7 @@ const ExpandedTemplateCard = ({
         </div>
         <div className="flex-1 min-w-0 flex items-center gap-3">
           <h3 className="font-normal text-base">{template.name}</h3>
-          <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground bg-muted px-2.5 py-1 rounded-full">
+          <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-muted-foreground bg-muted px-2.5 py-1 rounded-full">
             {template.parties.party1}
             <HugeiconsIcon icon={ArrowDataTransferHorizontalIcon} size={12} />
             {template.parties.party2}
@@ -763,6 +763,34 @@ export default function TemplatesPage() {
     }, 500); // Wait for exit animations to complete
   }, []);
 
+  // Start builder from scratch (no template)
+  const startFromScratch = useCallback(() => {
+    // Start exit animation
+    setIsTransitioning(true);
+
+    // Wait for exit animations to complete, then proceed
+    setTimeout(() => {
+      // Create a custom template shell for the "create your own" flow
+      const customTemplate: ContractTemplate = {
+        id: "custom",
+        name: "Custom Contract",
+        icon: "File01Icon",
+        description: "A custom contract built from scratch",
+        parties: { party1: "Party A", party2: "Party B" },
+        defaultClauses: [],
+      };
+      setSelectedTemplate(customTemplate);
+      setSelectedClauses([]);
+      setContractTitle("Custom Contract");
+      setPartyNames({ party1: "", party2: "" });
+      setContractDate("");
+      setClauseValues({});
+      setPdfUrl(null);
+      setBuilderStep(2); // Go directly to Step 2 (Select Clauses)
+      setIsTransitioning(false);
+    }, 500);
+  }, []);
+
   // Handle template query parameter from command menu
   useEffect(() => {
     if (initialTemplateHandled) return;
@@ -1057,11 +1085,52 @@ export default function TemplatesPage() {
           {/* Template cards */}
           <div className="grid md:grid-cols-2 gap-4">
             <AnimatePresence>
+              {/* Create your own template card */}
+              {!isTransitioning && (
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: 20 }}
+                  transition={{
+                    duration: 0.3,
+                    delay: 0,
+                    ease: "easeOut"
+                  }}
+                  onClick={startFromScratch}
+                  className="border border-dashed border-purple-500/50 rounded-2xl overflow-hidden hover:border-purple-500 hover:bg-purple-500/5 transition-all cursor-pointer"
+                >
+                  {/* Title section */}
+                  <div className="flex items-center gap-3 p-5 bg-purple-500/10 border-b border-dashed border-purple-500/30">
+                    <div className="w-12 h-12 rounded-xl bg-purple-500/20 flex items-center justify-center shrink-0">
+                      <Plus className="w-6 h-6 text-purple-400" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-normal text-base text-purple-400">Create Your Own</h3>
+                    </div>
+                  </div>
+
+                  {/* Content section */}
+                  <div className="p-5">
+                    <p className="text-sm text-foreground/70 mb-4 leading-relaxed">
+                      Start from scratch and build a custom contract by selecting exactly the clauses you need. Perfect for unique agreements or specialized deals.
+                    </p>
+
+                    <div className="flex flex-wrap gap-1.5">
+                      <Badge variant="secondary" className="text-xs bg-purple-500/10 text-purple-400 border-purple-500/30">
+                        Full Customization
+                      </Badge>
+                      <Badge variant="secondary" className="text-xs bg-purple-500/10 text-purple-400 border-purple-500/30">
+                        Any Clause Combination
+                      </Badge>
+                    </div>
+                  </div>
+                </motion.div>
+              )}
               {!isTransitioning && contractTemplates.map((template, index) => (
                 <ExpandedTemplateCard
                   key={template.id}
                   template={template}
-                  index={index}
+                  index={index + 1}
                   onUse={() => startWithTemplate(template)}
                 />
               ))}
