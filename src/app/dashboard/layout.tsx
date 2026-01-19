@@ -561,7 +561,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
           >
             <SidebarGroup className="p-0 pb-4">
               <SidebarGroupLabel
-                className="h-auto pt-4 pb-1.5 px-3 text-[11px] font-medium uppercase tracking-wider text-sidebar-foreground/70 group-data-[collapsible=icon]:hidden"
+                className="h-auto pt-2 pb-1.5 px-3 text-[11px] font-medium uppercase tracking-wider text-sidebar-foreground/70 group-data-[collapsible=icon]:hidden"
               >
                 Menu
               </SidebarGroupLabel>

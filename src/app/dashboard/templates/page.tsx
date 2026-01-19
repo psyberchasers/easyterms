@@ -776,6 +776,7 @@ export default function TemplatesPage() {
         name: "Custom Contract",
         icon: "File01Icon",
         description: "A custom contract built from scratch",
+        category: "other",
         parties: { party1: "Party A", party2: "Party B" },
         defaultClauses: [],
       };
