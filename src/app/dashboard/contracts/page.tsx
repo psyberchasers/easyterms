@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
@@ -8,7 +8,7 @@ import { useAuth } from "@/components/providers/AuthProvider";
 import { Contract } from "@/types/database";
 import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
-import { Star, StarOff, Trash2, Check, Share2 } from "lucide-react";
+import { Star, StarOff, Trash2, Check, Share2, Search, X } from "lucide-react";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { ContractsIcon, PlusSignIcon, PlayIcon, FilterIcon, ViewIcon } from "@hugeicons-pro/core-stroke-rounded";
 import { FolderShared02Icon } from "@hugeicons-pro/core-bulk-rounded";
@@ -40,6 +40,9 @@ export default function ContractsPage() {
   const [initialLoad, setInitialLoad] = useState(true);
   const [activeTab, setActiveTab] = useState<"my" | "shared">("my");
   const [filter, setFilter] = useState<"all" | "high-risk" | "medium-risk" | "low-risk">("all");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
+  const [isPending, startTransition] = useTransition();
   const [selectedContracts, setSelectedContracts] = useState<Set<string>>(new Set());
   const [contractShares, setContractShares] = useState<Record<string, number>>({});
   const [deleteModal, setDeleteModal] = useState<{ open: boolean; contract: Contract | null }>({
@@ -178,32 +181,7 @@ export default function ContractsPage() {
     setContracts((prev) => prev.filter((c) => c.id !== deleteModal.contract?.id));
   };
 
-  // Get contracts based on active tab
-  const activeContracts = activeTab === "my" ? contracts : sharedContracts.map(s => s.contract).filter(Boolean) as Contract[];
-
-  const filteredContracts = activeContracts.filter((contract) => {
-    if (filter === "high-risk") return contract.overall_risk === "high";
-    if (filter === "medium-risk") return contract.overall_risk === "medium";
-    if (filter === "low-risk") return contract.overall_risk === "low";
-    return true;
-  });
-
-  // Get shared info for a contract (when viewing shared tab)
-  const getSharedInfo = (contractId: string) => {
-    return sharedContracts.find(s => s.contract_id === contractId);
-  };
-
-  // Get initials from name
-  const getInitials = (name: string | null, email: string | null) => {
-    if (name) {
-      return name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2);
-    }
-    if (email) {
-      return email[0].toUpperCase();
-    }
-    return "?";
-  };
-
+  // Helper functions (defined before use)
   const getPartyName = (contract: Contract) => {
     const analysis = contract.analysis as { parties?: Record<string, string | string[]> } | null;
     if (!analysis?.parties) return "—";
@@ -215,6 +193,41 @@ export default function ContractsPage() {
     const analysis = contract.analysis as { industry?: string; category?: string } | null;
     return analysis?.industry || analysis?.category || "—";
   };
+
+  const getSharedInfo = (contractId: string) => {
+    return sharedContracts.find(s => s.contract_id === contractId);
+  };
+
+  const getInitials = (name: string | null, email: string | null) => {
+    if (name) {
+      return name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2);
+    }
+    if (email) {
+      return email[0].toUpperCase();
+    }
+    return "?";
+  };
+
+  // Get contracts based on active tab
+  const activeContracts = activeTab === "my" ? contracts : sharedContracts.map(s => s.contract).filter(Boolean) as Contract[];
+
+  const filteredContracts = activeContracts.filter((contract) => {
+    // Risk filter
+    if (filter === "high-risk" && contract.overall_risk !== "high") return false;
+    if (filter === "medium-risk" && contract.overall_risk !== "medium") return false;
+    if (filter === "low-risk" && contract.overall_risk !== "low") return false;
+
+    // Search filter
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      const titleMatch = contract.title?.toLowerCase().includes(query);
+      const typeMatch = contract.contract_type?.toLowerCase().includes(query);
+      const partyMatch = getPartyName(contract).toLowerCase().includes(query);
+      return titleMatch || typeMatch || partyMatch;
+    }
+
+    return true;
+  });
 
   const toggleSelectContract = (contractId: string) => {
     setSelectedContracts((prev) => {
@@ -286,58 +299,72 @@ export default function ContractsPage() {
   }
 
   return (
-    <div className="h-full flex flex-col w-full bg-background">
+    <div className="fixed inset-0 top-12 bottom-10 left-0 right-0 md:left-[var(--sidebar-width)] flex flex-col bg-background overflow-x-auto overflow-y-hidden">
       {/* Tab Switcher */}
       <motion.div
-        className="flex items-center gap-1 px-4 pt-3 pb-0 w-full"
+        className="flex items-center gap-4 px-4 pt-3 pb-0 w-full shrink-0 border-b border-border"
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3 }}
       >
         <button
-          onClick={() => { setActiveTab("my"); setFilter("all"); }}
+          onClick={() => { setActiveTab("my"); startTransition(() => setFilter("all")); }}
           className={cn(
-            "px-4 py-2 rounded-t-lg text-[13px] font-medium transition-colors border-b-2",
+            "relative px-1 pb-3 text-[13px] font-medium transition-colors",
             activeTab === "my"
-              ? "bg-muted/50 text-foreground border-purple-500"
-              : "text-muted-foreground hover:text-foreground border-transparent hover:bg-muted/30"
+              ? "text-foreground"
+              : "text-muted-foreground hover:text-foreground"
           )}
         >
           My Contracts
-          <span className="ml-2 text-[11px] px-1.5 py-0.5 rounded-md bg-muted text-muted-foreground">
+          <span className="ml-2 text-[11px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground">
             {contracts.length}
           </span>
+          {activeTab === "my" && (
+            <motion.div
+              layoutId="contracts-tab-underline"
+              className="absolute bottom-0 left-0 right-0 h-[2px] bg-purple-500"
+              transition={{ type: "spring", stiffness: 500, damping: 30 }}
+            />
+          )}
         </button>
         <button
-          onClick={() => { setActiveTab("shared"); setFilter("all"); }}
+          onClick={() => { setActiveTab("shared"); startTransition(() => setFilter("all")); }}
           className={cn(
-            "px-4 py-2 rounded-t-lg text-[13px] font-medium transition-colors border-b-2 flex items-center gap-2",
+            "relative px-1 pb-3 text-[13px] font-medium transition-colors flex items-center gap-2",
             activeTab === "shared"
-              ? "bg-muted/50 text-foreground border-purple-500"
-              : "text-muted-foreground hover:text-foreground border-transparent hover:bg-muted/30"
+              ? "text-foreground"
+              : "text-muted-foreground hover:text-foreground"
           )}
         >
           <HugeiconsIcon icon={FolderShared02Icon} size={14} />
           Shared with Me
           {sharedContracts.length > 0 && (
-            <span className="text-[11px] px-1.5 py-0.5 rounded-md bg-purple-500/10 text-purple-400">
+            <span className="text-[11px] px-1.5 py-0.5 rounded bg-purple-500/10 text-purple-400">
               {sharedContracts.length}
             </span>
+          )}
+          {activeTab === "shared" && (
+            <motion.div
+              layoutId="contracts-tab-underline"
+              className="absolute bottom-0 left-0 right-0 h-[2px] bg-purple-500"
+              transition={{ type: "spring", stiffness: 500, damping: 30 }}
+            />
           )}
         </button>
       </motion.div>
 
       {/* Toolbar */}
       <motion.div
-        className="flex items-center justify-between px-4 py-3 border-b border-border w-full"
+        className="flex items-center justify-between px-4 py-3 md:border-b md:border-border w-full shrink-0"
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3, delay: 0.05 }}
       >
-        <div className="flex items-center gap-3">
-          {/* Filter buttons */}
+        {/* Desktop: Filter buttons */}
+        <div className="hidden md:flex items-center gap-3">
           <button
-            onClick={() => setFilter("all")}
+            onClick={() => startTransition(() => setFilter("all"))}
             className={cn(
               "px-3 py-1.5 rounded-md text-[12px] font-medium transition-colors text-muted-foreground",
               filter === "all" ? "bg-muted" : "hover:bg-muted/50"
@@ -346,7 +373,7 @@ export default function ContractsPage() {
             All ({activeContracts.length})
           </button>
           <button
-            onClick={() => setFilter("high-risk")}
+            onClick={() => startTransition(() => setFilter("high-risk"))}
             className={cn(
               "px-3 py-1.5 rounded-md text-[12px] font-medium transition-colors text-muted-foreground",
               filter === "high-risk" ? "bg-muted" : "hover:bg-muted/50"
@@ -355,7 +382,7 @@ export default function ContractsPage() {
             High Risk
           </button>
           <button
-            onClick={() => setFilter("medium-risk")}
+            onClick={() => startTransition(() => setFilter("medium-risk"))}
             className={cn(
               "px-3 py-1.5 rounded-md text-[12px] font-medium transition-colors text-muted-foreground",
               filter === "medium-risk" ? "bg-muted" : "hover:bg-muted/50"
@@ -364,7 +391,7 @@ export default function ContractsPage() {
             Medium Risk
           </button>
           <button
-            onClick={() => setFilter("low-risk")}
+            onClick={() => startTransition(() => setFilter("low-risk"))}
             className={cn(
               "px-3 py-1.5 rounded-md text-[12px] font-medium transition-colors text-muted-foreground",
               filter === "low-risk" ? "bg-muted" : "hover:bg-muted/50"
@@ -375,8 +402,98 @@ export default function ContractsPage() {
           <span className="text-[12px] font-medium ml-2 text-muted-foreground/60">{filteredContracts.length} Results</span>
         </div>
 
-        {/* Search */}
-        <div className="flex items-center gap-2">
+        {/* Mobile: Filter badges + Search */}
+        <div className="md:hidden flex items-center gap-2 flex-1">
+          <AnimatePresence mode="wait">
+            {mobileSearchOpen ? (
+              <motion.div
+                key="search-expanded"
+                className="flex items-center gap-2 flex-1 h-[32px]"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 20 }}
+                transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1] }}
+              >
+                <div className="flex-1 relative h-full">
+                  <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                  <input
+                    type="text"
+                    placeholder="Search contracts"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    autoFocus
+                    data-rounded="true"
+                    className="w-full h-full pl-9 pr-3 text-[16px] rounded-md bg-muted text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-transparent"
+                  />
+                </div>
+                <button
+                  onClick={() => {
+                    setMobileSearchOpen(false);
+                    setSearchQuery("");
+                  }}
+                  className="w-8 h-8 rounded-md bg-muted flex items-center justify-center touch-manipulation shrink-0"
+                >
+                  <X className="w-3.5 h-3.5 text-muted-foreground" />
+                </button>
+              </motion.div>
+            ) : (
+              <motion.div
+                key="filters"
+                className="flex items-center gap-2 flex-1"
+                initial={{ opacity: 0, y: -20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1] }}
+              >
+                <button
+                  onClick={() => startTransition(() => setFilter("all"))}
+                  className={cn(
+                    "px-3 py-1.5 rounded-md text-[12px] font-medium transition-colors whitespace-nowrap min-h-[32px] touch-manipulation",
+                    filter === "all" ? "bg-purple-500 text-white" : "bg-muted text-muted-foreground"
+                  )}
+                >
+                  All
+                </button>
+                <button
+                  onClick={() => startTransition(() => setFilter("high-risk"))}
+                  className={cn(
+                    "px-3 py-1.5 rounded-md text-[12px] font-medium transition-colors whitespace-nowrap min-h-[32px] touch-manipulation",
+                    filter === "high-risk" ? "bg-red-500 text-white" : "bg-muted text-muted-foreground"
+                  )}
+                >
+                  High
+                </button>
+                <button
+                  onClick={() => startTransition(() => setFilter("medium-risk"))}
+                  className={cn(
+                    "px-3 py-1.5 rounded-md text-[12px] font-medium transition-colors whitespace-nowrap min-h-[32px] touch-manipulation",
+                    filter === "medium-risk" ? "bg-amber-500 text-white" : "bg-muted text-muted-foreground"
+                  )}
+                >
+                  Medium
+                </button>
+                <button
+                  onClick={() => startTransition(() => setFilter("low-risk"))}
+                  className={cn(
+                    "px-3 py-1.5 rounded-md text-[12px] font-medium transition-colors whitespace-nowrap min-h-[32px] touch-manipulation",
+                    filter === "low-risk" ? "bg-green-500 text-white" : "bg-muted text-muted-foreground"
+                  )}
+                >
+                  Low
+                </button>
+                <button
+                  onClick={() => setMobileSearchOpen(true)}
+                  className="w-8 h-8 rounded-md bg-muted flex items-center justify-center touch-manipulation shrink-0"
+                >
+                  <Search className="w-3.5 h-3.5 text-muted-foreground" />
+                </button>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+
+        {/* Search - hidden on mobile */}
+        <div className="hidden md:flex items-center gap-2">
           <input
             type="text"
             placeholder="Search contracts"
@@ -386,90 +503,224 @@ export default function ContractsPage() {
         </div>
       </motion.div>
 
-      {/* Table */}
-      <div className="flex-1 overflow-auto w-full">
-        {/* Table Header */}
-        <motion.div
-          className="grid px-4 py-2.5 text-[11px] font-semibold uppercase tracking-wider border-b border-border sticky top-0 w-full bg-muted/50 text-muted-foreground/50"
-          style={{
-            gridTemplateColumns: '40px 1fr 200px 120px 150px 120px 100px 50px 50px'
-          }}
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.3, delay: 0.1 }}
-        >
-          <div className="flex items-center justify-center">
-            <button
-              onClick={toggleSelectAll}
-              className={cn(
-                "w-4 h-4 rounded border flex items-center justify-center transition-colors",
-                isAllSelected
-                  ? "bg-purple-500 border-purple-500"
-                  : isSomeSelected
-                  ? "bg-purple-500/50 border-purple-500"
-                  : "border-muted-foreground/30 hover:border-muted-foreground/50"
-              )}
-            >
-              {(isAllSelected || isSomeSelected) && (
-                <Check className="w-3 h-3 text-white" />
-              )}
-            </button>
-          </div>
-          <div>Contract</div>
-          <div>Type</div>
-          <div>Category</div>
-          <div>Party</div>
-          <div>Uploaded</div>
-          <div>Risk</div>
-          <div className="text-center">
-            <Star className="w-3 h-3 inline" />
-          </div>
-          <div></div>
-        </motion.div>
-
-        {/* Table Body */}
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={activeTab}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            transition={{ duration: 0.2 }}
+      {/* Table Header - Desktop (fixed) */}
+      <motion.div
+        className="hidden md:grid px-4 py-2.5 text-[11px] font-semibold uppercase tracking-wider border-b border-border w-full bg-muted/50 text-muted-foreground/50 shrink-0"
+        style={{
+          gridTemplateColumns: '40px 1fr 200px 120px 150px 120px 100px 50px 50px'
+        }}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.3, delay: 0.1 }}
+      >
+        <div className="flex items-center justify-center">
+          <button
+            onClick={toggleSelectAll}
+            className={cn(
+              "w-4 h-4 rounded border flex items-center justify-center transition-colors",
+              isAllSelected
+                ? "bg-purple-500 border-purple-500"
+                : isSomeSelected
+                ? "bg-purple-500/50 border-purple-500"
+                : "border-muted-foreground/30 hover:border-muted-foreground/50"
+            )}
           >
+            {(isAllSelected || isSomeSelected) && (
+              <Check className="w-3 h-3 text-white" />
+            )}
+          </button>
+        </div>
+        <div>Contract</div>
+        <div>Type</div>
+        <div>Category</div>
+        <div>Party</div>
+        <div>Uploaded</div>
+        <div>Risk</div>
+        <div className="text-center">
+          <Star className="w-3 h-3 inline" />
+        </div>
+        <div></div>
+      </motion.div>
+
+      {/* Table Header - Mobile (fixed) */}
+      <motion.div
+        className="md:hidden grid px-4 py-2.5 text-[11px] font-semibold uppercase tracking-wider border-b border-border w-full bg-muted/50 text-muted-foreground/50 shrink-0"
+        style={{
+          gridTemplateColumns: '1fr 80px 40px'
+        }}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.3, delay: 0.1 }}
+      >
+        <div>Contract</div>
+        <div>Risk</div>
+        <div className="text-center">
+          <Star className="w-3 h-3 inline" />
+        </div>
+      </motion.div>
+
+      {/* Table Body - Scrollable */}
+      <div className="flex-1 overflow-auto w-full overscroll-contain">
+        {/* Table Body */}
+        <div key={`${activeTab}-${filter}`}>
           {filteredContracts.map((contract, index) => {
             const isSelected = selectedContracts.has(contract.id);
             return (
-            <motion.div
-              key={contract.id}
-              className={cn(
-                "grid px-4 py-3 items-center border-b border-border hover:bg-muted/50 transition-colors cursor-pointer group",
-                isSelected && "bg-purple-500/5"
-              )}
-              style={{ gridTemplateColumns: '40px 1fr 200px 120px 150px 120px 100px 50px 50px' }}
-              onClick={() => router.push(activeTab === "shared" ? `/dashboard/shared/${contract.id}` : `/dashboard/contracts/${contract.id}`)}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3, delay: 0.15 + index * 0.05 }}
-            >
-              {/* Checkbox */}
-              <div className="flex items-center justify-center" onClick={(e) => e.stopPropagation()}>
-                <button
-                  onClick={() => toggleSelectContract(contract.id)}
-                  className={cn(
-                    "w-4 h-4 rounded border flex items-center justify-center transition-colors",
-                    isSelected
-                      ? "bg-purple-500 border-purple-500"
-                      : "border-muted-foreground/30 hover:border-muted-foreground/50"
-                  )}
-                >
-                  {isSelected && <Check className="w-3 h-3 text-white" />}
-                </button>
-              </div>
+            <div key={contract.id}>
+              {/* Desktop Row */}
+              <motion.div
+                className={cn(
+                  "hidden md:grid px-4 py-3 items-center border-b border-border hover:bg-muted/50 transition-colors cursor-pointer group",
+                  isSelected && "bg-purple-500/5"
+                )}
+                style={{ gridTemplateColumns: '40px 1fr 200px 120px 150px 120px 100px 50px 50px' }}
+                onClick={() => router.push(activeTab === "shared" ? `/dashboard/shared/${contract.id}` : `/dashboard/contracts/${contract.id}`)}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.4, delay: 0.1 + index * 0.08 }}
+              >
+                {/* Checkbox */}
+                <div className="flex items-center justify-center" onClick={(e) => e.stopPropagation()}>
+                  <button
+                    onClick={() => toggleSelectContract(contract.id)}
+                    className={cn(
+                      "w-4 h-4 rounded border flex items-center justify-center transition-colors",
+                      isSelected
+                        ? "bg-purple-500 border-purple-500"
+                        : "border-muted-foreground/30 hover:border-muted-foreground/50"
+                    )}
+                  >
+                    {isSelected && <Check className="w-3 h-3 text-white" />}
+                  </button>
+                </div>
 
-              {/* Contract Name */}
-              <div className="flex items-center gap-2 min-w-0 pr-4">
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-2">
+                {/* Contract Name */}
+                <div className="flex items-center gap-2 min-w-0 pr-4">
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2">
+                      <span className="text-[13px] font-medium truncate text-foreground">
+                        {contract.title}
+                      </span>
+                      {activeTab === "my" && contractShares[contract.id] && (
+                        <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-purple-500/10 text-purple-500 flex items-center gap-1 shrink-0">
+                          <Share2 className="w-2.5 h-2.5" />
+                        </span>
+                      )}
+                    </div>
+                    {activeTab === "shared" && (() => {
+                      const sharedInfo = getSharedInfo(contract.id);
+                      if (!sharedInfo?.owner) return null;
+                      const ownerName = sharedInfo.owner.full_name || sharedInfo.owner.email;
+                      return (
+                        <span className="inline-flex items-center gap-1.5 text-[10px] font-medium px-2 py-0.5 rounded-full bg-purple-500/10 text-purple-400 mt-1">
+                          <span className="w-4 h-4 rounded-full bg-purple-500 text-white text-[8px] flex items-center justify-center font-semibold">
+                            {getInitials(sharedInfo.owner.full_name, sharedInfo.owner.email)}
+                          </span>
+                          {ownerName}
+                        </span>
+                      );
+                    })()}
+                  </div>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setQuickView({ open: true, contract });
+                    }}
+                    className="shrink-0 p-1.5 rounded-md border border-transparent hover:border-border hover:bg-muted opacity-0 group-hover:opacity-100 transition-all"
+                    title="Quick View"
+                  >
+                    <HugeiconsIcon icon={ViewIcon} size={14} className="text-muted-foreground" />
+                  </button>
+                </div>
+
+                {/* Type */}
+                <div>
+                  <span className="text-[13px] text-muted-foreground">
+                    {contract.contract_type || "—"}
+                  </span>
+                </div>
+
+                {/* Category */}
+                <div>
+                  <span className="text-[13px] text-muted-foreground capitalize">
+                    {getCategory(contract)}
+                  </span>
+                </div>
+
+                {/* Party */}
+                <div>
+                  <span className="text-[13px] text-muted-foreground">
+                    {getPartyName(contract)}
+                  </span>
+                </div>
+
+                {/* Uploaded Date */}
+                <div>
+                  <span className="text-[13px] text-muted-foreground/70">
+                    {new Date(contract.created_at).toLocaleDateString("en-US", {
+                      day: "2-digit",
+                      month: "2-digit",
+                      year: "numeric"
+                    })}
+                  </span>
+                </div>
+
+                {/* Risk */}
+                <div>
+                  {contract.overall_risk && (
+                    <span
+                      className="text-[11px] font-medium px-2.5 py-1 rounded-md"
+                      style={{
+                        backgroundColor: contract.overall_risk === 'high' ? 'rgba(239, 68, 68, 0.1)' :
+                                         contract.overall_risk === 'medium' ? 'rgba(245, 158, 11, 0.1)' : 'rgba(34, 197, 94, 0.1)',
+                        color: contract.overall_risk === 'high' ? '#dc2626' :
+                               contract.overall_risk === 'medium' ? '#d97706' : '#16a34a'
+                      }}
+                    >
+                      {contract.overall_risk === "high" ? "High" :
+                       contract.overall_risk === "medium" ? "Medium" : "Low"}
+                    </span>
+                  )}
+                </div>
+
+                {/* Starred */}
+                <div className="flex justify-center" onClick={(e) => e.stopPropagation()}>
+                  <button
+                    onClick={() => toggleStar(contract.id, contract.is_starred)}
+                    className="p-1 rounded hover:bg-muted transition-colors"
+                  >
+                    {contract.is_starred ? (
+                      <Star className="w-4 h-4 text-amber-500 fill-amber-500" />
+                    ) : (
+                      <Star className="w-4 h-4 text-muted-foreground/30 group-hover:text-muted-foreground/60" />
+                    )}
+                  </button>
+                </div>
+
+                {/* Actions */}
+                <div className="flex justify-center" onClick={(e) => e.stopPropagation()}>
+                  <button
+                    onClick={() => setDeleteModal({ open: true, contract })}
+                    className="p-1.5 rounded hover:bg-red-500/10 opacity-0 group-hover:opacity-100 transition-all"
+                    title="Delete"
+                  >
+                    <Trash2 className="w-4 h-4 text-muted-foreground hover:text-red-500 transition-colors" />
+                  </button>
+                </div>
+              </motion.div>
+
+              {/* Mobile Row (simplified) */}
+              <div
+                className={cn(
+                  "md:hidden grid px-4 py-3 items-center border-b border-border hover:bg-muted/50 transition-colors cursor-pointer",
+                  isSelected && "bg-purple-500/5"
+                )}
+                style={{ gridTemplateColumns: '1fr 80px 40px' }}
+                onClick={() => router.push(activeTab === "shared" ? `/dashboard/shared/${contract.id}` : `/dashboard/contracts/${contract.id}`)}
+              >
+                {/* Contract Name */}
+                <div className="min-w-0">
+                  <div className="flex items-center gap-1.5">
                     <span className="text-[13px] font-medium truncate text-foreground">
                       {contract.title}
                     </span>
@@ -479,111 +730,47 @@ export default function ContractsPage() {
                       </span>
                     )}
                   </div>
-                  {activeTab === "shared" && (() => {
-                    const sharedInfo = getSharedInfo(contract.id);
-                    if (!sharedInfo?.owner) return null;
-                    const ownerName = sharedInfo.owner.full_name || sharedInfo.owner.email;
-                    return (
-                      <span className="inline-flex items-center gap-1.5 text-[10px] font-medium px-2 py-0.5 rounded-full bg-purple-500/10 text-purple-400 mt-1">
-                        <span className="w-4 h-4 rounded-full bg-purple-500 text-white text-[8px] flex items-center justify-center font-semibold">
-                          {getInitials(sharedInfo.owner.full_name, sharedInfo.owner.email)}
-                        </span>
-                        {ownerName}
-                      </span>
-                    );
-                  })()}
-                </div>
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setQuickView({ open: true, contract });
-                  }}
-                  className="shrink-0 p-1.5 rounded-md border border-transparent hover:border-border hover:bg-muted opacity-0 group-hover:opacity-100 transition-all"
-                  title="Quick View"
-                >
-                  <HugeiconsIcon icon={ViewIcon} size={14} className="text-muted-foreground" />
-                </button>
-              </div>
-
-              {/* Type */}
-              <div>
-                <span className="text-[13px] text-muted-foreground">
-                  {contract.contract_type || "—"}
-                </span>
-              </div>
-
-              {/* Category */}
-              <div>
-                <span className="text-[13px] text-muted-foreground capitalize">
-                  {getCategory(contract)}
-                </span>
-              </div>
-
-              {/* Party */}
-              <div>
-                <span className="text-[13px] text-muted-foreground">
-                  {getPartyName(contract)}
-                </span>
-              </div>
-
-              {/* Uploaded Date */}
-              <div>
-                <span className="text-[13px] text-muted-foreground/70">
-                  {new Date(contract.created_at).toLocaleDateString("en-US", {
-                    day: "2-digit",
-                    month: "2-digit",
-                    year: "numeric"
-                  })}
-                </span>
-              </div>
-
-              {/* Risk */}
-              <div>
-                {contract.overall_risk && (
-                  <span
-                    className="text-[11px] font-medium px-2.5 py-1 rounded-md"
-                    style={{
-                      backgroundColor: contract.overall_risk === 'high' ? 'rgba(239, 68, 68, 0.1)' :
-                                       contract.overall_risk === 'medium' ? 'rgba(245, 158, 11, 0.1)' : 'rgba(34, 197, 94, 0.1)',
-                      color: contract.overall_risk === 'high' ? '#dc2626' :
-                             contract.overall_risk === 'medium' ? '#d97706' : '#16a34a'
-                    }}
-                  >
-                    {contract.overall_risk === "high" ? "High" :
-                     contract.overall_risk === "medium" ? "Medium" : "Low"}
+                  <span className="text-[11px] text-muted-foreground">
+                    {contract.contract_type || "Contract"}
                   </span>
-                )}
-              </div>
+                </div>
 
-              {/* Starred */}
-              <div className="flex justify-center" onClick={(e) => e.stopPropagation()}>
-                <button
-                  onClick={() => toggleStar(contract.id, contract.is_starred)}
-                  className="p-1 rounded hover:bg-muted transition-colors"
-                >
-                  {contract.is_starred ? (
-                    <Star className="w-4 h-4 text-amber-500 fill-amber-500" />
-                  ) : (
-                    <Star className="w-4 h-4 text-muted-foreground/30 group-hover:text-muted-foreground/60" />
+                {/* Risk */}
+                <div>
+                  {contract.overall_risk && (
+                    <span
+                      className="text-[10px] font-medium px-2 py-0.5 rounded-md"
+                      style={{
+                        backgroundColor: contract.overall_risk === 'high' ? 'rgba(239, 68, 68, 0.1)' :
+                                         contract.overall_risk === 'medium' ? 'rgba(245, 158, 11, 0.1)' : 'rgba(34, 197, 94, 0.1)',
+                        color: contract.overall_risk === 'high' ? '#dc2626' :
+                               contract.overall_risk === 'medium' ? '#d97706' : '#16a34a'
+                      }}
+                    >
+                      {contract.overall_risk === "high" ? "High" :
+                       contract.overall_risk === "medium" ? "Medium" : "Low"}
+                    </span>
                   )}
-                </button>
-              </div>
+                </div>
 
-              {/* Actions */}
-              <div className="flex justify-center" onClick={(e) => e.stopPropagation()}>
-                <button
-                  onClick={() => setDeleteModal({ open: true, contract })}
-                  className="p-1.5 rounded hover:bg-red-500/10 opacity-0 group-hover:opacity-100 transition-all"
-                  title="Delete"
-                >
-                  <Trash2 className="w-4 h-4 text-muted-foreground hover:text-red-500 transition-colors" />
-                </button>
+                {/* Starred */}
+                <div className="flex justify-center" onClick={(e) => e.stopPropagation()}>
+                  <button
+                    onClick={() => toggleStar(contract.id, contract.is_starred)}
+                    className="p-1 rounded hover:bg-muted transition-colors"
+                  >
+                    {contract.is_starred ? (
+                      <Star className="w-4 h-4 text-amber-500 fill-amber-500" />
+                    ) : (
+                      <Star className="w-4 h-4 text-muted-foreground/30" />
+                    )}
+                  </button>
+                </div>
               </div>
-            </motion.div>
+            </div>
           );
           })}
-          </motion.div>
-        </AnimatePresence>
+        </div>
 
         {/* Empty filtered state */}
         {filteredContracts.length === 0 && activeContracts.length > 0 && (

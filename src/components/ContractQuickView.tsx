@@ -189,15 +189,15 @@ export function ContractQuickView({
   const risk = contract?.overall_risk ? riskConfig[contract.overall_risk as keyof typeof riskConfig] : null;
 
   return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
+    <Sheet open={open} onOpenChange={onOpenChange} modal={true}>
       <SheetContent
         side="right"
         className="w-full sm:max-w-[520px] p-0 flex flex-col overflow-hidden [&>button]:hidden"
       >
         {contract && (
           <>
-        {/* Header */}
-        <div className="flex items-center justify-between px-5 py-3 border-b border-border bg-muted/30">
+        {/* Header - Fixed */}
+        <div className="flex items-center justify-between px-5 py-3 border-b border-border bg-muted/30 shrink-0">
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <span>Dashboard</span>
             <span className="text-muted-foreground/50">/</span>
@@ -225,63 +225,8 @@ export function ContractQuickView({
 
         {/* Content - Scrollable */}
         <div className="flex-1 overflow-y-auto">
-          {/* Title Section */}
-          <div className="p-6">
-            <div className="flex items-start gap-4">
-              {/* Icon */}
-              <div className={cn(
-                "w-16 h-16 rounded-2xl flex items-center justify-center shrink-0 border",
-                contract.overall_risk === "high" ? "bg-red-500/10 border-red-500/20" :
-                contract.overall_risk === "medium" ? "bg-amber-500/10 border-amber-500/20" :
-                "bg-primary/10 border-primary/20"
-              )}>
-                <FileText className={cn(
-                  "w-8 h-8",
-                  contract.overall_risk === "high" ? "text-red-500" :
-                  contract.overall_risk === "medium" ? "text-amber-500" :
-                  "text-primary"
-                )} />
-              </div>
-
-              {/* Title & Type */}
-              <div className="flex-1 min-w-0 pt-1">
-                <h2 className="text-xl font-semibold text-foreground mb-1 leading-tight">
-                  {contract.title}
-                </h2>
-                <p className="text-sm text-muted-foreground">
-                  {contract.contract_type || "Contract"}
-                </p>
-              </div>
-            </div>
-
-            {/* Tags */}
-            <div className="mt-4 space-y-2">
-              {risk && (
-                <div className="flex items-center gap-2">
-                  <span className={cn(
-                    "text-xs font-medium px-3 py-1.5 rounded-lg border shrink-0",
-                    risk.color
-                  )}>
-                    {risk.label}
-                  </span>
-                  <span className="text-xs text-muted-foreground">
-                    {risk.explanation}
-                  </span>
-                </div>
-              )}
-              {versionCount > 0 && (
-                <span className="inline-block text-xs font-medium px-3 py-1.5 rounded-lg border border-border bg-muted text-muted-foreground">
-                  {versionCount + 1} versions
-                </span>
-              )}
-            </div>
-          </div>
-
-          {/* Divider under tags */}
-          <div className="border-t border-border" />
-
           {/* Summary Highlights */}
-          <div className="px-6 py-6">
+          <div className="px-6 pt-2 pb-6">
             {analysis?.summary ? (
               <SummaryHighlights summary={analysis.summary} />
             ) : (
@@ -417,8 +362,8 @@ export function ContractQuickView({
           )}
         </div>
 
-        {/* Footer */}
-        <div className="border-t border-border p-4 bg-muted/30">
+        {/* Footer - Fixed */}
+        <div className="border-t border-border p-4 bg-muted/30 shrink-0">
           <Link href={`/dashboard/contracts/${contract.id}`} className="block">
             <Button className="w-full rounded-xl h-11" variant="outline">
               <FileCheck className="w-4 h-4 mr-2" />

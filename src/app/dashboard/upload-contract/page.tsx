@@ -211,13 +211,24 @@ export default function UploadContractPage() {
   );
   const [showUploadModal, setShowUploadModal] = useState(pathname.includes("/recipient") || pathname.includes("/sender"));
 
+  // Mobile-only: which role is shown in the single-panel view (toggle between recipient/sender)
+  const [mobileRoleView, setMobileRoleView] = useState<"recipient" | "sender">("recipient");
+
   // Handle role selection with animation
   const handleRoleSelect = (role: "recipient" | "sender") => {
     setSelectedRole(role);
     // Show upload modal AFTER panel push animation completes
     setTimeout(() => {
       setShowUploadModal(true);
-    }, 500);
+    }, 300);
+  };
+
+  // Handle going back from upload modal
+  const handleGoBack = () => {
+    setShowUploadModal(false);
+    setTimeout(() => {
+      setSelectedRole(null);
+    }, 300);
   };
 
   // Core state
@@ -758,15 +769,189 @@ export default function UploadContractPage() {
   // IDLE STATE - Role Selection or Upload
   // ============================================
   if (status === "idle") {
+    const currentRole = mobileRoleView;
+    const isRecipient = currentRole === "recipient";
+
     return (
       <>
-      <div className="flex flex-col md:flex-row bg-card" style={{ height: 'calc(100vh - 48px)' }}>
+      {/* MOBILE VIEW - Single panel with toggle */}
+      <div className="md:hidden flex flex-col bg-card" style={{ height: 'calc(100vh - 96px)' }}>
+        <AnimatePresence mode="wait">
+          {!showUploadModal ? (
+            <motion.div
+              key="role-selection"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="flex-1 flex flex-col items-center justify-center relative overflow-hidden px-6"
+            >
+              {/* Dotted logo watermark */}
+              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                <div
+                  className="w-[600px] h-[600px] opacity-20"
+                  style={{
+                    backgroundImage: `radial-gradient(circle, ${isRecipient ? 'rgba(168, 85, 247, 0.8)' : 'rgba(59, 130, 246, 0.8)'} 1.5px, transparent 1.5px)`,
+                    backgroundSize: '8px 8px',
+                    WebkitMaskImage: 'url(/darkModeS.svg)',
+                    WebkitMaskSize: 'contain',
+                    WebkitMaskRepeat: 'no-repeat',
+                    WebkitMaskPosition: 'center',
+                    maskImage: 'url(/darkModeS.svg)',
+                    maskSize: 'contain',
+                    maskRepeat: 'no-repeat',
+                    maskPosition: 'center'
+                  }}
+                />
+              </div>
+
+              {/* Toggle between Recipient/Sender */}
+              <div className="flex items-center gap-1 p-1 bg-muted rounded-lg mb-8 z-10">
+                <button
+                  onClick={() => setMobileRoleView("recipient")}
+                  className={cn(
+                    "px-4 py-2 text-sm font-medium rounded-md transition-all",
+                    isRecipient ? "bg-purple-500 text-white" : "text-muted-foreground hover:text-foreground"
+                  )}
+                >
+                  Receiving
+                </button>
+                <button
+                  onClick={() => setMobileRoleView("sender")}
+                  className={cn(
+                    "px-4 py-2 text-sm font-medium rounded-md transition-all",
+                    !isRecipient ? "bg-blue-500 text-white" : "text-muted-foreground hover:text-foreground"
+                  )}
+                >
+                  Sending
+                </button>
+              </div>
+
+              {/* Role content */}
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={currentRole}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  transition={{ duration: 0.2 }}
+                  className="flex flex-col items-center gap-6 max-w-sm text-center z-10"
+                >
+                  <div className="space-y-3">
+                    <h2 className="text-xl font-semibold text-foreground">
+                      {isRecipient ? "I received a contract" : "I'm sending a contract"}
+                    </h2>
+                    <p className="text-sm text-muted-foreground">
+                      {isRecipient
+                        ? "Upload a contract you've received to analyze terms, identify risks, and get recommendations"
+                        : "Upload a contract you're sending to check for completeness, enforceability, and missing protections"}
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => handleRoleSelect(currentRole)}
+                    className={cn(
+                      "flex items-center gap-2 px-6 py-3 rounded-xl font-medium text-white transition-all",
+                      isRecipient ? "bg-purple-500 hover:bg-purple-600" : "bg-blue-500 hover:bg-blue-600"
+                    )}
+                  >
+                    Upload Contract
+                    <ChevronRight className="w-4 h-4" />
+                  </button>
+                </motion.div>
+              </AnimatePresence>
+            </motion.div>
+          ) : (
+            <motion.div
+              key="upload-modal"
+              initial={{ opacity: 0, y: 50 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 50 }}
+              transition={{ duration: 0.3 }}
+              className="flex-1 flex flex-col p-4 bg-card"
+            >
+              {/* Back button and role indicator */}
+              <div className="flex items-center gap-2 mb-4 mt-20">
+                <button
+                  onClick={handleGoBack}
+                  className="flex items-center gap-1.5 px-3 py-2 text-xs font-medium text-muted-foreground hover:text-foreground border border-border hover:bg-muted rounded-lg transition-colors"
+                >
+                  <ChevronLeft className="w-3.5 h-3.5" />
+                  Back
+                </button>
+                <div className={cn(
+                  "flex items-center gap-1.5 px-3 py-2 text-xs font-medium rounded-lg",
+                  selectedRole === "recipient" ? "bg-purple-500/10 text-purple-500" : "bg-blue-500/10 text-blue-500"
+                )}>
+                  {selectedRole === "recipient" ? "Recipient" : "Sender"}
+                </div>
+              </div>
+
+              <div className="flex-1 flex flex-col items-center justify-center gap-4">
+                <div
+                  onDragOver={handleDragOver}
+                  onDrop={handleDrop}
+                  onClick={() => fileInputRef.current?.click()}
+                  className="w-full p-8 text-center cursor-pointer rounded-xl"
+                  style={{
+                    border: `2px dashed ${isHovering ? (selectedRole === "recipient" ? '#8b5cf6' : '#3b82f6') : 'var(--border)'}`,
+                    backgroundColor: isHovering ? (selectedRole === "recipient" ? 'rgba(139, 92, 246, 0.05)' : 'rgba(59, 130, 246, 0.05)') : 'transparent',
+                  }}
+                >
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept=".pdf,.doc,.docx,.txt"
+                    onChange={handleFileInput}
+                    className="hidden"
+                  />
+                  <div className="flex flex-col items-center gap-3">
+                    <div className={cn(
+                      "w-14 h-14 rounded-full flex items-center justify-center",
+                      selectedRole === "recipient" ? "bg-purple-500/20" : "bg-blue-500/20"
+                    )}>
+                      <HugeiconsIcon
+                        icon={FileUploadIcon}
+                        size={28}
+                        className={selectedRole === "recipient" ? "text-purple-500" : "text-blue-500"}
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-sm font-medium text-foreground">
+                        Drop your file here, or{" "}
+                        <span className={selectedRole === "recipient" ? "text-purple-600" : "text-blue-600"}>
+                          browse
+                        </span>
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        PDF, DOC, DOCX, TXT up to 200MB
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {isMobile && (
+                  <button
+                    type="button"
+                    className="flex items-center gap-2 px-4 py-2 rounded-lg border border-border bg-background text-foreground text-sm font-medium hover:bg-muted transition-colors"
+                    onClick={() => setShowScanner(true)}
+                  >
+                    <Camera className="w-4 h-4" />
+                    Scan Document
+                  </button>
+                )}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+
+      {/* DESKTOP VIEW - Two panels side by side */}
+      <div className="hidden md:flex flex-row bg-card" style={{ height: 'calc(100vh - 96px)' }}>
         {/* Recipient Side */}
         <motion.div
-          initial={{ opacity: 1, x: 0 }}
+          initial={{ opacity: 1 }}
           animate={{
-            opacity: selectedRole === "sender" ? 0 : 1,
-            x: selectedRole === "sender" ? -200 : 0,
+            opacity: selectedRole === "sender" ? 0.3 : 1,
             flex: selectedRole === "recipient" ? 1 : selectedRole === "sender" ? 0 : 1
           }}
           transition={{ duration: 0.4, ease: [0.4, 0, 0.2, 1] }}
@@ -774,15 +959,13 @@ export default function UploadContractPage() {
           onMouseEnter={() => !selectedRole && downloadIconRef.current?.startAnimation()}
           onMouseLeave={() => downloadIconRef.current?.stopAnimation()}
           className={cn(
-            "flex flex-col items-center justify-center relative overflow-hidden min-h-[45vh] md:min-h-0",
-            !selectedRole && "cursor-pointer border-b md:border-b-0 md:border-r border-border group"
+            "flex flex-col items-center justify-center relative overflow-hidden",
+            !selectedRole && "cursor-pointer border-r border-border group"
           )}
           style={{ flex: selectedRole === "recipient" ? 1 : selectedRole === "sender" ? 0 : 1 }}
         >
           {/* Dotted logo watermark */}
-          <div
-            className="absolute inset-0 flex items-center justify-center pointer-events-none"
-          >
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
             <div
               className="w-[600px] h-[600px] opacity-20 group-hover:opacity-40 transition-opacity duration-500 ease-out"
               style={{
@@ -800,12 +983,12 @@ export default function UploadContractPage() {
             />
           </div>
 
-          {/* Role selection content - hide when selected */}
+          {/* Role selection content */}
           <AnimatePresence>
             {!selectedRole && (
               <motion.div
-                exit={{ opacity: 0, y: -30 }}
-                transition={{ duration: 0.3 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                transition={{ duration: 0.2 }}
                 className="flex flex-col items-center gap-6 max-w-sm text-center"
               >
                 <div className="space-y-3">
@@ -827,31 +1010,20 @@ export default function UploadContractPage() {
             )}
           </AnimatePresence>
 
-          {/* Upload modal - slides up from bottom */}
+          {/* Upload modal */}
           <AnimatePresence mode="wait">
             {showUploadModal && selectedRole === "recipient" && (
               <motion.div
-                initial={{ opacity: 0, y: 100 }}
+                initial={{ opacity: 0, y: 50 }}
                 animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: 100 }}
-                transition={{ duration: 0.4, ease: [0.4, 0, 0.2, 1] }}
-                className="absolute inset-0 flex flex-col p-8 z-10"
+                exit={{ opacity: 0, y: 50 }}
+                transition={{ duration: 0.3 }}
+                className="absolute inset-0 flex flex-col p-8 z-10 bg-card"
               >
-                {/* Back button and role indicator */}
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  transition={{ delay: 0.3 }}
-                  className="absolute top-3 left-4 flex items-center gap-2"
-                >
+                <div className="absolute top-3 left-4 flex items-center gap-2 z-20">
                   <button
-                    onClick={() => {
-                      setShowUploadModal(false);
-                      // Reset role AFTER upload fully slides down
-                      setTimeout(() => setSelectedRole(null), 450);
-                    }}
-                    className="flex items-center gap-1.5 px-3 py-2 text-xs font-medium text-muted-foreground hover:text-foreground border border-border hover:bg-muted rounded-lg transition-colors"
+                    onClick={handleGoBack}
+                    className="flex items-center gap-1.5 px-3 py-2 text-xs font-medium text-muted-foreground hover:text-foreground border border-border hover:bg-muted rounded-lg transition-colors bg-card"
                   >
                     <ChevronLeft className="w-3.5 h-3.5" />
                     Change Role
@@ -859,66 +1031,43 @@ export default function UploadContractPage() {
                   <div className="flex items-center gap-1.5 px-3 py-2 text-xs font-medium bg-purple-500/10 text-purple-500 rounded-lg">
                     Recipient
                   </div>
-                </motion.div>
+                </div>
 
-                <div className="flex-1 flex flex-col items-center justify-center gap-4 pt-4 md:pt-0">
-                <motion.div
-                  initial={{ scale: 0.95 }}
-                  animate={{ scale: 1 }}
-                  transition={{ duration: 0.4, delay: 0.1 }}
-                  onDragOver={handleDragOver}
-                  onDrop={handleDrop}
-                  onClick={() => fileInputRef.current?.click()}
-                  onMouseEnter={() => setIsHovering(true)}
-                  onMouseLeave={() => setIsHovering(false)}
-                  className="w-full max-w-4xl p-12 md:p-32 text-center transition-all cursor-pointer rounded-xl"
-                  style={{
-                    border: `2px dashed ${isHovering ? '#8b5cf6' : 'var(--border)'}`,
-                    backgroundColor: isHovering ? 'rgba(139, 92, 246, 0.05)' : 'transparent',
-                    transition: 'all 0.2s ease',
-                  }}
-                >
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept=".pdf,.doc,.docx,.txt"
-                    onChange={handleFileInput}
-                    className="hidden"
-                  />
-                  <div className="flex flex-col items-center gap-3">
-                    <div className="w-14 h-14 rounded-full flex items-center justify-center transition-all bg-purple-500/20">
-                      <HugeiconsIcon
-                        icon={FileUploadIcon}
-                        size={28}
-                        className="text-purple-500"
-                      />
-                    </div>
-                    <div className="space-y-1">
-                      <p className="text-sm font-medium text-foreground">
-                        Drop your file here, or{" "}
-                        <span className="text-purple-600 hover:text-purple-700 transition-colors">
-                          browse
-                        </span>
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        PDF, DOC, DOCX, TXT up to 200MB
-                      </p>
-                    </div>
-                  </div>
-                </motion.div>
-
-                {/* Mobile scan option */}
-                {isMobile && (
-                  <button
-                    type="button"
-                    className="flex items-center gap-2 px-4 py-2 rounded-lg border border-border bg-background text-foreground text-sm font-medium hover:bg-muted transition-colors"
-                    style={{ touchAction: 'manipulation' }}
-                    onClick={() => setShowScanner(true)}
+                <div className="flex-1 flex flex-col items-center justify-center gap-4">
+                  <motion.div
+                    initial={{ scale: 0.95 }}
+                    animate={{ scale: 1 }}
+                    transition={{ duration: 0.3 }}
+                    onDragOver={handleDragOver}
+                    onDrop={handleDrop}
+                    onClick={() => fileInputRef.current?.click()}
+                    onMouseEnter={() => setIsHovering(true)}
+                    onMouseLeave={() => setIsHovering(false)}
+                    className="w-full max-w-4xl p-32 text-center transition-all cursor-pointer rounded-xl"
+                    style={{
+                      border: `2px dashed ${isHovering ? '#8b5cf6' : 'var(--border)'}`,
+                      backgroundColor: isHovering ? 'rgba(139, 92, 246, 0.05)' : 'transparent',
+                    }}
                   >
-                    <Camera className="w-4 h-4" />
-                    Scan Document
-                  </button>
-                )}
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept=".pdf,.doc,.docx,.txt"
+                      onChange={handleFileInput}
+                      className="hidden"
+                    />
+                    <div className="flex flex-col items-center gap-3">
+                      <div className="w-14 h-14 rounded-full flex items-center justify-center bg-purple-500/20">
+                        <HugeiconsIcon icon={FileUploadIcon} size={28} className="text-purple-500" />
+                      </div>
+                      <div className="space-y-1">
+                        <p className="text-sm font-medium text-foreground">
+                          Drop your file here, or <span className="text-purple-600">browse</span>
+                        </p>
+                        <p className="text-xs text-muted-foreground">PDF, DOC, DOCX, TXT up to 200MB</p>
+                      </div>
+                    </div>
+                  </motion.div>
                 </div>
               </motion.div>
             )}
@@ -927,10 +1076,9 @@ export default function UploadContractPage() {
 
         {/* Sender Side */}
         <motion.div
-          initial={{ opacity: 1, x: 0 }}
+          initial={{ opacity: 1 }}
           animate={{
-            opacity: selectedRole === "recipient" ? 0 : 1,
-            x: selectedRole === "recipient" ? 200 : 0,
+            opacity: selectedRole === "recipient" ? 0.3 : 1,
             flex: selectedRole === "sender" ? 1 : selectedRole === "recipient" ? 0 : 1
           }}
           transition={{ duration: 0.4, ease: [0.4, 0, 0.2, 1] }}
@@ -938,15 +1086,13 @@ export default function UploadContractPage() {
           onMouseEnter={() => !selectedRole && uploadIconRef.current?.startAnimation()}
           onMouseLeave={() => uploadIconRef.current?.stopAnimation()}
           className={cn(
-            "flex flex-col items-center justify-center relative overflow-hidden min-h-[45vh] md:min-h-0",
+            "flex flex-col items-center justify-center relative overflow-hidden",
             !selectedRole && "cursor-pointer group"
           )}
           style={{ flex: selectedRole === "sender" ? 1 : selectedRole === "recipient" ? 0 : 1 }}
         >
           {/* Dotted logo watermark */}
-          <div
-            className="absolute inset-0 flex items-center justify-center pointer-events-none"
-          >
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
             <div
               className="w-[600px] h-[600px] opacity-20 group-hover:opacity-40 transition-opacity duration-500 ease-out"
               style={{
@@ -963,12 +1109,13 @@ export default function UploadContractPage() {
               }}
             />
           </div>
-          {/* Role selection content - hide when selected */}
+
+          {/* Role selection content */}
           <AnimatePresence>
             {!selectedRole && (
               <motion.div
-                exit={{ opacity: 0, y: -30 }}
-                transition={{ duration: 0.3 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                transition={{ duration: 0.2 }}
                 className="flex flex-col items-center gap-6 max-w-sm text-center"
               >
                 <div className="space-y-3">
@@ -990,31 +1137,20 @@ export default function UploadContractPage() {
             )}
           </AnimatePresence>
 
-          {/* Upload modal for sender - slides up from bottom */}
+          {/* Upload modal */}
           <AnimatePresence mode="wait">
             {showUploadModal && selectedRole === "sender" && (
               <motion.div
-                initial={{ opacity: 0, y: 100 }}
+                initial={{ opacity: 0, y: 50 }}
                 animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: 100 }}
-                transition={{ duration: 0.4, ease: [0.4, 0, 0.2, 1] }}
-                className="absolute inset-0 flex flex-col p-8 z-10"
+                exit={{ opacity: 0, y: 50 }}
+                transition={{ duration: 0.3 }}
+                className="absolute inset-0 flex flex-col p-8 z-10 bg-card"
               >
-                {/* Back button and role indicator */}
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  transition={{ delay: 0.3 }}
-                  className="absolute top-3 left-4 flex items-center gap-2"
-                >
+                <div className="absolute top-3 left-4 flex items-center gap-2 z-20">
                   <button
-                    onClick={() => {
-                      setShowUploadModal(false);
-                      // Reset role AFTER upload fully slides down
-                      setTimeout(() => setSelectedRole(null), 450);
-                    }}
-                    className="flex items-center gap-1.5 px-3 py-2 text-xs font-medium text-muted-foreground hover:text-foreground border border-border hover:bg-muted rounded-lg transition-colors"
+                    onClick={handleGoBack}
+                    className="flex items-center gap-1.5 px-3 py-2 text-xs font-medium text-muted-foreground hover:text-foreground border border-border hover:bg-muted rounded-lg transition-colors bg-card"
                   >
                     <ChevronLeft className="w-3.5 h-3.5" />
                     Change Role
@@ -1022,66 +1158,43 @@ export default function UploadContractPage() {
                   <div className="flex items-center gap-1.5 px-3 py-2 text-xs font-medium bg-blue-500/10 text-blue-500 rounded-lg">
                     Sender
                   </div>
-                </motion.div>
+                </div>
 
-                <div className="flex-1 flex flex-col items-center justify-center gap-4 pt-4 md:pt-0">
-                <motion.div
-                  initial={{ scale: 0.95 }}
-                  animate={{ scale: 1 }}
-                  transition={{ duration: 0.4, delay: 0.1 }}
-                  onDragOver={handleDragOver}
-                  onDrop={handleDrop}
-                  onClick={() => fileInputRef.current?.click()}
-                  onMouseEnter={() => setIsHovering(true)}
-                  onMouseLeave={() => setIsHovering(false)}
-                  className="w-full max-w-4xl p-12 md:p-32 text-center transition-all cursor-pointer rounded-xl"
-                  style={{
-                    border: `2px dashed ${isHovering ? '#3b82f6' : 'var(--border)'}`,
-                    backgroundColor: isHovering ? 'rgba(59, 130, 246, 0.05)' : 'transparent',
-                    transition: 'all 0.2s ease',
-                  }}
-                >
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept=".pdf,.doc,.docx,.txt"
-                    onChange={handleFileInput}
-                    className="hidden"
-                  />
-                  <div className="flex flex-col items-center gap-3">
-                    <div className="w-14 h-14 rounded-full flex items-center justify-center transition-all bg-blue-500/20">
-                      <HugeiconsIcon
-                        icon={FileUploadIcon}
-                        size={28}
-                        className="text-blue-500"
-                      />
-                    </div>
-                    <div className="space-y-1">
-                      <p className="text-sm font-medium text-foreground">
-                        Drop your file here, or{" "}
-                        <span className="text-blue-600 hover:text-blue-700 transition-colors">
-                          browse
-                        </span>
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        PDF, DOC, DOCX, TXT up to 200MB
-                      </p>
-                    </div>
-                  </div>
-                </motion.div>
-
-                {/* Scan Document Button - Mobile Only */}
-                {isMobile && (
-                  <button
-                    type="button"
-                    className="flex items-center gap-2 px-4 py-2 rounded-lg border border-border bg-background text-foreground text-sm font-medium hover:bg-muted transition-colors"
-                    style={{ touchAction: 'manipulation' }}
-                    onClick={() => setShowScanner(true)}
+                <div className="flex-1 flex flex-col items-center justify-center gap-4">
+                  <motion.div
+                    initial={{ scale: 0.95 }}
+                    animate={{ scale: 1 }}
+                    transition={{ duration: 0.3 }}
+                    onDragOver={handleDragOver}
+                    onDrop={handleDrop}
+                    onClick={() => fileInputRef.current?.click()}
+                    onMouseEnter={() => setIsHovering(true)}
+                    onMouseLeave={() => setIsHovering(false)}
+                    className="w-full max-w-4xl p-32 text-center transition-all cursor-pointer rounded-xl"
+                    style={{
+                      border: `2px dashed ${isHovering ? '#3b82f6' : 'var(--border)'}`,
+                      backgroundColor: isHovering ? 'rgba(59, 130, 246, 0.05)' : 'transparent',
+                    }}
                   >
-                    <Camera className="w-4 h-4" />
-                    Scan Document
-                  </button>
-                )}
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept=".pdf,.doc,.docx,.txt"
+                      onChange={handleFileInput}
+                      className="hidden"
+                    />
+                    <div className="flex flex-col items-center gap-3">
+                      <div className="w-14 h-14 rounded-full flex items-center justify-center bg-blue-500/20">
+                        <HugeiconsIcon icon={FileUploadIcon} size={28} className="text-blue-500" />
+                      </div>
+                      <div className="space-y-1">
+                        <p className="text-sm font-medium text-foreground">
+                          Drop your file here, or <span className="text-blue-600">browse</span>
+                        </p>
+                        <p className="text-xs text-muted-foreground">PDF, DOC, DOCX, TXT up to 200MB</p>
+                      </div>
+                    </div>
+                  </motion.div>
                 </div>
               </motion.div>
             )}

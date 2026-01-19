@@ -67,6 +67,7 @@ import {
   Invoice04Icon,
   Setting06Icon,
   Logout02Icon,
+  Notification03Icon,
 } from "@hugeicons-pro/core-bulk-rounded";
 import { motion } from "framer-motion";
 import { createClient } from "@/lib/supabase/client";
@@ -134,6 +135,7 @@ function DashboardHeader({
   const isCollapsed = state === "collapsed";
   const pathname = usePathname();
 
+  const isHomePage = pathname === "/dashboard";
   const isContractsPage = pathname.startsWith("/dashboard/contracts");
   const isUploadContractPage = pathname.startsWith("/dashboard/upload-contract");
   const isChatPage = pathname.startsWith("/dashboard/chat");
@@ -233,7 +235,7 @@ function DashboardHeader({
   return (
     <header
       className={cn(
-        "fixed top-0 right-0 z-50 flex h-12 items-center gap-1.5 sm:gap-2 border-b border-border bg-background px-4 sm:px-4 transition-[left] duration-400 ease-[cubic-bezier(0.75,0,0.25,1)]",
+        "fixed top-0 right-0 z-50 flex h-12 items-center gap-1.5 sm:gap-2 md:border-b md:border-border bg-background px-4 sm:px-4 transition-[left] duration-400 ease-[cubic-bezier(0.75,0,0.25,1)]",
         "left-0 md:left-[var(--sidebar-width-icon,3rem)]",
         !isCollapsed && "md:left-[var(--sidebar-width,16rem)]"
       )}
@@ -254,10 +256,45 @@ function DashboardHeader({
         <SidebarToggleButton />
       </div>
 
-      {/* Chat icon - mobile only */}
+      {/* Mobile navigation icons - using same bulk icons as sidebar */}
+      <Link href="/dashboard" className="md:hidden">
+        <button className={cn(
+          "h-8 w-8 flex items-center justify-center border border-border hover:bg-muted transition-colors rounded-md",
+          isHomePage && "bg-purple-500/10 border-purple-500/30"
+        )}>
+          <HugeiconsIcon icon={Home01BulkIcon} size={14} className={isHomePage ? "text-purple-500" : "text-muted-foreground"} />
+        </button>
+      </Link>
+      <Link href="/dashboard/contracts" className="md:hidden">
+        <button className={cn(
+          "h-8 w-8 flex items-center justify-center border border-border hover:bg-muted transition-colors rounded-md",
+          isContractsPage && "bg-purple-500/10 border-purple-500/30"
+        )}>
+          <HugeiconsIcon icon={DocumentAttachmentIcon} size={14} className={isContractsPage ? "text-purple-500" : "text-muted-foreground"} />
+        </button>
+      </Link>
+      <Link href="/dashboard/compare" className="md:hidden">
+        <button className={cn(
+          "h-8 w-8 flex items-center justify-center border border-border hover:bg-muted transition-colors rounded-md",
+          isComparePage && "bg-purple-500/10 border-purple-500/30"
+        )}>
+          <HugeiconsIcon icon={GitCompareBulkIcon} size={14} className={isComparePage ? "text-purple-500" : "text-muted-foreground"} />
+        </button>
+      </Link>
+      <Link href="/dashboard/templates" className="md:hidden">
+        <button className={cn(
+          "h-8 w-8 flex items-center justify-center border border-border hover:bg-muted transition-colors rounded-md",
+          isTemplatesPage && "bg-purple-500/10 border-purple-500/30"
+        )}>
+          <HugeiconsIcon icon={LayoutGridIcon} size={14} className={isTemplatesPage ? "text-purple-500" : "text-muted-foreground"} />
+        </button>
+      </Link>
       <Link href="/dashboard/chat" className="md:hidden">
-        <button className="h-8 w-8 flex items-center justify-center border border-border hover:bg-muted transition-colors rounded-md">
-          <HugeiconsIcon icon={ChatSparkIcon} size={14} className="text-muted-foreground" />
+        <button className={cn(
+          "h-8 w-8 flex items-center justify-center border border-border hover:bg-muted transition-colors rounded-md",
+          isChatPage && "bg-purple-500/10 border-purple-500/30"
+        )}>
+          <HugeiconsIcon icon={ChatSearch01Icon} size={14} className={isChatPage ? "text-purple-500" : "text-muted-foreground"} />
         </button>
       </Link>
 
@@ -265,7 +302,8 @@ function DashboardHeader({
       <DropdownMenu open={notificationsOpen} onOpenChange={setNotificationsOpen}>
         <DropdownMenuTrigger asChild>
           <button className="relative h-8 w-8 flex items-center justify-center border border-border hover:bg-muted transition-colors rounded-md">
-            <Bell className="w-4 h-4 text-muted-foreground" />
+            <HugeiconsIcon icon={Notification03Icon} size={14} className="md:hidden text-muted-foreground" />
+            <Bell className="hidden md:block w-4 h-4 text-muted-foreground" />
             {unreadCount > 0 && (
               <span className="absolute -top-1 -right-1 w-4 h-4 bg-purple-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
                 {unreadCount > 9 ? "9+" : unreadCount}
@@ -754,9 +792,9 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
         </main>
 
         {/* Dashboard Footer - Fixed at bottom */}
-        <footer className="fixed bottom-0 left-0 right-0 border-t border-border px-6 py-3 bg-background z-40 md:ml-[var(--sidebar-width)]">
+        <footer className="fixed bottom-0 left-0 right-0 border-t border-border px-6 py-3 bg-background z-[60] md:ml-[var(--sidebar-width)]">
           <div className="flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-muted-foreground">
-            <p>
+            <p className="text-center sm:text-left">
               EasyTerms provides informational analysis only and is not a substitute for professional legal advice.
             </p>
             <div className="flex items-center gap-4">

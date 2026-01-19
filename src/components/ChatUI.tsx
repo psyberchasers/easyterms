@@ -346,7 +346,23 @@ const ChatUI = () => {
   const supabase = createClient();
 
   // Sidebar and conversation state
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+  const [isKeyboardOpen, setIsKeyboardOpen] = useState(false);
+
+  // Check if mobile on mount and resize
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+      // Close sidebar on mobile by default
+      if (window.innerWidth < 768) {
+        setIsSidebarOpen(false);
+      }
+    };
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [currentConversationId, setCurrentConversationId] = useState<string | null>(null);
   const [isLoadingConversations, setIsLoadingConversations] = useState(true);
@@ -877,15 +893,32 @@ const ChatUI = () => {
       }}
     >
       <div className="flex h-full w-full overflow-hidden">
+        {/* Mobile Sidebar Backdrop */}
+        <AnimatePresence>
+          {isSidebarOpen && isMobile && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="fixed inset-0 bg-black/50 z-40 md:hidden"
+              onClick={() => setIsSidebarOpen(false)}
+            />
+          )}
+        </AnimatePresence>
+
         {/* Collapsible Sidebar */}
         <AnimatePresence mode="wait">
           {isSidebarOpen && (
             <motion.div
-              initial={{ width: 0, opacity: 0 }}
-              animate={{ width: 280, opacity: 1 }}
-              exit={{ width: 0, opacity: 0 }}
+              initial={isMobile ? { x: -280, opacity: 0 } : { width: 0, opacity: 0 }}
+              animate={isMobile ? { x: 0, opacity: 1 } : { width: 280, opacity: 1 }}
+              exit={isMobile ? { x: -280, opacity: 0 } : { width: 0, opacity: 0 }}
               transition={{ type: "spring", stiffness: 300, damping: 30 }}
-              className="h-full bg-muted/30 border-r border-border flex flex-col overflow-hidden"
+              className={cn(
+                "h-full bg-background border-r border-border flex flex-col overflow-hidden",
+                isMobile ? "fixed left-0 top-0 z-50 w-[280px] border-t border-border" : "relative"
+              )}
             >
               {/* Sidebar Header */}
               <div className="flex items-center justify-between py-3 pl-4 pr-1 border-b border-border">
@@ -924,7 +957,10 @@ const ChatUI = () => {
                             ? "bg-purple-500/10 text-foreground"
                             : "hover:bg-muted text-muted-foreground hover:text-foreground"
                         )}
-                        onClick={() => loadConversation(conv.id)}
+                        onClick={() => {
+                          loadConversation(conv.id);
+                          if (isMobile) setIsSidebarOpen(false);
+                        }}
                       >
                         <span className="flex-1 text-sm truncate">
                           {conv.title || "New Chat"}
@@ -995,7 +1031,7 @@ const ChatUI = () => {
           />
 
           {/* Chat Messages Container - mb accounts for fixed input height */}
-          <motion.div className={cn("flex-1 w-full max-w-3xl mx-auto overflow-y-auto scroll-smooth px-3", attachedContracts.length > 0 ? "mb-52" : "mb-44")}>
+          <motion.div className={cn("flex-1 w-full max-w-3xl mx-auto overflow-y-auto scroll-smooth px-3", attachedContracts.length > 0 ? "mb-[340px] md:mb-52" : "mb-80 md:mb-44")}>
           <div className="min-h-full flex flex-col justify-end pt-4">
           {chatMessages.length === 0 && (
             <div
@@ -1071,13 +1107,14 @@ const ChatUI = () => {
           </div>
         </motion.div>
 
-        {/* Input Container - positioned above footer (48px) */}
+        {/* Input Container - positioned above footer */}
         <div
           ref={inputContainerRef}
           className={cn(
-            "absolute bottom-12 left-0 right-0 flex justify-center px-3 pb-4 bg-gradient-to-t from-background from-85% to-transparent",
+            "absolute left-0 right-0 flex justify-center px-3 pb-2 md:pb-4 bg-gradient-to-t from-background from-85% to-transparent",
             attachedContracts.length > 0 ? "pt-6" : "pt-0"
           )}
+          style={{ bottom: isMobile ? (isKeyboardOpen ? '160px' : '180px') : '48px' }}
         >
           <div className="w-full max-w-3xl">
           {/* Suggestion Pills */}
@@ -1142,7 +1179,7 @@ const ChatUI = () => {
                   value={userInput}
                   autoFocus
                   placeholder=""
-                  className="field-sizing-content pr-15 max-h-52 w-full resize-none rounded-none !bg-transparent p-4 !text-base leading-[1.2] shadow-none focus-visible:outline-0 focus-visible:ring-0"
+                  className="field-sizing-content pr-15 max-h-52 w-full resize-none rounded-none !bg-transparent pt-5 pb-0 px-4 md:p-4 !text-base leading-[1.2] shadow-none focus-visible:outline-0 focus-visible:ring-0 min-h-[44px] md:min-h-0"
                   onKeyDown={(e) => {
                     if (e.key === "Enter" && !e.shiftKey) {
                       e.preventDefault();
@@ -1153,10 +1190,16 @@ const ChatUI = () => {
                       setShowAtMention(false);
                     }
                   }}
+                  onFocus={() => setIsKeyboardOpen(true)}
+                  onBlur={() => {
+                    setIsKeyboardOpen(false);
+                    // Fix iOS keyboard not resetting scroll position
+                    window.scrollTo(0, 0);
+                  }}
                   onChange={handleInputChange}
                 />
                 {!userInput && (
-                  <div className="pointer-events-none absolute left-0 top-0 h-full w-full p-4">
+                  <div className="pointer-events-none absolute left-0 top-0 h-full w-full pt-5 pb-0 px-4 md:p-4">
                     <AnimatedPlaceholder isDeepMindMode={isDeepMindMode} />
                   </div>
                 )}
@@ -1301,11 +1344,14 @@ const ChatUI = () => {
                   <span className="text-xs font-medium">to mention</span>
                 </div>
               </div>
-              <p className="text-muted-foreground/50 pr-2 text-xs">
+              <p className="text-muted-foreground/50 pr-2 text-xs hidden md:block">
                 Powered by EasyTerms
               </p>
             </div>
           </div>
+          <p className="text-muted-foreground/50 text-xs text-center mt-2 md:hidden">
+            Powered by EasyTerms
+          </p>
           </div>
         </div>
         </div>

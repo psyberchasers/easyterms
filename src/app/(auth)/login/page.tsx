@@ -228,12 +228,7 @@ export default function LoginPage() {
               className="space-y-6"
             >
               <div className="text-center">
-                <h2 className="text-2xl font-medium text-[#e8e4df] flex items-center justify-center gap-2">
-                  <img
-                    src={theme === "dark" ? "/darkModeS.svg" : "/lightModeS.svg"}
-                    alt=""
-                    className="h-6"
-                  />
+                <h2 className="text-2xl font-medium text-[#e8e4df]">
                   {mode === "login" ? "Welcome back" : "Create an account"}
                 </h2>
                 <p className="text-muted-foreground/60 mt-1 text-sm">
