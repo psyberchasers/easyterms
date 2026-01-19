@@ -698,7 +698,7 @@ export function ContractAnalysisView({
         <main className={cn(
           "px-6 py-6 transition-all duration-300 flex-1 flex flex-col overflow-y-auto",
           activeTab === "discussion" ? "pb-0" : "pb-24",
-          showDocument ? "w-full" : "max-w-4xl mx-auto"
+          showDocument ? "w-full" : "md:max-w-4xl md:mx-auto"
         )}>
           {/* Overview Tab */}
           <TabsContent value="overview" className="space-y-6">
