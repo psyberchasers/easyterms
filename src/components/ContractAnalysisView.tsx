@@ -510,9 +510,9 @@ export function ContractAnalysisView({
                   <Share2 className="w-2.5 h-2.5" />
                 </span>
               )}
-              <span className="text-[10px] text-muted-foreground/40">•</span>
+              <span className="text-[10px] text-muted-foreground/40 hidden md:inline">•</span>
               <span className={cn(
-                "text-[10px] uppercase font-medium",
+                "text-[10px] uppercase font-medium whitespace-nowrap",
                 activeAnalysis.overallRiskAssessment === "low" ? "text-green-600" :
                 activeAnalysis.overallRiskAssessment === "medium" ? "text-yellow-600" :
                 activeAnalysis.overallRiskAssessment === "high" ? "text-red-600" :
