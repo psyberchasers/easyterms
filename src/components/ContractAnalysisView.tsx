@@ -616,7 +616,7 @@ export function ContractAnalysisView({
 
           {/* Row 2: Tabs */}
           <div className={cn(
-            "px-6 flex items-center border-b border-border h-[49px]",
+            "px-6 flex items-center border-b border-border h-[49px] overflow-x-auto",
             !showDocument && "max-w-4xl mx-auto"
           )}>
             <div className="flex gap-6 h-full">
@@ -625,7 +625,7 @@ export function ContractAnalysisView({
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
                   className={cn(
-                    "relative h-full flex items-center text-xs font-medium transition-colors",
+                    "relative h-full flex items-center text-xs font-medium transition-colors whitespace-nowrap",
                     activeTab === tab.id ? "text-foreground" : "text-muted-foreground/60 hover:text-muted-foreground"
                   )}
                 >
