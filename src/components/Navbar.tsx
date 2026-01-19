@@ -232,15 +232,6 @@ export function Navbar({ showNewAnalysis = true, showBorder = false, showSearch 
             <div className="w-8 h-8 bg-muted animate-pulse" />
           ) : user ? (
             <>
-              {showNewAnalysis && (
-                <Link
-                  href="/analyze"
-                  className="h-8 px-3 text-[13px] font-semibold bg-purple-500 hover:bg-purple-600 text-white rounded-md flex items-center gap-2 transition-colors whitespace-nowrap"
-                >
-                  <HugeiconsIcon icon={AiSheetsIcon} size={14} />
-                  New Analysis
-                </Link>
-              )}
               <Link
                 href="/dashboard"
                 className={cn(
