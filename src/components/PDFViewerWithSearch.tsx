@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import { Document, Page, pdfjs } from "react-pdf";
-import { Loader2, ChevronLeft, ChevronRight, Search, AlertCircle } from "lucide-react";
+import { Loader2, ChevronLeft, ChevronRight, Search, AlertCircle, X } from "lucide-react";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { SearchMinusIcon, SearchAddIcon } from "@hugeicons-pro/core-stroke-rounded";
 import { MusicLoader } from "@/components/MusicLoader";
@@ -28,6 +28,7 @@ interface PDFViewerWithSearchProps {
   highlightColor?: "yellow" | "red" | "green";
   className?: string;
   initialScale?: number;
+  onClose?: () => void;
 }
 
 // Normalize text for comparison
@@ -96,6 +97,7 @@ export function PDFViewerWithSearch({
   highlightColor = "yellow",
   className,
   initialScale = 1.0,
+  onClose,
 }: PDFViewerWithSearchProps) {
   const [numPages, setNumPages] = useState<number>(0);
   const [currentPage, setCurrentPage] = useState<number>(1);
@@ -375,8 +377,8 @@ export function PDFViewerWithSearch({
           </Button>
         </div>
 
-        {/* Center - Search status indicator (only when searching) */}
-        <div className="flex items-center justify-center">
+        {/* Center - Search status indicator (only when searching, hidden on mobile) */}
+        <div className="hidden md:flex items-center justify-center">
           {searchText && (
             <div className={cn(
               "flex items-center gap-2 px-3 py-1 text-xs",
@@ -404,7 +406,7 @@ export function PDFViewerWithSearch({
         </div>
 
         {/* Right - Page controls */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1 md:gap-2">
           <Button
             variant="outline"
             size="icon"
@@ -428,6 +430,16 @@ export function PDFViewerWithSearch({
           >
             <ChevronRight className="h-4 w-4" />
           </Button>
+          {onClose && (
+            <Button
+              variant="outline"
+              className="h-8 px-3 border-border bg-muted hover:bg-muted/80 shadow-none ml-2 md:hidden"
+              onClick={onClose}
+            >
+              <span className="text-sm font-medium mr-1">Close</span>
+              <X className="h-4 w-4" />
+            </Button>
+          )}
         </div>
       </div>
 

@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Contract } from "@/types/database";
 import {
@@ -32,6 +33,15 @@ import { Button } from "@/components/ui/button";
 
 // Helper to parse summary into structured highlights
 function SummaryHighlights({ summary }: { summary: string }) {
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
+
   // Split by sentences and try to categorize them
   const sentences = summary.split(/(?<=[.!?])\s+/).filter(s => s.trim());
 
@@ -96,12 +106,21 @@ function SummaryHighlights({ summary }: { summary: string }) {
     }
   });
 
-  // If we couldn't categorize anything, just show as paragraphs
+  // If we couldn't categorize anything, break into paragraphs (3 on mobile, 4 on desktop)
   if (categorized.length === 0) {
+    const chunkSize = isMobile ? 3 : 4;
+    const paragraphs: string[] = [];
+    for (let i = 0; i < sentences.length; i += chunkSize) {
+      paragraphs.push(sentences.slice(i, i + chunkSize).join(' '));
+    }
     return (
-      <p className="text-[15px] text-muted-foreground leading-relaxed">
-        {summary}
-      </p>
+      <div className="space-y-3">
+        {paragraphs.map((para, i) => (
+          <p key={i} className="text-[15px] text-muted-foreground leading-relaxed">
+            {para}
+          </p>
+        ))}
+      </div>
     );
   }
 
@@ -205,22 +224,12 @@ export function ContractQuickView({
               {contract.title}
             </span>
           </div>
-          <div className="flex items-center gap-1">
-            <button className="h-6 w-6 flex items-center justify-center rounded-md border border-border hover:bg-muted transition-colors">
-              <MoreVertical className="w-3 h-3 text-muted-foreground" />
-            </button>
-            <Link href={`/dashboard/contracts/${contract.id}`}>
-              <button className="h-6 w-6 flex items-center justify-center rounded-md border border-border hover:bg-muted transition-colors">
-                <ExternalLink className="w-3 h-3 text-muted-foreground" />
-              </button>
-            </Link>
-            <button
-              onClick={() => onOpenChange(false)}
-              className="h-6 w-6 flex items-center justify-center rounded-md border border-border hover:bg-muted transition-colors"
-            >
-              <X className="w-3 h-3 text-muted-foreground" />
-            </button>
-          </div>
+          <button
+            onClick={() => onOpenChange(false)}
+            className="h-8 w-8 flex items-center justify-center rounded-md border border-border hover:bg-muted transition-colors"
+          >
+            <X className="w-4 h-4 text-muted-foreground" />
+          </button>
         </div>
 
         {/* Content - Scrollable */}

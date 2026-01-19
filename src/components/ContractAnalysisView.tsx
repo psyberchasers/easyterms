@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback, useRef, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import {
@@ -216,6 +217,8 @@ export function ContractAnalysisView({
   onRemoveShare,
   discussionMembers = [],
 }: ContractAnalysisViewProps) {
+  const router = useRouter();
+
   // UI state
   const [showDocument, setShowDocument] = useState(false);
   const [highlightedClause, setHighlightedClause] = useState<string | null>(null);
@@ -449,8 +452,9 @@ export function ContractAnalysisView({
                 )}
                 <button
                   onClick={() => { setShowDocument(false); setHighlightedClause(null); }}
-                  className="w-7 h-7 flex items-center justify-center hover:bg-muted transition-colors"
+                  className="h-8 px-3 md:px-0 md:w-7 md:h-7 flex items-center justify-center gap-2 bg-muted md:bg-transparent rounded-lg md:rounded-none hover:bg-muted/80 md:hover:bg-muted transition-colors"
                 >
+                  <span className="text-sm font-medium text-foreground md:hidden">Close</span>
                   <X className="w-4 h-4 text-muted-foreground" />
                 </button>
               </div>
@@ -463,6 +467,7 @@ export function ContractAnalysisView({
                   searchText={highlightedClause || ""}
                   className="h-full"
                   initialScale={isMobile ? 0.8 : 1.0}
+                  onClose={() => { setShowDocument(false); setHighlightedClause(null); }}
                 />
               ) : pdfError ? (
                 <div className="flex flex-col items-center justify-center h-full gap-3 text-center px-4">
@@ -611,6 +616,14 @@ export function ContractAnalysisView({
                   <CheckCircle2 className="w-3 h-3 text-green-400" />
                 </div>
               ) : null}
+
+              {/* Close button - mobile only */}
+              <button
+                onClick={() => router.back()}
+                className="h-7 w-7 flex md:hidden items-center justify-center border border-border hover:bg-muted transition-colors rounded-md"
+              >
+                <X className="w-3.5 h-3.5 text-muted-foreground" />
+              </button>
             </div>
           </div>
 
@@ -713,6 +726,7 @@ export function ContractAnalysisView({
             {activeAnalysis.financialTerms && (
               <div>
                 <div className="flex items-center gap-2 mb-4 -mr-6">
+                  <HugeiconsIcon icon={Money03Icon} size={14} className="text-muted-foreground/60 shrink-0" />
                   <span className="text-[10px] text-muted-foreground/60 uppercase tracking-wider shrink-0">Financial Analysis</span>
                   <div className="h-px flex-1 bg-border" />
                 </div>
@@ -725,10 +739,10 @@ export function ContractAnalysisView({
                         handleClauseClick(activeAnalysis.financialTerms.royaltyRate);
                       }}
                     >
-                      <div className="flex items-center">
+                      <div className="flex items-center flex-wrap md:flex-nowrap">
                         <p className="text-[10px] font-medium uppercase tracking-wider shrink-0 transition-colors duration-300" style={{ color: selectedFinancial === 'royalty' ? '#a855f7' : 'var(--foreground)' }}>Royalty</p>
                         <span className="mx-2 text-[10px] transition-colors duration-300" style={{ color: selectedFinancial === 'royalty' ? '#a855f7' : 'var(--muted-foreground)' }}>·</span>
-                        <p className="text-[10px] tracking-wider uppercase shrink-0 transition-colors duration-300" style={{ color: selectedFinancial === 'royalty' ? '#a855f7' : 'var(--foreground)' }}>
+                        <p className="text-[10px] tracking-wider uppercase transition-colors duration-300 break-words" style={{ color: selectedFinancial === 'royalty' ? '#a855f7' : 'var(--foreground)' }}>
                           {renderValue(activeAnalysis.financialTerms.royaltyRate)}
                         </p>
                       </div>
@@ -742,10 +756,10 @@ export function ContractAnalysisView({
                         handleClauseClick(activeAnalysis.termLength);
                       }}
                     >
-                      <div className="flex items-center">
+                      <div className="flex items-center flex-wrap md:flex-nowrap">
                         <p className="text-[10px] font-medium uppercase tracking-wider shrink-0 transition-colors duration-300" style={{ color: selectedFinancial === 'term' ? '#a855f7' : 'var(--foreground)' }}>Term</p>
                         <span className="mx-2 text-[10px] transition-colors duration-300" style={{ color: selectedFinancial === 'term' ? '#a855f7' : 'var(--muted-foreground)' }}>·</span>
-                        <p className="text-[10px] tracking-wider uppercase shrink-0 transition-colors duration-300" style={{ color: selectedFinancial === 'term' ? '#a855f7' : 'var(--foreground)' }}>
+                        <p className="text-[10px] tracking-wider uppercase transition-colors duration-300 break-words" style={{ color: selectedFinancial === 'term' ? '#a855f7' : 'var(--foreground)' }}>
                           {renderValue(activeAnalysis.termLength)}
                         </p>
                       </div>
@@ -759,10 +773,10 @@ export function ContractAnalysisView({
                         handleClauseClick(activeAnalysis.financialTerms.advanceAmount);
                       }}
                     >
-                      <div className="flex items-center">
+                      <div className="flex items-center flex-wrap md:flex-nowrap">
                         <p className="text-[10px] font-medium uppercase tracking-wider shrink-0 transition-colors duration-300" style={{ color: selectedFinancial === 'advance' ? '#a855f7' : 'var(--foreground)' }}>Advance</p>
                         <span className="mx-2 text-[10px] transition-colors duration-300" style={{ color: selectedFinancial === 'advance' ? '#a855f7' : 'var(--muted-foreground)' }}>·</span>
-                        <p className="text-[10px] tracking-wider uppercase shrink-0 transition-colors duration-300" style={{ color: selectedFinancial === 'advance' ? '#a855f7' : 'var(--foreground)' }}>
+                        <p className="text-[10px] tracking-wider uppercase transition-colors duration-300 break-words" style={{ color: selectedFinancial === 'advance' ? '#a855f7' : 'var(--foreground)' }}>
                           {renderValue(activeAnalysis.financialTerms.advanceAmount)}
                         </p>
                       </div>
@@ -776,10 +790,10 @@ export function ContractAnalysisView({
                         handleClauseClick(activeAnalysis.financialTerms.paymentSchedule);
                       }}
                     >
-                      <div className="flex items-center">
+                      <div className="flex items-center flex-wrap md:flex-nowrap">
                         <p className="text-[10px] font-medium uppercase tracking-wider shrink-0 transition-colors duration-300" style={{ color: selectedFinancial === 'payment' ? '#a855f7' : 'var(--foreground)' }}>Payment</p>
                         <span className="mx-2 text-[10px] transition-colors duration-300" style={{ color: selectedFinancial === 'payment' ? '#a855f7' : 'var(--muted-foreground)' }}>·</span>
-                        <p className="text-[10px] tracking-wider uppercase shrink-0 transition-colors duration-300" style={{ color: selectedFinancial === 'payment' ? '#a855f7' : 'var(--foreground)' }}>
+                        <p className="text-[10px] tracking-wider uppercase transition-colors duration-300 break-words" style={{ color: selectedFinancial === 'payment' ? '#a855f7' : 'var(--foreground)' }}>
                           {renderValue(activeAnalysis.financialTerms.paymentSchedule)}
                         </p>
                       </div>

@@ -870,7 +870,7 @@ export default function UploadContractPage() {
               className="flex-1 flex flex-col p-4 bg-card"
             >
               {/* Back button and role indicator */}
-              <div className="flex items-center gap-2 mb-4 mt-20">
+              <div className="flex items-center gap-2 mb-3 mt-1">
                 <button
                   onClick={handleGoBack}
                   className="flex items-center gap-1.5 px-3 py-2 text-xs font-medium text-muted-foreground hover:text-foreground border border-border hover:bg-muted rounded-lg transition-colors"
@@ -886,7 +886,7 @@ export default function UploadContractPage() {
                 </div>
               </div>
 
-              <div className="flex-1 flex flex-col items-center justify-center gap-4">
+              <div className="flex-1 flex flex-col items-center justify-start pt-4 gap-4">
                 <div
                   onDragOver={handleDragOver}
                   onDrop={handleDrop}
@@ -1448,6 +1448,7 @@ export default function UploadContractPage() {
                   fileUrl={fileUrl}
                   searchText={highlightedClause || ""}
                   className="h-full"
+                  initialScale={isMobile ? 0.7 : 1.0}
                 />
               ) : (
                 <div className="h-full flex items-center justify-center">
@@ -1464,7 +1465,7 @@ export default function UploadContractPage() {
         {/* Sticky Header - Row 1: Title */}
         <div className="sticky top-0 z-20 bg-card shrink-0">
           <div className={cn(
-            "px-6 h-12 flex items-center justify-between border-b border-border",
+            "px-6 py-3 md:py-0 md:h-12 flex flex-col md:flex-row md:items-center md:justify-between border-b border-border gap-2 md:gap-0",
             !showDocument && "max-w-4xl mx-auto"
           )}>
             {/* Left: Title + Risk Assessment */}
@@ -1472,7 +1473,7 @@ export default function UploadContractPage() {
               <h1 className="text-sm font-medium text-foreground">{analysis.contractType || fileName}</h1>
               <span className="text-[10px] text-muted-foreground/40">•</span>
               <span className={cn(
-                "text-[10px] uppercase font-medium",
+                "text-[10px] uppercase font-medium whitespace-nowrap",
                 analysis.overallRiskAssessment === "low" ? "text-green-600" :
                 analysis.overallRiskAssessment === "medium" ? "text-yellow-600" :
                 analysis.overallRiskAssessment === "high" ? "text-red-600" :
@@ -1555,12 +1556,20 @@ export default function UploadContractPage() {
                   <CheckCircle2 className="w-3 h-3 text-green-400" />
                 </div>
               ) : null}
+
+              {/* Close button - mobile only */}
+              <button
+                onClick={() => router.back()}
+                className="h-7 w-7 flex md:hidden items-center justify-center border border-border hover:bg-muted transition-colors rounded-md"
+              >
+                <X className="w-3.5 h-3.5 text-muted-foreground" />
+              </button>
             </div>
           </div>
 
           {/* Row 2: Tabs */}
           <div className={cn(
-            "px-6 flex items-center border-b border-border h-[49px]",
+            "px-6 flex items-center border-b border-border h-[49px] overflow-x-auto",
             !showDocument && "max-w-4xl mx-auto"
           )}>
             <div className="flex gap-6 h-full">
@@ -1569,7 +1578,7 @@ export default function UploadContractPage() {
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
                   className={cn(
-                    "relative h-full flex items-center text-xs font-medium transition-colors",
+                    "relative h-full flex items-center text-xs font-medium transition-colors whitespace-nowrap",
                     activeTab === tab.id ? "text-foreground" : "text-muted-foreground/60 hover:text-muted-foreground"
                   )}
                 >
@@ -1589,7 +1598,7 @@ export default function UploadContractPage() {
 
         <main className={cn(
           "px-6 py-6 pb-24 transition-all duration-300 flex-1 overflow-auto",
-          showDocument ? "w-full" : "max-w-4xl mx-auto"
+          showDocument ? "w-full" : "md:max-w-4xl md:mx-auto"
         )}>
             {/* Overview Tab */}
             <TabsContent value="overview" className="space-y-6">
@@ -1630,10 +1639,10 @@ export default function UploadContractPage() {
                           handleClauseClick(analysis.financialTerms.royaltyRate);
                         }}
                       >
-                        <div className="flex items-center">
+                        <div className="flex items-center flex-wrap md:flex-nowrap">
                           <p className="text-[10px] font-medium uppercase tracking-wider shrink-0 transition-colors duration-300" style={{ color: selectedFinancial === 'royalty' ? '#a855f7' : 'var(--foreground)' }}>Royalty</p>
                           <span className="mx-2 text-[10px] transition-colors duration-300" style={{ color: selectedFinancial === 'royalty' ? '#a855f7' : 'var(--muted-foreground)' }}>·</span>
-                          <p className="text-[10px] tracking-wider uppercase shrink-0 transition-colors duration-300" style={{ color: selectedFinancial === 'royalty' ? '#a855f7' : 'var(--foreground)' }}>
+                          <p className="text-[10px] tracking-wider uppercase transition-colors duration-300 break-words" style={{ color: selectedFinancial === 'royalty' ? '#a855f7' : 'var(--foreground)' }}>
                             {analysis.financialTerms.royaltyRate}
                           </p>
                         </div>
@@ -1647,10 +1656,10 @@ export default function UploadContractPage() {
                           handleClauseClick(analysis.termLength);
                         }}
                       >
-                        <div className="flex items-center">
+                        <div className="flex items-center flex-wrap md:flex-nowrap">
                           <p className="text-[10px] font-medium uppercase tracking-wider shrink-0 transition-colors duration-300" style={{ color: selectedFinancial === 'term' ? '#a855f7' : 'var(--foreground)' }}>Term</p>
                           <span className="mx-2 text-[10px] transition-colors duration-300" style={{ color: selectedFinancial === 'term' ? '#a855f7' : 'var(--muted-foreground)' }}>·</span>
-                          <p className="text-[10px] tracking-wider uppercase shrink-0 transition-colors duration-300" style={{ color: selectedFinancial === 'term' ? '#a855f7' : 'var(--foreground)' }}>
+                          <p className="text-[10px] tracking-wider uppercase transition-colors duration-300 break-words" style={{ color: selectedFinancial === 'term' ? '#a855f7' : 'var(--foreground)' }}>
                             {analysis.termLength}
                           </p>
                         </div>
@@ -1664,10 +1673,10 @@ export default function UploadContractPage() {
                           handleClauseClick(analysis.financialTerms.advanceAmount);
                         }}
                       >
-                        <div className="flex items-center">
+                        <div className="flex items-center flex-wrap md:flex-nowrap">
                           <p className="text-[10px] font-medium uppercase tracking-wider shrink-0 transition-colors duration-300" style={{ color: selectedFinancial === 'advance' ? '#a855f7' : 'var(--foreground)' }}>Advance</p>
                           <span className="mx-2 text-[10px] transition-colors duration-300" style={{ color: selectedFinancial === 'advance' ? '#a855f7' : 'var(--muted-foreground)' }}>·</span>
-                          <p className="text-[10px] tracking-wider uppercase shrink-0 transition-colors duration-300" style={{ color: selectedFinancial === 'advance' ? '#a855f7' : 'var(--foreground)' }}>
+                          <p className="text-[10px] tracking-wider uppercase transition-colors duration-300 break-words" style={{ color: selectedFinancial === 'advance' ? '#a855f7' : 'var(--foreground)' }}>
                             {analysis.financialTerms.advanceAmount}
                           </p>
                         </div>
@@ -1681,10 +1690,10 @@ export default function UploadContractPage() {
                           handleClauseClick(analysis.financialTerms.paymentSchedule);
                         }}
                       >
-                        <div className="flex items-center">
+                        <div className="flex items-center flex-wrap md:flex-nowrap">
                           <p className="text-[10px] font-medium uppercase tracking-wider shrink-0 transition-colors duration-300" style={{ color: selectedFinancial === 'payment' ? '#a855f7' : 'var(--foreground)' }}>Payment</p>
                           <span className="mx-2 text-[10px] transition-colors duration-300" style={{ color: selectedFinancial === 'payment' ? '#a855f7' : 'var(--muted-foreground)' }}>·</span>
-                          <p className="text-[10px] tracking-wider uppercase shrink-0 transition-colors duration-300" style={{ color: selectedFinancial === 'payment' ? '#a855f7' : 'var(--foreground)' }}>
+                          <p className="text-[10px] tracking-wider uppercase transition-colors duration-300 break-words" style={{ color: selectedFinancial === 'payment' ? '#a855f7' : 'var(--foreground)' }}>
                             {analysis.financialTerms.paymentSchedule}
                           </p>
                         </div>

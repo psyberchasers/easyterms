@@ -188,7 +188,7 @@ const ExpandedTemplateCard = ({
         </div>
         <div className="flex-1 min-w-0 flex items-center gap-3">
           <h3 className="font-normal text-base">{template.name}</h3>
-          <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-muted-foreground bg-muted px-2.5 py-1 rounded-full">
+          <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-muted-foreground bg-muted px-2.5 py-1 rounded-full whitespace-nowrap shrink-0">
             {template.parties.party1}
             <HugeiconsIcon icon={ArrowDataTransferHorizontalIcon} size={12} />
             {template.parties.party2}
@@ -737,6 +737,18 @@ export default function TemplatesPage() {
   // Filter state for clauses
   const [clauseFilter, setClauseFilter] = useState<string>("all");
 
+  // Mobile review view toggle
+  const [mobileReviewView, setMobileReviewView] = useState<"pdf" | "breakdown">("pdf");
+
+  // Mobile detection
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
+
   // Current clause index for Step 3 stepper
   const [currentClauseIndex, setCurrentClauseIndex] = useState(0);
   // Direction of navigation for animations (1 = forward, -1 = backward)
@@ -1152,19 +1164,19 @@ export default function TemplatesPage() {
               transition={{ duration: 0.3 }}
             >
               <motion.div
-                className="flex items-center justify-between"
+                className="flex flex-col md:flex-row md:items-center md:justify-between gap-3"
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.3, delay: 0.1 }}
               >
-                <h2 className="text-lg font-medium">Select Clauses</h2>
-                <div className="flex items-center gap-2">
+                <h2 className="text-lg font-medium whitespace-nowrap">Select Clauses</h2>
+                <div className="flex items-center gap-2 overflow-x-auto pb-1 -mb-1">
                   {clauseCategories.map((cat) => (
                     <button
                       key={cat.id}
                       onClick={() => setClauseFilter(cat.id)}
                       className={cn(
-                        "px-3 py-1.5 rounded-md text-xs font-bold transition-colors flex items-center gap-1.5",
+                        "px-3 py-1.5 rounded-md text-xs font-bold transition-colors flex items-center gap-1.5 whitespace-nowrap shrink-0",
                         clauseFilter === cat.id
                           ? "bg-purple-500 text-white"
                           : "bg-muted text-muted-foreground hover:bg-muted/80"
@@ -1234,7 +1246,7 @@ export default function TemplatesPage() {
                 </motion.div>
               </TooltipProvider>
 
-              <div className="flex items-center justify-between pt-4 border-t border-border">
+              <div className="flex items-center justify-between pt-4 pb-9 md:pb-0 border-t border-border">
                 <Button variant="outline" onClick={() => setBuilderStep(1)}>
                   <ChevronLeft className="w-4 h-4 mr-2" />
                   Back
@@ -1259,7 +1271,7 @@ export default function TemplatesPage() {
 
           {/* Step 3: Customize */}
           {builderStep === 3 && (
-            <div className="rounded-xl overflow-hidden flex flex-col border border-dashed border-border bg-background">
+            <div className="rounded-xl overflow-hidden flex flex-col border border-dashed border-border bg-background mb-12 md:mb-0">
               {/* Header */}
               <div className="px-5 py-4">
                 <div className="flex items-center justify-between">
@@ -1414,8 +1426,8 @@ export default function TemplatesPage() {
           {/* Step 4: Review & Export */}
           {builderStep === 4 && (
             <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <h2 className="text-lg font-medium">Review Your Contract</h2>
+              <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+                <h2 className="text-lg font-medium whitespace-nowrap">Review Your Contract</h2>
                 <div className="flex gap-2">
                   <Button variant="outline" size="sm" onClick={copyToClipboard}>
                     <Copy className="w-4 h-4 mr-2" />
@@ -1428,10 +1440,35 @@ export default function TemplatesPage() {
                 </div>
               </div>
 
+              {/* Mobile toggle */}
+              <div className="flex md:hidden gap-2 p-1 bg-muted rounded-lg">
+                <button
+                  onClick={() => setMobileReviewView("pdf")}
+                  className={cn(
+                    "flex-1 py-2 text-xs font-medium rounded-md transition-colors",
+                    mobileReviewView === "pdf" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground"
+                  )}
+                >
+                  PDF Preview
+                </button>
+                <button
+                  onClick={() => setMobileReviewView("breakdown")}
+                  className={cn(
+                    "flex-1 py-2 text-xs font-medium rounded-md transition-colors",
+                    mobileReviewView === "breakdown" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground"
+                  )}
+                >
+                  Breakdown
+                </button>
+              </div>
+
               {/* Side by side: PDF + Breakdown */}
-              <div className="flex gap-6 h-[calc(100vh-220px)] min-h-[600px]">
+              <div className="flex flex-col md:flex-row gap-6 h-auto md:h-[calc(100vh-220px)] md:min-h-[600px]">
                 {/* Left: PDF Preview */}
-                <div className="flex-1 border border-border rounded-xl overflow-hidden bg-muted/30">
+                <div className={cn(
+                  "flex-1 border border-border rounded-xl overflow-hidden bg-muted/30 h-[500px] md:h-auto",
+                  mobileReviewView !== "pdf" && "hidden md:block"
+                )}>
                   {isGeneratingPdf ? (
                     <div className="h-full flex items-center justify-center">
                       <div className="flex flex-col items-center gap-3">
@@ -1441,7 +1478,7 @@ export default function TemplatesPage() {
                     </div>
                   ) : pdfUrl ? (
                     <iframe
-                      src={`${pdfUrl}#navpanes=0&scrollbar=1&zoom=67`}
+                      src={`${pdfUrl}#navpanes=0&scrollbar=1&zoom=${isMobile ? 45 : 67}`}
                       className="w-full h-full"
                       title="Contract Preview"
                     />
@@ -1453,7 +1490,10 @@ export default function TemplatesPage() {
                 </div>
 
                 {/* Right: Contract Breakdown */}
-                <div className="w-[400px] border border-dashed border-border rounded-xl overflow-hidden flex flex-col bg-card">
+                <div className={cn(
+                  "w-full md:w-[400px] border border-dashed border-border rounded-xl overflow-hidden flex flex-col bg-card h-[500px] md:h-auto",
+                  mobileReviewView !== "breakdown" && "hidden md:flex"
+                )}>
                   <div className="px-4 py-3 border-b border-dashed border-border bg-purple-500/10">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">

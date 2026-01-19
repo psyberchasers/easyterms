@@ -274,7 +274,7 @@ export default function ComparePage() {
       {/* Two-Panel Upload Area */}
       {!comparisonResult && (
         <motion.div
-          className="flex-1 grid grid-cols-2 gap-px bg-border"
+          className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-px bg-border"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.3 }}
@@ -423,51 +423,63 @@ export default function ComparePage() {
                       {/* Quick Stats - List format */}
                       <div className="w-full space-y-2.5 mt-2">
                         {contract.analysis?.financialTerms?.royaltyRate && (
-                          <div className="flex items-start gap-2">
-                            <HugeiconsIcon icon={PercentIcon} size={14} className="text-muted-foreground shrink-0 mt-0.5" />
-                            <span className="text-xs text-muted-foreground whitespace-nowrap">Royalty</span>
-                            <span className="text-xs text-muted-foreground/50">—</span>
-                            <span className="text-xs font-medium text-foreground">{contract.analysis.financialTerms.royaltyRate}</span>
+                          <div className="flex items-start gap-2 md:gap-2 justify-between md:justify-start">
+                            <div className="flex items-start gap-2">
+                              <HugeiconsIcon icon={PercentIcon} size={14} className="text-muted-foreground shrink-0 mt-0.5" />
+                              <span className="text-xs text-muted-foreground whitespace-nowrap">Royalty</span>
+                              <span className="text-xs text-muted-foreground/50 hidden md:inline">—</span>
+                            </div>
+                            <span className="text-xs font-medium text-foreground text-right md:text-left">{contract.analysis.financialTerms.royaltyRate}</span>
                           </div>
                         )}
                         {contract.analysis?.termLength && (
-                          <div className="flex items-start gap-2">
-                            <HugeiconsIcon icon={Calendar03Icon} size={14} className="text-muted-foreground shrink-0 mt-0.5" />
-                            <span className="text-xs text-muted-foreground whitespace-nowrap">Term</span>
-                            <span className="text-xs text-muted-foreground/50">—</span>
-                            <span className="text-xs font-medium text-foreground">{contract.analysis.termLength}</span>
+                          <div className="flex items-start gap-2 md:gap-2 justify-between md:justify-start">
+                            <div className="flex items-start gap-2">
+                              <HugeiconsIcon icon={Calendar03Icon} size={14} className="text-muted-foreground shrink-0 mt-0.5" />
+                              <span className="text-xs text-muted-foreground whitespace-nowrap">Term</span>
+                              <span className="text-xs text-muted-foreground/50 hidden md:inline">—</span>
+                            </div>
+                            <span className="text-xs font-medium text-foreground text-right md:text-left">{contract.analysis.termLength}</span>
                           </div>
                         )}
                         {contract.analysis?.financialTerms?.advanceAmount && (
-                          <div className="flex items-start gap-2">
-                            <HugeiconsIcon icon={DollarCircleIcon} size={14} className="text-muted-foreground shrink-0 mt-0.5" />
-                            <span className="text-xs text-muted-foreground whitespace-nowrap">Advance</span>
-                            <span className="text-xs text-muted-foreground/50">—</span>
-                            <span className="text-xs font-medium text-foreground">{contract.analysis.financialTerms.advanceAmount}</span>
+                          <div className="flex items-start gap-2 md:gap-2 justify-between md:justify-start">
+                            <div className="flex items-start gap-2">
+                              <HugeiconsIcon icon={DollarCircleIcon} size={14} className="text-muted-foreground shrink-0 mt-0.5" />
+                              <span className="text-xs text-muted-foreground whitespace-nowrap">Advance</span>
+                              <span className="text-xs text-muted-foreground/50 hidden md:inline">—</span>
+                            </div>
+                            <span className="text-xs font-medium text-foreground text-right md:text-left">{contract.analysis.financialTerms.advanceAmount}</span>
                           </div>
                         )}
                         {contract.analysis?.rightsAndOwnership?.exclusivity && (
-                          <div className="flex items-start gap-2">
-                            <HugeiconsIcon icon={Flag01Icon} size={14} className="text-muted-foreground shrink-0 mt-0.5" />
-                            <span className="text-xs text-muted-foreground whitespace-nowrap">Exclusivity</span>
-                            <span className="text-xs text-muted-foreground/50">—</span>
-                            <span className="text-xs font-medium text-foreground">{contract.analysis.rightsAndOwnership.exclusivity}</span>
+                          <div className="flex items-start gap-2 md:gap-2 justify-between md:justify-start">
+                            <div className="flex items-start gap-2">
+                              <HugeiconsIcon icon={Flag01Icon} size={14} className="text-muted-foreground shrink-0 mt-0.5" />
+                              <span className="text-xs text-muted-foreground whitespace-nowrap">Exclusivity</span>
+                              <span className="text-xs text-muted-foreground/50 hidden md:inline">—</span>
+                            </div>
+                            <span className="text-xs font-medium text-foreground text-right md:text-left">{contract.analysis.rightsAndOwnership.exclusivity}</span>
                           </div>
                         )}
                         {contract.analysis?.rightsAndOwnership?.territorialRights && (
-                          <div className="flex items-start gap-2">
-                            <HugeiconsIcon icon={Flag01Icon} size={14} className="text-muted-foreground shrink-0 mt-0.5" />
-                            <span className="text-xs text-muted-foreground whitespace-nowrap">Territory</span>
-                            <span className="text-xs text-muted-foreground/50">—</span>
-                            <span className="text-xs font-medium text-foreground">{contract.analysis.rightsAndOwnership.territorialRights}</span>
+                          <div className="flex items-start gap-2 md:gap-2 justify-between md:justify-start">
+                            <div className="flex items-start gap-2">
+                              <HugeiconsIcon icon={Flag01Icon} size={14} className="text-muted-foreground shrink-0 mt-0.5" />
+                              <span className="text-xs text-muted-foreground whitespace-nowrap">Territory</span>
+                              <span className="text-xs text-muted-foreground/50 hidden md:inline">—</span>
+                            </div>
+                            <span className="text-xs font-medium text-foreground text-right md:text-left">{contract.analysis.rightsAndOwnership.territorialRights}</span>
                           </div>
                         )}
                         {contract.analysis?.rightsAndOwnership?.masterOwnership && (
-                          <div className="flex items-start gap-2">
-                            <HugeiconsIcon icon={Flag01Icon} size={14} className="text-muted-foreground shrink-0 mt-0.5" />
-                            <span className="text-xs text-muted-foreground whitespace-nowrap">Ownership</span>
-                            <span className="text-xs text-muted-foreground/50">—</span>
-                            <span className="text-xs font-medium text-foreground">{contract.analysis.rightsAndOwnership.masterOwnership}</span>
+                          <div className="flex items-start gap-2 md:gap-2 justify-between md:justify-start">
+                            <div className="flex items-start gap-2">
+                              <HugeiconsIcon icon={Flag01Icon} size={14} className="text-muted-foreground shrink-0 mt-0.5" />
+                              <span className="text-xs text-muted-foreground whitespace-nowrap">Ownership</span>
+                              <span className="text-xs text-muted-foreground/50 hidden md:inline">—</span>
+                            </div>
+                            <span className="text-xs font-medium text-foreground text-right md:text-left">{contract.analysis.rightsAndOwnership.masterOwnership}</span>
                           </div>
                         )}
                       </div>
@@ -483,7 +495,7 @@ export default function ComparePage() {
       {/* Compare Button */}
       {!comparisonResult && (
         <motion.div
-          className="border-t border-border p-4 flex justify-center"
+          className="border-t border-border p-4 pb-[52px] md:pb-4 flex justify-center"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3, delay: 0.2 }}
@@ -638,7 +650,7 @@ export default function ComparePage() {
 
             {/* Actions */}
             <motion.div
-              className="flex justify-center gap-4 pt-4"
+              className="flex justify-center gap-4 pt-4 pb-14 md:pb-4"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ duration: 0.3, delay: 0.3 }}
