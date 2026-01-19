@@ -485,9 +485,9 @@ export function ContractAnalysisView({
       </div>
 
       {/* Main Content */}
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 overflow-auto flex flex-col bg-card">
-        {/* Sticky Header - Row 1: Title */}
-        <div className="sticky top-0 z-20 bg-card shrink-0">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 overflow-hidden flex flex-col bg-card">
+        {/* Fixed Header - Row 1: Title */}
+        <div className="z-20 bg-card shrink-0">
           <div className={cn(
             "px-6 py-3 md:py-0 md:h-12 flex flex-col md:flex-row md:items-center md:justify-between border-b border-border gap-2 md:gap-0",
             !showDocument && "max-w-4xl mx-auto"
@@ -683,8 +683,8 @@ export function ContractAnalysisView({
         </div>
 
         <main className={cn(
-          "px-6 py-6 transition-all duration-300 flex-1 flex flex-col",
-          activeTab === "discussion" ? "overflow-hidden pb-0" : "overflow-auto pb-24",
+          "px-6 py-6 transition-all duration-300 flex-1 flex flex-col overflow-y-auto",
+          activeTab === "discussion" ? "pb-0" : "pb-24",
           showDocument ? "w-full" : "max-w-4xl mx-auto"
         )}>
           {/* Overview Tab */}
