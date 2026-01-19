@@ -1031,7 +1031,7 @@ const ChatUI = () => {
           />
 
           {/* Chat Messages Container - mb accounts for fixed input height */}
-          <motion.div className={cn("flex-1 w-full max-w-3xl mx-auto overflow-y-auto scroll-smooth px-3", attachedContracts.length > 0 ? "mb-[340px] md:mb-52" : "mb-80 md:mb-44")}>
+          <motion.div className={cn("flex-1 w-full max-w-3xl mx-auto overflow-y-auto scroll-smooth px-3", attachedContracts.length > 0 ? "mb-[360px] md:mb-52" : "mb-80 md:mb-44")}>
           <div className="min-h-full flex flex-col justify-end pt-4">
           {chatMessages.length === 0 && (
             <div

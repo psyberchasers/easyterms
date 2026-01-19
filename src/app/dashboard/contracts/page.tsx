@@ -182,11 +182,12 @@ export default function ContractsPage() {
   };
 
   // Helper functions (defined before use)
-  const getPartyName = (contract: Contract) => {
+  const getPartyName = (contract: Contract): string => {
     const analysis = contract.analysis as { parties?: Record<string, string | string[]> } | null;
     if (!analysis?.parties) return "—";
     const parties = analysis.parties;
-    return parties.label || parties.artist || parties.company || parties.client || "—";
+    const party = parties.label || parties.artist || parties.company || parties.client || "—";
+    return Array.isArray(party) ? party.join(", ") : party;
   };
 
   const getCategory = (contract: Contract) => {
