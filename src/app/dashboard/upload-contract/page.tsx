@@ -74,7 +74,7 @@ import { MusicLoader } from "@/components/MusicLoader";
 import { DownloadIcon as AnimatedDownloadIcon, DownloadHandle } from "@/components/DownloadIcon";
 import { UploadIcon as AnimatedUploadIcon, UploadHandle } from "@/components/UploadIcon";
 import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "@/components/animate-ui/components/animate/tooltip";
-import { DocumentScanner } from "@/components/DocumentScanner";
+import { CameraCapture } from "@/components/CameraCapture";
 import { Camera } from "lucide-react";
 import { convertToPdf } from "@/lib/convertToPdf";
 
@@ -736,7 +736,7 @@ export default function UploadContractPage() {
     if (file) handleFileSelect(file);
   };
 
-  // Handle scanned document from DocumentScanner
+  // Handle scanned document from CameraCapture
   const handleScanComplete = useCallback((pdfBlob: Blob, fileName: string) => {
     setShowScanner(false);
     const file = new File([pdfBlob], fileName, { type: "application/pdf" });
@@ -1337,7 +1337,7 @@ export default function UploadContractPage() {
         </motion.div>
       </div>
 
-      {/* Document Scanner Modal */}
+      {/* Camera Capture Modal */}
       {showScanner && (
         <div
           className="fixed inset-0 z-[9999] bg-black/50 flex items-center justify-center p-4"
@@ -1352,15 +1352,17 @@ export default function UploadContractPage() {
             onClick={(e) => e.stopPropagation()}
           >
             <div className="p-4 border-b border-border">
-              <h2 className="text-lg font-semibold">Scan Document</h2>
+              <h2 className="text-lg font-semibold">Scan Contract</h2>
               <p className="text-sm text-muted-foreground">
-                Take photos of your contract pages
+                Take photos of each page
               </p>
             </div>
-            <DocumentScanner
-              onScanComplete={handleScanComplete}
-              onClose={() => setShowScanner(false)}
-            />
+            <div className="p-4">
+              <CameraCapture
+                onComplete={handleScanComplete}
+                onClose={() => setShowScanner(false)}
+              />
+            </div>
           </div>
         </div>
       )}
@@ -2837,7 +2839,7 @@ export default function UploadContractPage() {
 
     </motion.div>
 
-    {/* Document Scanner Modal - OUTSIDE motion.div to avoid transform breaking fixed positioning */}
+    {/* Camera Capture Modal - OUTSIDE motion.div to avoid transform breaking fixed positioning */}
     {showScanner && (
       <div
         className="fixed inset-0 z-[9999] bg-black/50 flex items-center justify-center p-4"
@@ -2853,15 +2855,17 @@ export default function UploadContractPage() {
           onClick={(e) => e.stopPropagation()}
         >
           <div className="p-4 border-b border-border">
-            <h2 className="text-lg font-semibold">Scan Document</h2>
+            <h2 className="text-lg font-semibold">Scan Contract</h2>
             <p className="text-sm text-muted-foreground">
-              Take photos of your contract pages
+              Take photos of each page
             </p>
           </div>
-          <DocumentScanner
-            onScanComplete={handleScanComplete}
-            onClose={() => setShowScanner(false)}
-          />
+          <div className="p-4">
+            <CameraCapture
+              onComplete={handleScanComplete}
+              onClose={() => setShowScanner(false)}
+            />
+          </div>
         </div>
       </div>
     )}
