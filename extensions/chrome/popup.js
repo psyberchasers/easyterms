@@ -34,7 +34,26 @@ async function init() {
   showSection('loading');
 
   // Check for stored session
-  const session = await getStoredSession();
+  let session = await getStoredSession();
+
+  // If no stored session, try to fetch from API (user might be logged in on website)
+  if (!session) {
+    try {
+      const response = await fetch(`${API_BASE}/api/auth/session`, {
+        credentials: 'include'
+      });
+      if (response.ok) {
+        const data = await response.json();
+        if (data.session) {
+          session = data.session;
+          await setStoredSession(session);
+        }
+      }
+    } catch (e) {
+      console.log('Could not fetch session from API');
+    }
+  }
+
   if (session) {
     currentUser = session.user;
     await showLoggedInState();
@@ -82,7 +101,26 @@ async function showLoggedInState() {
 }
 
 // Auth handlers
-signinBtn.addEventListener('click', () => {
+signinBtn.addEventListener('click', async () => {
+  // First, try to fetch session from API (in case already logged in)
+  try {
+    const response = await fetch(`${API_BASE}/api/auth/session`, {
+      credentials: 'include'
+    });
+    if (response.ok) {
+      const data = await response.json();
+      if (data.session) {
+        await setStoredSession(data.session);
+        currentUser = data.session.user;
+        await showLoggedInState();
+        return;
+      }
+    }
+  } catch (e) {
+    console.log('Could not fetch existing session, opening login');
+  }
+
+  // Open login page
   chrome.tabs.create({ url: `${API_BASE}/login?extension=true` });
 });
 
