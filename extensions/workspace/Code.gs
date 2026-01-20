@@ -3,7 +3,7 @@
  * Analyze music contracts directly from Google Drive and Docs
  */
 
-const API_BASE = 'https://easyterms.vercel.app';
+const API_BASE = 'https://easyterms.ai';
 const SUPABASE_URL = 'https://jnfzlhzawqkbumzjssma.supabase.co';
 
 /**
@@ -65,7 +65,7 @@ function createHomepageCard(isDocsContext) {
     .setTitle('EasyTerms')
     .setSubtitle('Contract Analysis')
     .setImageStyle(CardService.ImageStyle.CIRCLE)
-    .setImageUrl('https://easyterms.vercel.app/icon.png');
+    .setImageUrl('https://easyterms.ai/icon.png');
 
   builder.setHeader(header);
 
@@ -404,7 +404,7 @@ function createAnalyzingCard(contractId, fileName) {
 
   section.addWidget(
     CardService.newImage()
-      .setImageUrl('https://easyterms.vercel.app/analyzing.gif')
+      .setImageUrl('https://easyterms.ai/analyzing.gif')
   );
 
   section.addWidget(

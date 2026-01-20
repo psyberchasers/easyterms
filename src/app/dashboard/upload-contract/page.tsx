@@ -279,6 +279,58 @@ export default function UploadContractPage() {
     }
   }, []);
 
+  // State to track pending extension analysis
+  const [pendingExtensionAnalysis, setPendingExtensionAnalysis] = useState<{
+    content: string;
+    title: string;
+    source: string;
+  } | null>(null);
+
+  // Handle text from Chrome extension - check for pending analysis
+  useEffect(() => {
+    const handleExtensionAnalysis = (e: CustomEvent) => {
+      const data = e.detail;
+      if (data && data.type === 'text' && data.content) {
+        setPendingExtensionAnalysis({
+          content: data.content,
+          title: data.title || 'Web Content',
+          source: data.source || ''
+        });
+      }
+    };
+
+    // Check localStorage for pending analysis (set by extension)
+    const checkPendingAnalysis = () => {
+      const pending = localStorage.getItem('easyterms_pending_analysis');
+      if (pending) {
+        try {
+          const data = JSON.parse(pending);
+          localStorage.removeItem('easyterms_pending_analysis');
+          if (data.type === 'text' && data.content) {
+            setPendingExtensionAnalysis({
+              content: data.content,
+              title: data.title || 'Web Content',
+              source: data.source || ''
+            });
+          }
+        } catch (e) {
+          console.error('Failed to parse pending analysis', e);
+        }
+      }
+    };
+
+    window.addEventListener('easyterms-pending-analysis', handleExtensionAnalysis as EventListener);
+
+    // Check on mount and after a delay (for extension timing)
+    checkPendingAnalysis();
+    const timeout = setTimeout(checkPendingAnalysis, 1000);
+
+    return () => {
+      window.removeEventListener('easyterms-pending-analysis', handleExtensionAnalysis as EventListener);
+      clearTimeout(timeout);
+    };
+  }, []);
+
   // Disable scroll on role selection screen
   useEffect(() => {
     if (status === "idle") {
@@ -453,6 +505,89 @@ export default function UploadContractPage() {
       setStatus("error");
     }
   }, [user]);
+
+  // Analyze text content directly (from Chrome extension)
+  const analyzeTextContent = useCallback(async (text: string, title: string, sourceUrl: string) => {
+    setStatus("uploading");
+    setFileName(title);
+    setFileType("text/plain");
+    setError("");
+
+    // Create a text file blob for the API
+    const textBlob = new Blob([text], { type: "text/plain" });
+    const textFile = new File([textBlob], `${title}.txt`, { type: "text/plain" });
+    setOriginalFile(textFile);
+
+    // Convert to PDF for preview
+    try {
+      const { pdfBuffer } = await convertToPdf(textFile);
+      const pdfBlob = new Blob([new Uint8Array(pdfBuffer)], { type: "application/pdf" });
+      setFileUrl(URL.createObjectURL(pdfBlob));
+    } catch (err) {
+      console.warn("PDF conversion failed:", err);
+      setFileUrl(URL.createObjectURL(textBlob));
+    }
+
+    try {
+      setStatus("analyzing");
+
+      const formData = new FormData();
+      formData.append("file", textFile);
+      formData.append("industry", "general"); // General for ToS/web content
+      formData.append("role", selectedRole || "recipient");
+      formData.append("sourceUrl", sourceUrl);
+
+      const response = await fetch("/api/analyze", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || "Analysis failed");
+      }
+
+      const data = await response.json();
+
+      // Add missing clauses check
+      if (!data.analysis.missingClauses) {
+        const contractText = (data.extractedText || text).toLowerCase();
+        const actuallyMissing = DEFAULT_MISSING_CLAUSES.filter(item => {
+          const clauseLower = item.clause.toLowerCase();
+          if (clauseLower.includes("audit")) return !contractText.includes("audit");
+          if (clauseLower.includes("reversion")) return !contractText.includes("reversion") && !contractText.includes("revert");
+          if (clauseLower.includes("creative control")) return !contractText.includes("creative control") && !contractText.includes("approval rights");
+          if (clauseLower.includes("termination")) return !contractText.includes("termination") && !contractText.includes("terminate");
+          return true;
+        });
+        data.analysis.missingClauses = actuallyMissing;
+      }
+
+      setAnalysis(data.analysis);
+      setStatus("complete");
+
+      // Auto-save if user is logged in
+      if (user && data.analysis) {
+        saveContract(data.analysis, textFile);
+      }
+    } catch (err) {
+      console.error("Analysis error:", err);
+      setError(err instanceof Error ? err.message : "Analysis failed");
+      setStatus("error");
+    }
+  }, [user, selectedRole]);
+
+  // Process pending extension analysis once analyzeTextContent is available
+  useEffect(() => {
+    if (pendingExtensionAnalysis) {
+      analyzeTextContent(
+        pendingExtensionAnalysis.content,
+        pendingExtensionAnalysis.title,
+        pendingExtensionAnalysis.source
+      );
+      setPendingExtensionAnalysis(null);
+    }
+  }, [pendingExtensionAnalysis, analyzeTextContent]);
 
   // Save contract
   const saveContract = useCallback(async (analysisData: ContractAnalysis, file: File) => {

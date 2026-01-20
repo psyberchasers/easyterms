@@ -1,5 +1,5 @@
 // EasyTerms Chrome Extension
-const API_BASE = 'https://easyterms.vercel.app';
+const API_BASE = 'https://easyterms.ai';
 const SUPABASE_URL = 'https://jnfzlhzawqkbumzjssma.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpuZnpsaHphd3FrYnVtempzc21hIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzY0MzQ5NDgsImV4cCI6MjA1MjAxMDk0OH0.74LazhLuOBqbSMZFakYALLHiNHri-0eFq3DP-sJy8sw';
 

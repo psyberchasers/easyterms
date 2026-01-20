@@ -69,7 +69,7 @@ Located in `/workspace`
 
 ## API Integration
 
-Both extensions use the EasyTerms API at `https://easyterms.vercel.app/api/`
+Both extensions use the EasyTerms API at `https://easyterms.ai/api/`
 
 ### Authentication Flow
 

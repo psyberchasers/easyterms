@@ -20,7 +20,7 @@
   "addOns": {
     "common": {
       "name": "EasyTerms",
-      "logoUrl": "https://easyterms.vercel.app/icon.png",
+      "logoUrl": "https://easyterms.ai/icon.png",
       "layoutProperties": {
         "primaryColor": "#a855f7",
         "secondaryColor": "#7c3aed"

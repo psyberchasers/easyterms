@@ -6,11 +6,13 @@
   "permissions": [
     "storage",
     "activeTab",
-    "contextMenus"
+    "contextMenus",
+    "scripting"
   ],
   "host_permissions": [
-    "https://easyterms.vercel.app/*",
-    "https://*.supabase.co/*"
+    "https://easyterms.ai/*",
+    "https://*.supabase.co/*",
+    "<all_urls>"
   ],
   "action": {
     "default_popup": "popup.html",
@@ -25,7 +27,7 @@
   },
   "content_scripts": [
     {
-      "matches": ["https://easyterms.vercel.app/*"],
+      "matches": ["https://easyterms.ai/*"],
       "js": ["content.js"],
       "run_at": "document_idle"
     }
