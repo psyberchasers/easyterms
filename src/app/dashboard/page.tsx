@@ -158,6 +158,27 @@ export default function DashboardPage() {
   const router = useRouter();
   const supabase = createClient();
 
+  // Handle Chrome extension auth - send session if redirected here with extension param
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("extension") === "true" && user) {
+      supabase.auth.getSession().then(({ data: { session } }) => {
+        if (session) {
+          const sessionData = {
+            access_token: session.access_token,
+            refresh_token: session.refresh_token,
+            user: {
+              id: session.user.id,
+              email: session.user.email,
+            }
+          };
+          // Store in localStorage for extension content script to pick up
+          localStorage.setItem('easyterms_extension_session', JSON.stringify(sessionData));
+        }
+      });
+    }
+  }, [user, supabase]);
+
   const fetchContracts = useCallback(async (isInitial = false) => {
     if (!user) return;
 
