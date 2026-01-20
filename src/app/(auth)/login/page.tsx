@@ -26,6 +26,7 @@ export default function LoginPage() {
   const [success, setSuccess] = useState(false);
   const [redirect, setRedirect] = useState("/dashboard");
   const [wordIndex, setWordIndex] = useState(0);
+  const [isExtension, setIsExtension] = useState(false);
   const router = useRouter();
   const { theme } = useTheme();
 
@@ -34,6 +35,10 @@ export default function LoginPage() {
     const redirectParam = params.get("redirect");
     if (redirectParam) {
       setRedirect(redirectParam);
+    }
+    // Check if opened from Chrome extension
+    if (params.get("extension") === "true") {
+      setIsExtension(true);
     }
     // Check if URL has signup mode
     const modeParam = params.get("mode");
@@ -57,7 +62,7 @@ export default function LoginPage() {
     setLoading(true);
     setError("");
 
-    const { error } = await supabase.auth.signInWithPassword({
+    const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
@@ -66,6 +71,31 @@ export default function LoginPage() {
       setError(error.message);
       setLoading(false);
     } else {
+      // If opened from extension, send session back
+      if (isExtension && data.session) {
+        const sessionData = {
+          access_token: data.session.access_token,
+          refresh_token: data.session.refresh_token,
+          user: {
+            id: data.session.user.id,
+            email: data.session.user.email,
+          }
+        };
+        // Try to send to extension
+        try {
+          if (typeof chrome !== 'undefined' && chrome.runtime) {
+            chrome.runtime.sendMessage({ type: 'EASYTERMS_AUTH', session: sessionData });
+          }
+        } catch (err) {
+          console.log('Extension messaging not available');
+        }
+        // Also store in localStorage for the extension to read
+        localStorage.setItem('easyterms_extension_session', JSON.stringify(sessionData));
+        // Show success and close instruction
+        setSuccess(true);
+        setLoading(false);
+        return;
+      }
       router.push(redirect);
       router.refresh();
     }
@@ -117,6 +147,40 @@ export default function LoginPage() {
   };
 
   if (success) {
+    // Extension login success
+    if (isExtension) {
+      return (
+        <div className="h-screen flex items-center justify-center bg-background px-4 overflow-hidden">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="w-full max-w-md border border-border p-8 rounded-xl"
+          >
+            <div className="text-center">
+              <div className="mx-auto w-12 h-12 border border-green-400/30 rounded-full flex items-center justify-center mb-4">
+                <CheckCircle2 className="w-6 h-6 text-green-400" />
+              </div>
+              <h2 className="text-xl font-medium text-foreground mb-2">Signed in!</h2>
+              <p className="text-muted-foreground/60 mb-4 text-sm">
+                You&apos;re now signed in to the EasyTerms extension.
+              </p>
+              <p className="text-xs text-muted-foreground/40">
+                You can close this tab and return to the extension.
+              </p>
+              <Button
+                variant="outline"
+                className="mt-6 border-border bg-background text-foreground hover:bg-muted hover:text-foreground rounded-md"
+                onClick={() => window.close()}
+              >
+                Close this tab
+              </Button>
+            </div>
+          </motion.div>
+        </div>
+      );
+    }
+
+    // Signup success (email confirmation)
     return (
       <div className="h-screen flex items-center justify-center bg-background px-4 overflow-hidden">
         <motion.div
