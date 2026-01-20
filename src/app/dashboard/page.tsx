@@ -163,7 +163,7 @@ export default function DashboardPage() {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     if (params.get("extension") === "true" && user) {
-      supabase.auth.getSession().then(({ data: { session } }) => {
+      supabase.auth.getSession().then(({ data: { session } }: { data: { session: { access_token: string; refresh_token: string; user: { id: string; email?: string } } | null } }) => {
         if (session) {
           const sessionData = {
             access_token: session.access_token,
