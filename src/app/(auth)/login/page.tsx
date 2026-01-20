@@ -42,7 +42,7 @@ export default function LoginPage() {
       setIsExtension(true);
       // Check if already logged in - if so, send session to extension
       const supabaseClient = createClient();
-      supabaseClient.auth.getSession().then(({ data: { session } }) => {
+      supabaseClient.auth.getSession().then(({ data: { session } }: { data: { session: { access_token: string; refresh_token: string; user: { id: string; email?: string } } | null } }) => {
         if (session) {
           const sessionData = {
             access_token: session.access_token,
