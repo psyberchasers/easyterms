@@ -258,6 +258,136 @@ body {
   margin-bottom: 12px;
 }
 
+/* Stats Row */
+.result-stats {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.stat-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 8px;
+  background: #0a0a0b;
+  border-radius: 6px;
+}
+
+.stat-value {
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.stat-value.high { color: #ef4444; }
+.stat-value.medium { color: #eab308; }
+.stat-value.low { color: #22c55e; }
+
+.stat-label {
+  font-size: 9px;
+  color: #71717a;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Key Concerns */
+.result-concerns {
+  margin-bottom: 12px;
+  padding: 10px;
+  background: rgba(239, 68, 68, 0.05);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  border-radius: 6px;
+}
+
+.concerns-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #ef4444;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 8px;
+}
+
+.concerns-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.concerns-list li {
+  font-size: 11px;
+  color: #fafafa;
+  padding-left: 12px;
+  position: relative;
+}
+
+.concerns-list li::before {
+  content: "•";
+  position: absolute;
+  left: 0;
+  color: #ef4444;
+}
+
+/* Financial Highlights */
+.result-financial {
+  margin-bottom: 12px;
+  padding: 10px;
+  background: rgba(168, 85, 247, 0.05);
+  border: 1px solid rgba(168, 85, 247, 0.2);
+  border-radius: 6px;
+}
+
+.financial-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #a855f7;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 8px;
+}
+
+.financial-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+}
+
+.financial-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.financial-label {
+  font-size: 9px;
+  color: #71717a;
+  text-transform: uppercase;
+}
+
+.financial-value {
+  font-size: 11px;
+  color: #fafafa;
+  font-weight: 500;
+}
+
+/* Result Actions */
+.result-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.result-actions .btn {
+  flex: 1;
+}
+
 /* Recent Section */
 .recent-section {
   margin-top: 16px;

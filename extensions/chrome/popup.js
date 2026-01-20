@@ -20,7 +20,15 @@ const resultSection = document.getElementById('result-section');
 const resultTitle = document.getElementById('result-title');
 const resultSummary = document.getElementById('result-summary');
 const riskBadge = document.getElementById('risk-badge');
+const statHigh = document.getElementById('stat-high');
+const statMedium = document.getElementById('stat-medium');
+const statLow = document.getElementById('stat-low');
+const resultConcerns = document.getElementById('result-concerns');
+const concernsList = document.getElementById('concerns-list');
+const resultFinancial = document.getElementById('result-financial');
+const financialGrid = document.getElementById('financial-grid');
 const viewFullBtn = document.getElementById('view-full-btn');
+const newAnalysisBtn = document.getElementById('new-analysis-btn');
 const viewAllLink = document.getElementById('view-all-link');
 const recentList = document.getElementById('recent-list');
 
@@ -293,6 +301,8 @@ function showResultFromAnalysis(result) {
   progressSection.classList.add('hidden');
   resultSection.classList.remove('hidden');
 
+  const analysis = result.analysis || {};
+
   resultTitle.textContent = result.contractType || 'Contract Analysis';
   resultSummary.textContent = result.summary ?
     (result.summary.length > 150 ? result.summary.substring(0, 150) + '...' : result.summary) :
@@ -302,6 +312,56 @@ function showResultFromAnalysis(result) {
   const risk = result.overallRisk || 'medium';
   riskBadge.textContent = `${risk} risk`;
   riskBadge.className = `risk-badge ${risk}`;
+
+  // Calculate stats from keyTerms
+  const keyTerms = analysis.keyTerms || [];
+  const highCount = keyTerms.filter(t => t.riskLevel === 'high').length;
+  const mediumCount = keyTerms.filter(t => t.riskLevel === 'medium').length;
+  const lowCount = keyTerms.filter(t => t.riskLevel === 'low').length;
+
+  statHigh.textContent = highCount;
+  statMedium.textContent = mediumCount;
+  statLow.textContent = lowCount;
+
+  // Populate concerns
+  const concerns = analysis.potentialConcerns || [];
+  if (concerns.length > 0) {
+    resultConcerns.classList.remove('hidden');
+    concernsList.innerHTML = concerns.slice(0, 4).map(concern =>
+      `<li>${concern}</li>`
+    ).join('');
+  } else {
+    resultConcerns.classList.add('hidden');
+  }
+
+  // Populate financial terms
+  const financial = analysis.financialTerms || {};
+  const financialItems = [];
+
+  if (financial.advanceAmount && financial.advanceAmount !== 'null' && !financial.advanceAmount.toLowerCase().includes('not ')) {
+    financialItems.push({ label: 'Advance', value: financial.advanceAmount });
+  }
+  if (financial.royaltyRate && financial.royaltyRate !== 'null') {
+    financialItems.push({ label: 'Royalty', value: financial.royaltyRate });
+  }
+  if (analysis.termLength && analysis.termLength !== 'See contract') {
+    financialItems.push({ label: 'Term', value: analysis.termLength });
+  }
+  if (financial.recoupment && financial.recoupment !== 'null' && !financial.recoupment.toLowerCase().includes('not ')) {
+    financialItems.push({ label: 'Recoupment', value: financial.recoupment });
+  }
+
+  if (financialItems.length > 0) {
+    resultFinancial.classList.remove('hidden');
+    financialGrid.innerHTML = financialItems.slice(0, 4).map(item => `
+      <div class="financial-item">
+        <span class="financial-label">${item.label}</span>
+        <span class="financial-value">${item.value.length > 30 ? item.value.substring(0, 30) + '...' : item.value}</span>
+      </div>
+    `).join('');
+  } else {
+    resultFinancial.classList.add('hidden');
+  }
 
   // Refresh recent list
   loadRecentContracts();
@@ -319,6 +379,12 @@ viewFullBtn.addEventListener('click', () => {
   if (currentContractId) {
     chrome.tabs.create({ url: `${API_BASE}/dashboard/contracts/${currentContractId}` });
   }
+});
+
+// New analysis - reset to upload state
+newAnalysisBtn.addEventListener('click', () => {
+  resetUploadState();
+  currentContractId = null;
 });
 
 viewAllLink.addEventListener('click', (e) => {

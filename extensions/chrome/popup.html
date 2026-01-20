@@ -37,14 +37,14 @@
 
       <!-- Upload Area -->
       <div class="upload-area" id="upload-area">
-        <input type="file" id="file-input" accept=".pdf,.doc,.docx" hidden>
+        <input type="file" id="file-input" accept=".pdf,.doc,.docx,.txt" hidden>
         <div class="upload-content">
           <svg class="upload-icon" width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path d="M12 15V3M12 3L8 7M12 3L16 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
             <path d="M3 15V17C3 18.1046 3.89543 19 5 19H19C20.1046 19 21 18.1046 21 17V15" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
           </svg>
           <p class="upload-text">Drop contract here or <span class="link">browse</span></p>
-          <p class="upload-hint">PDF, DOC, DOCX up to 10MB</p>
+          <p class="upload-hint">PDF, DOC, DOCX, TXT up to 10MB</p>
         </div>
       </div>
 
@@ -63,9 +63,58 @@
           <span class="risk-badge" id="risk-badge">Low Risk</span>
         </div>
         <p class="result-summary" id="result-summary"></p>
-        <button id="view-full-btn" class="btn btn-secondary">
-          View Full Analysis
-        </button>
+
+        <!-- Stats Row -->
+        <div class="result-stats" id="result-stats">
+          <div class="stat-item">
+            <span class="stat-value high" id="stat-high">0</span>
+            <span class="stat-label">High Risk</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-value medium" id="stat-medium">0</span>
+            <span class="stat-label">Medium</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-value low" id="stat-low">0</span>
+            <span class="stat-label">Low Risk</span>
+          </div>
+        </div>
+
+        <!-- Key Concerns -->
+        <div class="result-concerns" id="result-concerns">
+          <div class="concerns-header">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+              <path d="M12 9V13M12 17H12.01M12 3L2 21H22L12 3Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <span>Key Concerns</span>
+          </div>
+          <ul class="concerns-list" id="concerns-list">
+            <!-- Populated by JS -->
+          </ul>
+        </div>
+
+        <!-- Financial Highlights -->
+        <div class="result-financial" id="result-financial">
+          <div class="financial-header">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+              <path d="M12 1V23M17 5H9.5C8.57174 5 7.6815 5.36875 7.02513 6.02513C6.36875 6.6815 6 7.57174 6 8.5C6 9.42826 6.36875 10.3185 7.02513 10.9749C7.6815 11.6313 8.57174 12 9.5 12H14.5C15.4283 12 16.3185 12.3687 16.9749 13.0251C17.6313 13.6815 18 14.5717 18 15.5C18 16.4283 17.6313 17.3185 16.9749 17.9749C16.3185 18.6313 15.4283 19 14.5 19H6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <span>Financial Terms</span>
+          </div>
+          <div class="financial-grid" id="financial-grid">
+            <!-- Populated by JS -->
+          </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="result-actions">
+          <button id="view-full-btn" class="btn btn-primary">
+            View Full Analysis
+          </button>
+          <button id="new-analysis-btn" class="btn btn-secondary">
+            New Analysis
+          </button>
+        </div>
       </div>
 
       <!-- Recent Contracts -->
