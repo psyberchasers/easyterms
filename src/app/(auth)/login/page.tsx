@@ -102,8 +102,9 @@ export default function LoginPage() {
         };
         // Try to send to extension
         try {
-          if (typeof chrome !== 'undefined' && chrome.runtime) {
-            chrome.runtime.sendMessage({ type: 'EASYTERMS_AUTH', session: sessionData });
+          const chromeGlobal = (window as unknown as { chrome?: { runtime?: { sendMessage: (msg: unknown) => void } } }).chrome;
+          if (chromeGlobal?.runtime?.sendMessage) {
+            chromeGlobal.runtime.sendMessage({ type: 'EASYTERMS_AUTH', session: sessionData });
           }
         } catch (err) {
           console.log('Extension messaging not available');

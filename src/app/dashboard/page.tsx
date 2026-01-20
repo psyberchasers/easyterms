@@ -177,9 +177,9 @@ export default function DashboardPage() {
           localStorage.setItem('easyterms_extension_session', JSON.stringify(sessionData));
           // Also try to send directly to extension
           try {
-            if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.sendMessage) {
-              // Try sending to all extension IDs (the extension will only receive its own)
-              chrome.runtime.sendMessage({ type: 'EASYTERMS_AUTH', session: sessionData });
+            const chromeGlobal = (window as unknown as { chrome?: { runtime?: { sendMessage: (msg: unknown) => void } } }).chrome;
+            if (chromeGlobal?.runtime?.sendMessage) {
+              chromeGlobal.runtime.sendMessage({ type: 'EASYTERMS_AUTH', session: sessionData });
             }
           } catch (e) {
             console.log('Extension messaging not available');
