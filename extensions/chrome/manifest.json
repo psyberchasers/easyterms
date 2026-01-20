@@ -10,7 +10,8 @@
     "scripting"
   ],
   "host_permissions": [
-    "https://easyterms.ai/*",
+    "*://*.easyterms.ai/*",
+    "*://easyterms.ai/*",
     "http://localhost:3000/*",
     "https://*.supabase.co/*",
     "<all_urls>"
@@ -28,9 +29,9 @@
   },
   "content_scripts": [
     {
-      "matches": ["https://easyterms.ai/*", "http://localhost:3000/*"],
+      "matches": ["*://*.easyterms.ai/*", "*://easyterms.ai/*", "http://localhost:3000/*"],
       "js": ["content.js"],
-      "run_at": "document_idle"
+      "run_at": "document_start"
     }
   ],
   "icons": {
