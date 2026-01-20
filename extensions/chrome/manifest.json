@@ -11,6 +11,7 @@
   ],
   "host_permissions": [
     "https://easyterms.ai/*",
+    "http://localhost:3000/*",
     "https://*.supabase.co/*",
     "<all_urls>"
   ],
