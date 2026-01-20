@@ -1,0 +1,292 @@
+/* EasyTerms Page Highlighter Styles */
+
+/* Highlight styles */
+.easyterms-highlight {
+  padding: 2px 0;
+  border-radius: 2px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.easyterms-highlight:hover {
+  filter: brightness(0.9);
+}
+
+.easyterms-high,
+.easyterms-concern {
+  background-color: rgba(239, 68, 68, 0.25);
+  border-bottom: 2px solid #ef4444;
+}
+
+.easyterms-medium {
+  background-color: rgba(234, 179, 8, 0.25);
+  border-bottom: 2px solid #eab308;
+}
+
+.easyterms-low {
+  background-color: rgba(34, 197, 94, 0.2);
+  border-bottom: 2px solid #22c55e;
+}
+
+/* Tooltip styles */
+.easyterms-tooltip {
+  position: absolute;
+  z-index: 2147483647;
+  max-width: 320px;
+  background: #ffffff;
+  border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-size: 13px;
+  line-height: 1.5;
+  animation: easyterms-fadeIn 0.2s ease;
+}
+
+@keyframes easyterms-fadeIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.easyterms-tooltip-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  border-bottom: 1px solid #e5e5e5;
+}
+
+.easyterms-tooltip-badge {
+  font-size: 10px;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 4px;
+}
+
+.easyterms-badge-high,
+.easyterms-badge-concern {
+  background: rgba(239, 68, 68, 0.15);
+  color: #dc2626;
+}
+
+.easyterms-badge-medium {
+  background: rgba(234, 179, 8, 0.15);
+  color: #ca8a04;
+}
+
+.easyterms-badge-low {
+  background: rgba(34, 197, 94, 0.15);
+  color: #16a34a;
+}
+
+.easyterms-tooltip-close {
+  background: none;
+  border: none;
+  font-size: 18px;
+  color: #71717a;
+  cursor: pointer;
+  padding: 0 4px;
+  line-height: 1;
+}
+
+.easyterms-tooltip-close:hover {
+  color: #1a1a1a;
+}
+
+.easyterms-tooltip-content {
+  padding: 12px;
+  color: #374151;
+}
+
+/* Floating panel styles */
+.easyterms-panel {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  width: 300px;
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  z-index: 2147483646;
+  animation: easyterms-slideIn 0.3s ease;
+  overflow: hidden;
+}
+
+@keyframes easyterms-slideIn {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.easyterms-panel-hidden {
+  display: none;
+}
+
+.easyterms-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background: #f9fafb;
+  border-bottom: 1px solid #e5e5e5;
+  cursor: grab;
+}
+
+.easyterms-panel-logo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+  font-size: 14px;
+  color: #1a1a1a;
+}
+
+.easyterms-panel-logo svg {
+  flex-shrink: 0;
+}
+
+.easyterms-panel-close {
+  background: none;
+  border: none;
+  font-size: 20px;
+  color: #71717a;
+  cursor: pointer;
+  padding: 0 4px;
+  line-height: 1;
+}
+
+.easyterms-panel-close:hover {
+  color: #1a1a1a;
+}
+
+.easyterms-panel-body {
+  padding: 16px;
+}
+
+.easyterms-panel-risk {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 4px;
+  margin-bottom: 12px;
+}
+
+.easyterms-risk-high {
+  background: rgba(239, 68, 68, 0.15);
+  color: #dc2626;
+}
+
+.easyterms-risk-medium {
+  background: rgba(234, 179, 8, 0.15);
+  color: #ca8a04;
+}
+
+.easyterms-risk-low {
+  background: rgba(34, 197, 94, 0.15);
+  color: #16a34a;
+}
+
+.easyterms-panel-stats {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.easyterms-stat {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 8px;
+  background: #f4f4f5;
+  border-radius: 6px;
+}
+
+.easyterms-stat-value {
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.easyterms-stat-label {
+  font-size: 10px;
+  color: #71717a;
+  text-transform: uppercase;
+}
+
+.easyterms-high { color: #dc2626; }
+.easyterms-medium { color: #ca8a04; }
+.easyterms-concern { color: #dc2626; }
+
+.easyterms-panel-concerns {
+  background: rgba(239, 68, 68, 0.05);
+  border-radius: 6px;
+  padding: 10px 12px;
+  margin-bottom: 12px;
+}
+
+.easyterms-concerns-title {
+  font-size: 11px;
+  font-weight: 600;
+  color: #dc2626;
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+
+.easyterms-panel-concerns ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.easyterms-panel-concerns li {
+  font-size: 12px;
+  color: #374151;
+  padding: 3px 0;
+  padding-left: 12px;
+  position: relative;
+}
+
+.easyterms-panel-concerns li::before {
+  content: "•";
+  position: absolute;
+  left: 0;
+  color: #dc2626;
+}
+
+.easyterms-panel-concerns .easyterms-more {
+  color: #71717a;
+  font-style: italic;
+}
+
+.easyterms-panel-concerns .easyterms-more::before {
+  content: none;
+}
+
+.easyterms-panel-actions {
+  margin-bottom: 8px;
+}
+
+.easyterms-panel-btn {
+  display: block;
+  width: 100%;
+  padding: 10px 16px;
+  background: #1a1a1a;
+  color: #ffffff !important;
+  text-decoration: none !important;
+  text-align: center;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  transition: background 0.15s ease;
+}
+
+.easyterms-panel-btn:hover {
+  background: #333333;
+  color: #ffffff !important;
+}
+
+.easyterms-panel-hint {
+  font-size: 11px;
+  color: #71717a;
+  text-align: center;
+}

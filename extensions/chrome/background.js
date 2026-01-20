@@ -17,10 +17,17 @@ chrome.runtime.onInstalled.addListener(() => {
     contexts: ['link'],
   });
 
-  // For page (ToS, contracts, etc)
+  // For page - highlight on page
+  chrome.contextMenus.create({
+    id: 'analyze-page-highlight',
+    title: 'Analyze & highlight this page',
+    contexts: ['page'],
+  });
+
+  // For page - open in EasyTerms (fallback)
   chrome.contextMenus.create({
     id: 'analyze-page',
-    title: 'Analyze this page with EasyTerms',
+    title: 'Analyze in EasyTerms (full view)',
     contexts: ['page'],
   });
 });
@@ -82,7 +89,13 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
     return;
   }
 
-  // Handle page analysis
+  // Handle page analysis with highlight
+  if (info.menuItemId === 'analyze-page-highlight') {
+    await analyzeAndHighlightPage(tab, session);
+    return;
+  }
+
+  // Handle page analysis (open in EasyTerms)
   if (info.menuItemId === 'analyze-page') {
     // Check if it's a PDF
     if (tab.url && isPdfUrl(tab.url)) {
@@ -134,6 +147,113 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
     }
   }
 });
+
+// Analyze page and highlight directly on the page
+async function analyzeAndHighlightPage(tab, session) {
+  // Check if it's a PDF - can't highlight PDFs inline
+  if (tab.url && isPdfUrl(tab.url)) {
+    chrome.tabs.create({
+      url: `${API_BASE}/dashboard/upload-contract?url=${encodeURIComponent(tab.url)}`,
+    });
+    return;
+  }
+
+  try {
+    // Show analyzing notification
+    chrome.notifications.create('analyzing', {
+      type: 'basic',
+      iconUrl: 'icons/icon128.png',
+      title: 'Analyzing page...',
+      message: 'EasyTerms is analyzing this page. This may take a moment.'
+    });
+
+    // Extract page content
+    const results = await chrome.scripting.executeScript({
+      target: { tabId: tab.id },
+      func: extractPageContent
+    });
+
+    if (!results || !results[0] || !results[0].result) {
+      throw new Error('Failed to extract content');
+    }
+
+    const content = results[0].result;
+
+    if (content.text.length < 200) {
+      chrome.notifications.create({
+        type: 'basic',
+        iconUrl: 'icons/icon128.png',
+        title: 'Not enough content',
+        message: 'This page doesn\'t have enough text to analyze.'
+      });
+      return;
+    }
+
+    // Create a text file blob and send to analyze API
+    const textBlob = new Blob([content.text], { type: 'text/plain' });
+    const formData = new FormData();
+    formData.append('file', textBlob, `${content.title || 'page'}.txt`);
+    formData.append('industry', 'music');
+
+    // Call the analyze-upload API
+    const response = await fetch(`${API_BASE}/api/contracts/analyze-upload`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${session.access_token}`,
+      },
+      body: formData,
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.error || 'Analysis failed');
+    }
+
+    const analysisResult = await response.json();
+
+    // Clear analyzing notification
+    chrome.notifications.clear('analyzing');
+
+    // Inject CSS first
+    await chrome.scripting.insertCSS({
+      target: { tabId: tab.id },
+      files: ['highlight.css']
+    });
+
+    // Inject the highlight script with the analysis data
+    await chrome.scripting.executeScript({
+      target: { tabId: tab.id },
+      files: ['highlight.js']
+    });
+
+    // Send the analysis data to the content script
+    await chrome.tabs.sendMessage(tab.id, {
+      type: 'EASYTERMS_HIGHLIGHT',
+      analysis: analysisResult.analysis,
+      contractId: analysisResult.contractId,
+      overallRisk: analysisResult.overallRisk,
+      summary: analysisResult.summary
+    });
+
+    // Show success notification
+    chrome.notifications.create({
+      type: 'basic',
+      iconUrl: 'icons/icon128.png',
+      title: 'Analysis Complete',
+      message: `Found ${analysisResult.analysis?.potentialConcerns?.length || 0} concerns. Check the highlighted text on the page.`
+    });
+
+  } catch (error) {
+    console.error('Failed to analyze page:', error);
+    chrome.notifications.clear('analyzing');
+    chrome.notifications.create({
+      type: 'basic',
+      iconUrl: 'icons/icon128.png',
+      title: 'Analysis failed',
+      message: error.message || 'Could not analyze this page. Try the full view option.'
+    });
+  }
+}
 
 // Function to extract page content (injected into page)
 function extractPageContent() {
