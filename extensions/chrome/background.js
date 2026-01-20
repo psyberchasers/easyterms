@@ -203,9 +203,15 @@ async function getStoredSession() {
 
 // Listen for messages from content scripts or popup
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  console.log('EasyTerms Background: Received message', message.type);
+
   if (message.type === 'EASYTERMS_AUTH') {
     // Store the session
-    chrome.storage.local.set({ easyterms_session: message.session });
+    chrome.storage.local.set({ easyterms_session: message.session }, () => {
+      console.log('EasyTerms Background: Session stored!', message.session.user?.email);
+      sendResponse({ success: true });
+    });
+    return true; // Keep message channel open
   }
 
   if (message.type === 'GET_SESSION') {
@@ -223,6 +229,10 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     });
     return true;
   }
+
+  // Default response
+  sendResponse({ received: true });
+  return true;
 });
 
 // Handle extension icon click when popup is disabled
