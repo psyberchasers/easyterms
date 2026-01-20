@@ -159,6 +159,7 @@ export default function DashboardPage() {
   const supabase = createClient();
 
   // Handle Chrome extension auth - send session if redirected here with extension param
+  const [showExtensionSuccess, setShowExtensionSuccess] = useState(false);
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     if (params.get("extension") === "true" && user) {
@@ -174,6 +175,17 @@ export default function DashboardPage() {
           };
           // Store in localStorage for extension content script to pick up
           localStorage.setItem('easyterms_extension_session', JSON.stringify(sessionData));
+          // Also try to send directly to extension
+          try {
+            if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.sendMessage) {
+              // Try sending to all extension IDs (the extension will only receive its own)
+              chrome.runtime.sendMessage({ type: 'EASYTERMS_AUTH', session: sessionData });
+            }
+          } catch (e) {
+            console.log('Extension messaging not available');
+          }
+          // Show success overlay
+          setShowExtensionSuccess(true);
         }
       });
     }
@@ -317,6 +329,31 @@ export default function DashboardPage() {
 
   return (
     <div>
+      {/* Extension Auth Success Overlay */}
+      {showExtensionSuccess && (
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-[9999]">
+          <div className="bg-[#18181b] border border-[#27272a] rounded-2xl p-8 text-center max-w-md mx-4">
+            <div className="w-12 h-12 rounded-full bg-green-500/10 border border-green-500/30 flex items-center justify-center mx-auto mb-4">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="20 6 9 17 4 12"></polyline>
+              </svg>
+            </div>
+            <h2 className="text-xl font-medium text-white mb-2">Signed in!</h2>
+            <p className="text-[#a1a1aa] text-sm mb-6">You&apos;re now signed in to the EasyTerms extension.</p>
+            <p className="text-[#71717a] text-xs mb-4">You can close this tab and return to the extension.</p>
+            <Button
+              onClick={() => {
+                setShowExtensionSuccess(false);
+                window.close();
+              }}
+              className="bg-purple-500 hover:bg-purple-600 text-white"
+            >
+              Close this tab
+            </Button>
+          </div>
+        </div>
+      )}
+
       {/* Top Section */}
       <div className="bg-background px-6 pt-6 pb-4">
         {/* Welcome & Stats */}
