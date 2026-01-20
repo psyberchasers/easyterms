@@ -159,12 +159,20 @@ async function analyzeAndHighlightPage(tab, session) {
   }
 
   try {
-    // Show analyzing notification
-    chrome.notifications.create('analyzing', {
-      type: 'basic',
-      iconUrl: 'icons/icon128.png',
-      title: 'Analyzing page...',
-      message: 'EasyTerms is analyzing this page. This may take a moment.'
+    // Inject CSS and script first so we can show loading overlay
+    await chrome.scripting.insertCSS({
+      target: { tabId: tab.id },
+      files: ['highlight.css']
+    });
+
+    await chrome.scripting.executeScript({
+      target: { tabId: tab.id },
+      files: ['highlight.js']
+    });
+
+    // Show loading overlay on the page
+    await chrome.tabs.sendMessage(tab.id, {
+      type: 'EASYTERMS_ANALYZING'
     });
 
     // Extract page content
@@ -180,11 +188,9 @@ async function analyzeAndHighlightPage(tab, session) {
     const content = results[0].result;
 
     if (content.text.length < 200) {
-      chrome.notifications.create({
-        type: 'basic',
-        iconUrl: 'icons/icon128.png',
-        title: 'Not enough content',
-        message: 'This page doesn\'t have enough text to analyze.'
+      await chrome.tabs.sendMessage(tab.id, {
+        type: 'EASYTERMS_ERROR',
+        error: 'This page doesn\'t have enough text to analyze.'
       });
       return;
     }
@@ -211,22 +217,7 @@ async function analyzeAndHighlightPage(tab, session) {
 
     const analysisResult = await response.json();
 
-    // Clear analyzing notification
-    chrome.notifications.clear('analyzing');
-
-    // Inject CSS first
-    await chrome.scripting.insertCSS({
-      target: { tabId: tab.id },
-      files: ['highlight.css']
-    });
-
-    // Inject the highlight script with the analysis data
-    await chrome.scripting.executeScript({
-      target: { tabId: tab.id },
-      files: ['highlight.js']
-    });
-
-    // Send the analysis data to the content script
+    // Send the analysis data to the content script (this also hides loading)
     await chrome.tabs.sendMessage(tab.id, {
       type: 'EASYTERMS_HIGHLIGHT',
       analysis: analysisResult.analysis,
@@ -235,23 +226,23 @@ async function analyzeAndHighlightPage(tab, session) {
       summary: analysisResult.summary
     });
 
-    // Show success notification
-    chrome.notifications.create({
-      type: 'basic',
-      iconUrl: 'icons/icon128.png',
-      title: 'Analysis Complete',
-      message: `Found ${analysisResult.analysis?.potentialConcerns?.length || 0} concerns. Check the highlighted text on the page.`
-    });
-
   } catch (error) {
     console.error('Failed to analyze page:', error);
-    chrome.notifications.clear('analyzing');
-    chrome.notifications.create({
-      type: 'basic',
-      iconUrl: 'icons/icon128.png',
-      title: 'Analysis failed',
-      message: error.message || 'Could not analyze this page. Try the full view option.'
-    });
+    // Try to send error to page
+    try {
+      await chrome.tabs.sendMessage(tab.id, {
+        type: 'EASYTERMS_ERROR',
+        error: error.message || 'Could not analyze this page.'
+      });
+    } catch (e) {
+      // Fallback to notification if we can't reach the page
+      chrome.notifications.create({
+        type: 'basic',
+        iconUrl: 'icons/icon128.png',
+        title: 'Analysis failed',
+        message: error.message || 'Could not analyze this page. Try the full view option.'
+      });
+    }
   }
 }
 
