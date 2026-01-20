@@ -7,12 +7,29 @@ import { convertToPdf } from "@/lib/convertToPdf";
 export async function POST(request: Request) {
   try {
     const supabase = await createClient();
-    
-    // Check if user is authenticated
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-    
-    if (authError || !user) {
-      console.error("Auth error:", authError);
+
+    // Check for Authorization header (for extension)
+    const authHeader = request.headers.get('Authorization');
+    let user = null;
+
+    if (authHeader?.startsWith('Bearer ')) {
+      const token = authHeader.substring(7);
+      const { data: { user: tokenUser }, error: tokenError } = await supabase.auth.getUser(token);
+      if (!tokenError && tokenUser) {
+        user = tokenUser;
+      }
+    }
+
+    // Fallback to cookie auth
+    if (!user) {
+      const { data: { user: cookieUser }, error: authError } = await supabase.auth.getUser();
+      if (!authError && cookieUser) {
+        user = cookieUser;
+      }
+    }
+
+    if (!user) {
+      console.error("Auth error: No valid authentication");
       return NextResponse.json(
         { error: "Not authenticated" },
         { status: 401 }

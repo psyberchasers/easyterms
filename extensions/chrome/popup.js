@@ -160,9 +160,9 @@ fileInput.addEventListener('change', (e) => {
 
 async function handleFile(file) {
   // Validate file type
-  const validTypes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+  const validTypes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'text/plain'];
   if (!validTypes.includes(file.type)) {
-    alert('Please upload a PDF or Word document');
+    alert('Please upload a PDF, Word document, or text file');
     return;
   }
 
@@ -197,54 +197,36 @@ async function uploadAndAnalyze(file) {
   // Update progress
   updateProgress(10, 'Uploading contract...');
 
-  // Create form data
+  // Create form data - use the combined analyze-upload API
   const formData = new FormData();
   formData.append('file', file);
+  formData.append('industry', 'music');
 
-  // Upload to Supabase storage
-  const fileName = `${Date.now()}-${file.name}`;
-  const uploadResponse = await fetch(`${SUPABASE_URL}/storage/v1/object/contracts/${session.user.id}/${fileName}`, {
+  updateProgress(30, 'Analyzing with AI...');
+
+  // Upload and analyze via the combined endpoint
+  const response = await fetch(`${API_BASE}/api/contracts/analyze-upload`, {
     method: 'POST',
     headers: {
       'Authorization': `Bearer ${session.access_token}`,
     },
-    body: file,
+    body: formData,
   });
 
-  if (!uploadResponse.ok) {
-    throw new Error('Failed to upload file');
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.error || 'Failed to analyze contract');
   }
 
-  updateProgress(40, 'Analyzing contract...');
+  updateProgress(90, 'Saving results...');
 
-  // Get the file URL
-  const fileUrl = `${SUPABASE_URL}/storage/v1/object/public/contracts/${session.user.id}/${fileName}`;
+  const result = await response.json();
+  currentContractId = result.contractId;
 
-  // Create contract record and trigger analysis
-  const contractResponse = await fetch(`${API_BASE}/api/contracts`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${session.access_token}`,
-    },
-    body: JSON.stringify({
-      title: file.name.replace(/\.[^/.]+$/, ''),
-      file_url: fileUrl,
-      file_name: file.name,
-    }),
-  });
+  updateProgress(100, 'Analysis complete!');
 
-  if (!contractResponse.ok) {
-    throw new Error('Failed to create contract');
-  }
-
-  const contract = await contractResponse.json();
-  currentContractId = contract.id;
-
-  updateProgress(60, 'AI analyzing terms...');
-
-  // Poll for analysis completion
-  await pollForAnalysis(contract.id, session.access_token);
+  // Show result directly from the response
+  showResultFromAnalysis(result);
 }
 
 async function pollForAnalysis(contractId, accessToken) {
@@ -300,6 +282,24 @@ function showResult(contract) {
 
   // Set risk badge
   const risk = contract.overall_risk || analysis.overallRiskAssessment || 'low';
+  riskBadge.textContent = `${risk} risk`;
+  riskBadge.className = `risk-badge ${risk}`;
+
+  // Refresh recent list
+  loadRecentContracts();
+}
+
+function showResultFromAnalysis(result) {
+  progressSection.classList.add('hidden');
+  resultSection.classList.remove('hidden');
+
+  resultTitle.textContent = result.contractType || 'Contract Analysis';
+  resultSummary.textContent = result.summary ?
+    (result.summary.length > 150 ? result.summary.substring(0, 150) + '...' : result.summary) :
+    'Contract analyzed successfully.';
+
+  // Set risk badge
+  const risk = result.overallRisk || 'medium';
   riskBadge.textContent = `${risk} risk`;
   riskBadge.className = `risk-badge ${risk}`;
 
