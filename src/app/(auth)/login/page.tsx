@@ -37,8 +37,27 @@ export default function LoginPage() {
       setRedirect(redirectParam);
     }
     // Check if opened from Chrome extension
-    if (params.get("extension") === "true") {
+    const fromExtension = params.get("extension") === "true";
+    if (fromExtension) {
       setIsExtension(true);
+      // Check if already logged in - if so, send session to extension
+      const supabaseClient = createClient();
+      supabaseClient.auth.getSession().then(({ data: { session } }) => {
+        if (session) {
+          const sessionData = {
+            access_token: session.access_token,
+            refresh_token: session.refresh_token,
+            user: {
+              id: session.user.id,
+              email: session.user.email,
+            }
+          };
+          // Store in localStorage for extension to pick up
+          localStorage.setItem('easyterms_extension_session', JSON.stringify(sessionData));
+          // Show success screen
+          setSuccess(true);
+        }
+      });
     }
     // Check if URL has signup mode
     const modeParam = params.get("mode");
