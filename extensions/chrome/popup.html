@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EasyTerms</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="container">
+    <!-- Header -->
+    <div class="header">
+      <div class="logo">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M9 12H15M9 16H15M17 21H7C5.89543 21 5 20.1046 5 19V5C5 3.89543 5.89543 3 7 3H12.5858C12.851 3 13.1054 3.10536 13.2929 3.29289L18.7071 8.70711C18.8946 8.89464 19 9.149 19 9.41421V19C19 20.1046 18.1046 21 17 21Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <span>EasyTerms</span>
+      </div>
+    </div>
+
+    <!-- Auth Section (shown when not logged in) -->
+    <div id="auth-section" class="section hidden">
+      <p class="subtitle">Sign in to analyze contracts</p>
+      <button id="signin-btn" class="btn btn-primary">
+        Sign In
+      </button>
+      <p class="hint">Don't have an account? <a href="#" id="signup-link">Sign up</a></p>
+    </div>
+
+    <!-- Main Section (shown when logged in) -->
+    <div id="main-section" class="section hidden">
+      <!-- User info -->
+      <div class="user-bar">
+        <span id="user-email" class="user-email"></span>
+        <button id="signout-btn" class="btn-link">Sign out</button>
+      </div>
+
+      <!-- Upload Area -->
+      <div class="upload-area" id="upload-area">
+        <input type="file" id="file-input" accept=".pdf,.doc,.docx" hidden>
+        <div class="upload-content">
+          <svg class="upload-icon" width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 15V3M12 3L8 7M12 3L16 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M3 15V17C3 18.1046 3.89543 19 5 19H19C20.1046 19 21 18.1046 21 17V15" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <p class="upload-text">Drop contract here or <span class="link">browse</span></p>
+          <p class="upload-hint">PDF, DOC, DOCX up to 10MB</p>
+        </div>
+      </div>
+
+      <!-- Progress (shown during upload/analysis) -->
+      <div id="progress-section" class="progress-section hidden">
+        <div class="progress-bar">
+          <div class="progress-fill" id="progress-fill"></div>
+        </div>
+        <p class="progress-text" id="progress-text">Uploading...</p>
+      </div>
+
+      <!-- Result Preview -->
+      <div id="result-section" class="result-section hidden">
+        <div class="result-header">
+          <span class="result-title" id="result-title">Contract Analysis</span>
+          <span class="risk-badge" id="risk-badge">Low Risk</span>
+        </div>
+        <p class="result-summary" id="result-summary"></p>
+        <button id="view-full-btn" class="btn btn-secondary">
+          View Full Analysis
+        </button>
+      </div>
+
+      <!-- Recent Contracts -->
+      <div class="recent-section">
+        <div class="recent-header">
+          <span>Recent</span>
+          <a href="#" id="view-all-link" class="link">View all</a>
+        </div>
+        <div id="recent-list" class="recent-list">
+          <!-- Populated by JS -->
+        </div>
+      </div>
+    </div>
+
+    <!-- Loading State -->
+    <div id="loading-section" class="section">
+      <div class="loader"></div>
+    </div>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
