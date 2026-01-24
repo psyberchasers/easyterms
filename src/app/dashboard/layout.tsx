@@ -143,6 +143,8 @@ function DashboardHeader({
   const isComparePage = pathname.startsWith("/dashboard/compare");
   const isBillingPage = pathname.startsWith("/dashboard/billing");
   const isSettingsPage = pathname.startsWith("/dashboard/settings");
+  const isFaqPage = pathname.startsWith("/dashboard/faq");
+  const isBlogPage = pathname.startsWith("/dashboard/blog");
   const isRecipientPage = pathname.includes("/recipient");
   const isSenderPage = pathname.includes("/sender");
 
@@ -221,6 +223,22 @@ function DashboardHeader({
         <>
           <HugeiconsIcon icon={Setting06Icon} size={16} className="text-muted-foreground" />
           <span className="text-sm font-semibold text-foreground">Settings</span>
+        </>
+      );
+    }
+    if (isFaqPage) {
+      return (
+        <>
+          <HugeiconsIcon icon={ChatQuestion01Icon} size={16} className="text-muted-foreground" />
+          <span className="text-sm font-semibold text-foreground">FAQ</span>
+        </>
+      );
+    }
+    if (isBlogPage) {
+      return (
+        <>
+          <HugeiconsIcon icon={News01Icon} size={16} className="text-muted-foreground" />
+          <span className="text-sm font-semibold text-foreground">Blog</span>
         </>
       );
     }
@@ -662,7 +680,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                       tooltip="FAQ"
                       className="h-auto py-1.5 px-3 text-[12px] font-normal text-sidebar-foreground/80"
                     >
-                      <Link href="/faq">
+                      <Link href="/dashboard/faq">
                         <HugeiconsIcon icon={ChatQuestion01Icon} size={16} className="text-muted-foreground" />
                         <span>FAQ</span>
                       </Link>
@@ -686,7 +704,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                       tooltip="Blog"
                       className="h-auto py-1.5 px-3 text-[12px] font-normal text-sidebar-foreground/80"
                     >
-                      <Link href="/blog">
+                      <Link href="/dashboard/blog">
                         <HugeiconsIcon icon={News01Icon} size={16} className="text-muted-foreground" />
                         <span>Blog</span>
                       </Link>

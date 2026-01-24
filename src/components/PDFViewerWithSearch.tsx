@@ -444,7 +444,7 @@ export function PDFViewerWithSearch({
       </div>
 
       {/* PDF Container */}
-      <div ref={scrollContainerRef} className="flex-1 overflow-hidden flex justify-center items-start p-4 pb-8 bg-card">
+      <div ref={scrollContainerRef} className="flex-1 overflow-auto flex justify-center items-start p-4 pb-4 bg-card">
         {loading && (
           <div className="flex items-center justify-center h-full">
             <MusicLoader />
@@ -464,7 +464,7 @@ export function PDFViewerWithSearch({
           loading={null}
         >
           {documentReady && numPages > 0 && !pageError && pdfDocRef.current && (
-            <div ref={pageContainerRef} className="relative inline-block mb-8">
+            <div ref={pageContainerRef} className="relative inline-block mb-2">
               <Page
                 key={`${fileUrl}-${currentPage}`}
                 pageNumber={currentPage}

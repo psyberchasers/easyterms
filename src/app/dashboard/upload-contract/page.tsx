@@ -335,10 +335,12 @@ export default function UploadContractPage() {
   useEffect(() => {
     if (status === "idle") {
       document.body.style.overflow = "hidden";
-      return () => {
-        document.body.style.overflow = "";
-      };
+    } else {
+      document.body.style.overflow = "";
     }
+    return () => {
+      document.body.style.overflow = "";
+    };
   }, [status]);
 
   useEffect(() => {
@@ -1065,14 +1067,25 @@ export default function UploadContractPage() {
                 </div>
 
                 {isMobile && (
-                  <button
-                    type="button"
-                    className="flex items-center gap-2 px-4 py-2 rounded-lg border border-border bg-background text-foreground text-sm font-medium hover:bg-muted transition-colors"
-                    onClick={() => setShowScanner(true)}
-                  >
-                    <Camera className="w-4 h-4" />
-                    Scan Document
-                  </button>
+                  <div className="w-full flex flex-col items-center gap-2 mt-2">
+                    <div className="text-xs text-muted-foreground">or</div>
+                    <button
+                      type="button"
+                      className={cn(
+                        "w-full flex items-center justify-center gap-3 px-6 py-4 rounded-xl text-sm font-semibold transition-all",
+                        selectedRole === "recipient"
+                          ? "bg-purple-500/10 text-purple-600 border-2 border-purple-500/30 hover:bg-purple-500/20"
+                          : "bg-blue-500/10 text-blue-600 border-2 border-blue-500/30 hover:bg-blue-500/20"
+                      )}
+                      onClick={() => setShowScanner(true)}
+                    >
+                      <Camera className="w-5 h-5" />
+                      <span>Scan Contract with Camera</span>
+                    </button>
+                    <p className="text-xs text-muted-foreground text-center">
+                      Take photos of paper contracts
+                    </p>
+                  </div>
                 )}
               </div>
             </motion.div>

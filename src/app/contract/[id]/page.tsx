@@ -650,7 +650,7 @@ export default function ContractDetailPage() {
         {/* Left: Document Panel - Desktop: side panel, Mobile: full-screen overlay */}
         <div
           className={cn(
-            "flex flex-col bg-card border-r border-border transition-all duration-300 ease-in-out overflow-hidden",
+            "flex flex-col bg-card border-r border-border transition-all duration-300 ease-in-out min-h-0",
             // Mobile: fixed full-screen overlay
             "fixed inset-0 z-50 md:relative md:inset-auto md:z-auto",
             // Desktop: side panel behavior
@@ -688,7 +688,7 @@ export default function ContractDetailPage() {
                   <X className="w-4 h-4 text-muted-foreground" />
                 </button>
               </div>
-              <div className="flex-1 overflow-hidden">
+              <div className="flex-1 overflow-auto">
                 {pdfUrl && contract.file_type === "application/pdf" ? (
                   loadingPdf ? <div className="flex items-center justify-center h-full"><MusicLoader /></div> : <PDFViewerWithSearch fileUrl={pdfUrl} searchText={highlightedText} className="h-full" />
                 ) : (
@@ -704,9 +704,9 @@ export default function ContractDetailPage() {
         </div>
 
         {/* Right: Main Analysis Content with Tabs */}
-        <div className="flex-1 overflow-hidden flex flex-col" style={{ backgroundColor: '#fcfcfc' }}>
+        <div className="flex-1 min-h-0 flex flex-col" style={{ backgroundColor: '#fcfcfc' }}>
           {analysis ? (
-            <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col overflow-hidden">
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col min-h-0">
               {/* Title and Tabs */}
               <div className="shrink-0" style={{ backgroundColor: '#fcfcfc' }}>
                 {/* Desktop: Title with toggle */}
