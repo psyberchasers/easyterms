@@ -61,7 +61,6 @@ import {
   GitCompareIcon as GitCompareBulkIcon,
   LayoutGridIcon,
   ChatQuestion01Icon,
-  Book01Icon,
   News01Icon,
   CreditCardIcon as CreditCardBulkIcon,
   Invoice04Icon,
@@ -683,18 +682,6 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                       <Link href="/dashboard/faq">
                         <HugeiconsIcon icon={ChatQuestion01Icon} size={16} className="text-muted-foreground" />
                         <span>FAQ</span>
-                      </Link>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                  <SidebarMenuItem>
-                    <SidebarMenuButton
-                      asChild
-                      tooltip="Resources"
-                      className="h-auto py-1.5 px-3 text-[12px] font-normal text-sidebar-foreground/80"
-                    >
-                      <Link href="/resources">
-                        <HugeiconsIcon icon={Book01Icon} size={16} className="text-muted-foreground" />
-                        <span>Resources</span>
                       </Link>
                     </SidebarMenuButton>
                   </SidebarMenuItem>

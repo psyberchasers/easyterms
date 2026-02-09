@@ -70,11 +70,12 @@ export async function POST(request: Request) {
       );
     }
 
+    // Generate signing token if permission is "sign"
+    const signingToken = permission === "sign"
+      ? crypto.randomUUID().replace(/-/g, "")
+      : null;
+
     // Create the share record
-    // The database trigger will automatically:
-    // 1. Link to existing user if they have an account
-    // 2. Create an in-app notification if user exists
-    // 3. Send an email invitation
     const { data: share, error: shareError } = await supabase
       .from("contract_shares")
       .insert({
@@ -83,8 +84,9 @@ export async function POST(request: Request) {
         shared_with_email: email.toLowerCase(),
         permission: permission || "view",
         message: message || null,
+        signing_token: signingToken,
       })
-      .select("id")
+      .select("id, signing_token")
       .single();
 
     if (shareError) {
@@ -95,9 +97,16 @@ export async function POST(request: Request) {
       );
     }
 
+    // Build signing URL if applicable
+    const host = request.headers.get("host") || "localhost:3000";
+    const protocol = request.headers.get("x-forwarded-proto") || "http";
+    const signingUrl = signingToken ? `${protocol}://${host}/sign/${signingToken}` : null;
+
     return NextResponse.json({
       success: true,
-      shareId: share.id
+      shareId: share.id,
+      signingToken,
+      signingUrl,
     });
   } catch (err) {
     console.error("Server error sharing contract:", err);

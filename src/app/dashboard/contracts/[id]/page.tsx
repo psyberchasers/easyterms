@@ -34,8 +34,9 @@ interface ContractShare {
   shared_with_email: string;
   shared_with_user_id: string | null;
   permission: "view" | "comment" | "sign";
-  status: "pending" | "viewed" | "signed" | "declined";
+  status: "pending" | "viewed" | "signed" | "declined" | "pending_signature";
   created_at: string;
+  signing_token?: string | null;
   user?: {
     full_name: string | null;
     email: string | null;
@@ -161,7 +162,7 @@ export default function ContractDetailPage() {
     try {
       const { data, error } = await supabase
         .from("contract_shares")
-        .select("id, shared_with_email, shared_with_user_id, permission, status, created_at")
+        .select("id, shared_with_email, shared_with_user_id, permission, status, created_at, signing_token")
         .eq("contract_id", contractId)
         .order("created_at", { ascending: false });
 

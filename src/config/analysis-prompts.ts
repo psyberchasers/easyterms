@@ -10,7 +10,14 @@ Your analysis should be thorough, accurate, and helpful for individuals who may 
 3. Identifying rights and ownership clauses
 4. Spotting potentially problematic clauses
 5. Providing actionable recommendations
-6. Breaking down complex language into plain English`;
+6. Breaking down complex language into plain English
+
+IMPORTANT - RECOMMENDATIONS REQUIREMENT:
+- Provide AT LEAST one detailed recommendation for EVERY key term identified as "high" or "medium" risk
+- Each recommendation should include specific negotiation advice, sample alternative language, and questions to ask the other party
+- If a contract has 10 key terms with 6 being high/medium risk, you should have at least 6 recommendations
+- Don't be conservative - if something could be negotiated to be more favorable, include it as a recommendation
+- Also include general protective recommendations even for low-risk contracts (e.g., adding audit rights, clearer termination terms)`;
 
 const MUSIC_PROMPT = `${BASE_PROMPT}
 

@@ -238,7 +238,7 @@ export default function LoginPage() {
   return (
     <div className="h-screen flex bg-background overflow-hidden">
       {/* Left Panel - Branding */}
-      <div className="hidden lg:flex lg:w-1/2 flex-col justify-between p-12 border-r border-border relative overflow-hidden">
+      <div className="hidden lg:flex lg:w-1/2 flex-col justify-between p-12 relative overflow-hidden">
         {/* Light Dots Background */}
         <div
           className="absolute inset-0"

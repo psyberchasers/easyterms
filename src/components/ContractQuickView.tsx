@@ -371,8 +371,8 @@ export function ContractQuickView({
           )}
         </div>
 
-        {/* Footer - Fixed */}
-        <div className="border-t border-border p-4 bg-muted/30 shrink-0">
+        {/* Footer - Fixed with extra bottom padding to clear global footer */}
+        <div className="border-t border-border p-4 pb-14 bg-muted/30 shrink-0">
           <Link href={`/dashboard/contracts/${contract.id}`} className="block">
             <Button className="w-full rounded-xl h-11" variant="outline">
               <FileCheck className="w-4 h-4 mr-2" />

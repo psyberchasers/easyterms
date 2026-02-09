@@ -48,6 +48,8 @@ import {
   ChevronLeft,
   ChevronRight,
   FileOutput,
+  Share2,
+  ChevronDown,
 } from "lucide-react";
 import { exportAnnotatedContract } from "@/lib/pdf-export";
 import { HugeiconsIcon } from "@hugeicons/react";
@@ -62,6 +64,15 @@ import {
   FileUploadIcon as FileUploadDuotoneIcon,
 } from "@hugeicons-pro/core-duotone-rounded";
 import { Calendar03Icon, Invoice03Icon } from "@hugeicons-pro/core-solid-rounded";
+import { SentIcon, Comment01Icon, SignatureIcon } from "@hugeicons-pro/core-bulk-rounded";
+import { AiVisionIcon } from "@/components/icons/AiVisionIcon";
+import {
+  DropdownMenu as ShareDropdownMenu,
+  DropdownMenuContent as ShareDropdownMenuContent,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuTrigger as ShareDropdownMenuTrigger,
+} from "@/components/animate-ui/components/radix/dropdown-menu";
 import { FileUploadIcon, DocumentAttachmentIcon, PayByCheckIcon, ViewIcon } from "@hugeicons-pro/core-stroke-rounded";
 import Lottie from "lottie-react";
 import loadMusicAnimation from "@/../public/loadmusic.json";
@@ -243,10 +254,19 @@ export default function UploadContractPage() {
   const [originalFile, setOriginalFile] = useState<File | null>(null);
 
   // UI state
-  const [showDocument, setShowDocument] = useState(false);
+  const [showDocument, setShowDocument] = useState(true);
   const [pdfReady, setPdfReady] = useState(false);
   const [highlightedClause, setHighlightedClause] = useState<string | null>(null);
   const [isHovering, setIsHovering] = useState(false);
+
+  // Share state
+  const [showShareModal, setShowShareModal] = useState(false);
+  const [shareEmail, setShareEmail] = useState("");
+  const [shareMessage, setShareMessage] = useState("");
+  const [sharePermission, setSharePermission] = useState<"view" | "comment" | "sign">("view");
+  const [sharing, setSharing] = useState(false);
+  const [shareSuccess, setShareSuccess] = useState(false);
+  const [shareError, setShareError] = useState<string | null>(null);
 
   // Save state
   const [saving, setSaving] = useState(false);
@@ -362,9 +382,11 @@ export default function UploadContractPage() {
     }
   }, [status]);
 
-  // Set PDF ready when we have a successful analysis
+  // Set PDF ready and show document when we have a successful analysis
   useEffect(() => {
     if (status === "success") {
+      // Show the PDF panel
+      setShowDocument(true);
       // Small delay to let the fade-in animation start, then show PDF
       const timer = setTimeout(() => {
         setPdfReady(true);
@@ -695,6 +717,45 @@ export default function UploadContractPage() {
     }
   };
 
+  // Handle share
+  const handleShare = async () => {
+    if (!savedContractId || !shareEmail) return;
+
+    setSharing(true);
+    setShareError(null);
+
+    try {
+      const response = await fetch("/api/contracts/share", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contractId: savedContractId,
+          email: shareEmail,
+          permission: sharePermission,
+          message: shareMessage || undefined,
+        }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || "Failed to share contract");
+      }
+
+      setShareSuccess(true);
+      setTimeout(() => {
+        setShowShareModal(false);
+        setShareEmail("");
+        setShareMessage("");
+        setSharePermission("view");
+        setShareSuccess(false);
+      }, 2000);
+    } catch (err) {
+      setShareError(err instanceof Error ? err.message : "Failed to share contract");
+    } finally {
+      setSharing(false);
+    }
+  };
+
   // Reset state
   const handleReset = () => {
     setStatus("idle");
@@ -912,7 +973,7 @@ export default function UploadContractPage() {
     return (
       <>
       {/* MOBILE VIEW - Single panel with toggle */}
-      <div className="md:hidden flex flex-col bg-card" style={{ height: 'calc(100vh - 96px)' }}>
+      <div className="md:hidden flex flex-col bg-card" style={{ minHeight: 'calc(100vh - 48px)' }}>
         <AnimatePresence mode="wait">
           {!showUploadModal ? (
             <motion.div
@@ -1094,7 +1155,7 @@ export default function UploadContractPage() {
       </div>
 
       {/* DESKTOP VIEW - Two panels side by side */}
-      <div className="hidden md:flex flex-row bg-card" style={{ height: 'calc(100vh - 96px)' }}>
+      <div className="hidden md:flex flex-row bg-card" style={{ minHeight: 'calc(100vh - 48px)' }}>
         {/* Recipient Side */}
         <motion.div
           initial={{ opacity: 1 }}
@@ -1549,7 +1610,7 @@ export default function UploadContractPage() {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, ease: [0.4, 0, 0.2, 1] }}
-      className="flex h-full bg-card"
+      className="fixed inset-0 top-12 bottom-10 left-0 right-0 md:left-[var(--sidebar-width)] flex bg-card overflow-hidden"
     >
       {/* Document Side Panel - Desktop: side panel, Mobile: full-screen overlay */}
       <div
@@ -1611,9 +1672,9 @@ export default function UploadContractPage() {
       </div>
 
       {/* Main Content */}
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 overflow-auto flex flex-col bg-card">
-        {/* Sticky Header - Row 1: Title */}
-        <div className="sticky top-0 z-20 bg-card shrink-0">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 overflow-hidden flex flex-col bg-card">
+        {/* Fixed Header - Row 1: Title */}
+        <div className="z-20 bg-card shrink-0">
           <div className={cn(
             "px-6 py-3 md:py-0 md:h-12 flex flex-col md:flex-row md:items-center md:justify-between border-b border-border gap-2 md:gap-0",
             !showDocument && "max-w-4xl mx-auto"
@@ -1668,6 +1729,17 @@ export default function UploadContractPage() {
                 )}
                 Download
               </button>
+
+              {/* Share - only if logged in and saved */}
+              {savedContractId && (
+                <button
+                  onClick={() => setShowShareModal(true)}
+                  className="h-7 px-2 text-[11px] text-purple-400 hover:text-purple-300 border border-purple-500/30 hover:bg-purple-500/10 flex items-center gap-1.5 transition-colors rounded-md"
+                >
+                  <Share2 className="w-3 h-3" />
+                  Share
+                </button>
+              )}
 
               {/* Upload New Version - only if logged in and saved */}
               {savedContractId && (
@@ -1747,7 +1819,8 @@ export default function UploadContractPage() {
         </div>
 
         <main className={cn(
-          "px-6 py-6 pb-24 transition-all duration-300 flex-1 overflow-auto",
+          "px-6 py-6 transition-all duration-300 flex-1 flex flex-col overflow-y-auto overflow-x-hidden",
+          activeTab === "versions" || activeTab === "dates" ? "pb-6" : "pb-24",
           showDocument ? "w-full" : "md:max-w-4xl md:mx-auto"
         )}>
             {/* Overview Tab */}
@@ -2851,6 +2924,149 @@ export default function UploadContractPage() {
       </Tabs>
 
     </motion.div>
+
+    {/* Share Modal */}
+    <Dialog open={showShareModal} onOpenChange={(open) => {
+      setShowShareModal(open);
+      if (!open) {
+        setTimeout(() => {
+          setShareEmail("");
+          setShareMessage("");
+          setSharePermission("view");
+          setShareError(null);
+          setShareSuccess(false);
+        }, 200);
+      }
+    }}>
+      <DialogContent className="sm:max-w-md rounded-xl overflow-hidden p-0" showCloseButton={false}>
+        <div className="bg-muted/50 px-6 py-3 border-b border-dashed border-border">
+          <DialogHeader className="gap-1">
+            <div className="flex items-center gap-2">
+              <Share2 className="w-4 h-4 text-purple-400" />
+              <DialogTitle className="text-base font-medium">Share Contract</DialogTitle>
+            </div>
+            <DialogDescription>
+              Invite someone to view, comment on, or sign this contract
+            </DialogDescription>
+          </DialogHeader>
+        </div>
+
+        {shareSuccess ? (
+          <div className="py-8 px-6 text-center">
+            <div className="w-12 h-12 rounded-full bg-green-500/10 flex items-center justify-center mx-auto mb-3">
+              <CheckCircle2 className="w-6 h-6 text-green-500" />
+            </div>
+            <p className="text-sm font-medium text-foreground">Invitation sent!</p>
+            <p className="text-xs text-muted-foreground mt-1">
+              {shareEmail} will receive an email shortly
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-4 px-6 pt-1 pb-4">
+            {/* Email Input */}
+            <div className="space-y-2.5">
+              <label className="text-xs font-medium text-foreground">Email address</label>
+              <Input
+                type="email"
+                placeholder="colleague@example.com"
+                value={shareEmail}
+                onChange={(e) => setShareEmail(e.target.value)}
+                className="text-sm rounded-lg"
+                data-rounded="true"
+              />
+            </div>
+
+            {/* Permission Selector */}
+            <div className="space-y-2.5">
+              <label className="text-xs font-medium text-foreground">Permission</label>
+              <ShareDropdownMenu>
+                <ShareDropdownMenuTrigger asChild>
+                  <button
+                    className="w-full h-9 flex items-center justify-between gap-2 border border-border rounded-lg bg-background px-3 text-sm text-left focus:outline-none focus:border-purple-500 transition-colors"
+                  >
+                    <span className="flex items-center gap-2">
+                      {sharePermission === "view" && <AiVisionIcon size={14} className="text-muted-foreground" />}
+                      {sharePermission === "comment" && <HugeiconsIcon icon={Comment01Icon} size={14} className="text-muted-foreground" />}
+                      {sharePermission === "sign" && <HugeiconsIcon icon={SignatureIcon} size={14} className="text-muted-foreground" />}
+                      {sharePermission === "view" && "Can view"}
+                      {sharePermission === "comment" && "Can comment"}
+                      {sharePermission === "sign" && "Request signature"}
+                    </span>
+                    <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                  </button>
+                </ShareDropdownMenuTrigger>
+                <ShareDropdownMenuContent align="start" className="min-w-[var(--radix-dropdown-menu-trigger-width)]">
+                  <DropdownMenuRadioGroup
+                    value={sharePermission}
+                    onValueChange={(v) => setSharePermission(v as "view" | "comment" | "sign")}
+                  >
+                    <DropdownMenuRadioItem value="view" className="flex items-center gap-2">
+                      <AiVisionIcon size={14} className="text-muted-foreground" />
+                      Can view
+                    </DropdownMenuRadioItem>
+                    <DropdownMenuRadioItem value="comment" className="flex items-center gap-2">
+                      <HugeiconsIcon icon={Comment01Icon} size={14} className="text-muted-foreground" />
+                      Can comment
+                    </DropdownMenuRadioItem>
+                    <DropdownMenuRadioItem value="sign" className="flex items-center gap-2">
+                      <HugeiconsIcon icon={SignatureIcon} size={14} className="text-muted-foreground" />
+                      Request signature
+                    </DropdownMenuRadioItem>
+                  </DropdownMenuRadioGroup>
+                </ShareDropdownMenuContent>
+              </ShareDropdownMenu>
+            </div>
+
+            {/* Optional Message */}
+            <div className="space-y-2.5">
+              <label className="text-xs font-medium text-foreground">
+                Message <span className="text-muted-foreground font-normal">(optional)</span>
+              </label>
+              <textarea
+                placeholder="Add a personal note..."
+                value={shareMessage}
+                onChange={(e) => setShareMessage(e.target.value)}
+                rows={3}
+                data-rounded="true"
+                className="w-full px-3 py-2 text-sm bg-background border border-border rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500/50"
+              />
+            </div>
+
+            {/* Error Message */}
+            {shareError && (
+              <div className="flex items-center gap-2 text-xs text-red-500 bg-red-500/10 px-3 py-2 rounded-md">
+                <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
+                {shareError}
+              </div>
+            )}
+
+            {/* Actions */}
+            <div className="flex gap-2 pt-2">
+              <button
+                onClick={() => setShowShareModal(false)}
+                className="flex-1 h-9 text-sm text-muted-foreground hover:text-foreground border border-border hover:bg-muted rounded-lg transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleShare}
+                disabled={!shareEmail || sharing}
+                className="flex-1 h-9 text-sm font-medium bg-purple-600 hover:bg-purple-700 text-white rounded-lg flex items-center justify-center gap-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {sharing ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <>
+                    <HugeiconsIcon icon={SentIcon} size={14} />
+                    Send Invitation
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        )}
+      </DialogContent>
+    </Dialog>
 
     {/* Camera Capture Modal - OUTSIDE motion.div to avoid transform breaking fixed positioning */}
     {showScanner && (

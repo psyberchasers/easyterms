@@ -46,6 +46,9 @@ import {
   FileOutput,
   Share2,
   Send,
+  Copy,
+  Check,
+  Link,
 } from "lucide-react";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
@@ -98,8 +101,9 @@ interface ContractShare {
   shared_with_email: string;
   shared_with_user_id: string | null;
   permission: "view" | "comment" | "sign";
-  status: "pending" | "viewed" | "signed" | "declined";
+  status: "pending" | "viewed" | "signed" | "declined" | "pending_signature";
   created_at: string;
+  signing_token?: string | null;
   user?: {
     full_name: string | null;
     email: string | null;
@@ -246,6 +250,7 @@ export function ContractAnalysisView({
   const [sharing, setSharing] = useState(false);
   const [shareSuccess, setShareSuccess] = useState(false);
   const [shareError, setShareError] = useState<string | null>(null);
+  const [copiedSigningLink, setCopiedSigningLink] = useState<string | null>(null);
 
   // Date management
   const [showAddDate, setShowAddDate] = useState(false);
@@ -253,6 +258,14 @@ export function ContractAnalysisView({
 
   // Refs
   const versionInputRef = useRef<HTMLInputElement>(null);
+  const mainContentRef = useRef<HTMLElement>(null);
+
+  // Reset scroll position when tab changes
+  useEffect(() => {
+    if (mainContentRef.current) {
+      mainContentRef.current.scrollTo(0, 0);
+    }
+  }, [activeTab]);
 
   // Fetch signed URL for version file when selected
   useEffect(() => {
@@ -678,6 +691,25 @@ export function ContractAnalysisView({
                       <span className="text-[10px] text-purple-400/60 capitalize">
                         ({share.permission})
                       </span>
+                      {/* Copy signing link for sign permissions */}
+                      {share.permission === "sign" && share.signing_token && (
+                        <button
+                          onClick={() => {
+                            const signingUrl = `${window.location.origin}/sign/${share.signing_token}`;
+                            navigator.clipboard.writeText(signingUrl);
+                            setCopiedSigningLink(share.id);
+                            setTimeout(() => setCopiedSigningLink(null), 2000);
+                          }}
+                          className="ml-0.5 px-1.5 py-0.5 rounded bg-purple-500/20 text-purple-400/60 hover:bg-purple-500/30 hover:text-purple-400 transition-colors text-[10px] flex items-center gap-1"
+                          title="Copy signing link"
+                        >
+                          {copiedSigningLink === share.id ? (
+                            <Check className="w-3 h-3 text-green-400" />
+                          ) : (
+                            <Link className="w-3 h-3" />
+                          )}
+                        </button>
+                      )}
                       {onRemoveShare && (
                         <button
                           onClick={() => onRemoveShare(share.id)}
@@ -695,8 +727,8 @@ export function ContractAnalysisView({
           )}
         </div>
 
-        <main className={cn(
-          "px-6 py-6 transition-all duration-300 flex-1 flex flex-col overflow-y-auto",
+        <main ref={mainContentRef} className={cn(
+          "px-6 py-6 transition-all duration-300 flex-1 flex flex-col overflow-y-auto overflow-x-hidden",
           activeTab === "discussion" ? "pb-0" : "pb-24",
           showDocument ? "w-full" : "md:max-w-4xl md:mx-auto"
         )}>
@@ -1018,7 +1050,7 @@ export function ContractAnalysisView({
                           {term.riskLevel.toUpperCase()}
                         </span>
                       </div>
-                      <p className="text-xs text-muted-foreground line-clamp-1">{term.content}</p>
+                      <p className="text-xs text-foreground/80 line-clamp-1">{term.content}</p>
                     </div>
                     <div className={cn(
                       "text-muted-foreground/60 transition-transform shrink-0",
@@ -1062,7 +1094,7 @@ export function ContractAnalysisView({
                                   {term.riskLevel.toUpperCase()}
                                 </span>
                               </div>
-                              <p className="text-xs text-muted-foreground">
+                              <p className="text-xs text-foreground">
                                 {term.riskLevel === "high" && "This term significantly favors the other party and could limit your rights or earnings."}
                                 {term.riskLevel === "medium" && "This term has some elements that could be improved but is within industry norms."}
                                 {term.riskLevel === "low" && "This term is favorable or standard for agreements of this type."}
@@ -1070,7 +1102,7 @@ export function ContractAnalysisView({
                             </div>
                             <div>
                               <p className="text-[10px] text-muted-foreground/60 uppercase tracking-wider mb-1">Questions to Ask Your Lawyer</p>
-                              <ul className="text-xs text-muted-foreground space-y-2">
+                              <ul className="text-xs text-foreground space-y-2">
                                 {(term.actionItems || getTermChecklist(term.title)).map((item, idx) => (
                                   <li key={idx} className="flex items-center gap-2">
                                     <span className="w-1 h-1 rounded-full bg-muted-foreground/40 shrink-0" />
@@ -1340,7 +1372,7 @@ export function ContractAnalysisView({
                               <div className="flex items-center gap-2 mb-1">
                                 <span className="text-xs text-foreground font-medium">{term.title}</span>
                               </div>
-                              <p className="text-xs text-muted-foreground line-clamp-1">{term.value}</p>
+                              <p className="text-xs text-foreground/80 line-clamp-1">{term.value}</p>
                             </div>
                             <div className={cn(
                               "text-muted-foreground/60 transition-transform shrink-0",
@@ -1378,11 +1410,11 @@ export function ContractAnalysisView({
                                     </div>
                                     <div>
                                       <p className="text-[10px] text-muted-foreground/60 uppercase tracking-wider mb-1">Industry Context</p>
-                                      <p className="text-xs text-muted-foreground">{term.industryContext}</p>
+                                      <p className="text-xs text-foreground">{term.industryContext}</p>
                                     </div>
                                     <div>
-                                      <p className="text-[10px] text-muted-foreground/60 uppercase tracking-wider mb-1">Questions to Ask</p>
-                                      <ul className="text-xs text-muted-foreground space-y-2">
+                                      <p className="text-[10px] text-muted-foreground/60 uppercase tracking-wider mb-1">Questions to Ask Your Lawyer</p>
+                                      <ul className="text-xs text-foreground space-y-2">
                                         {term.questionsToAsk.map((q, idx) => (
                                           <li key={idx} className="flex items-center gap-2">
                                             <span className="w-1 h-1 rounded-full bg-muted-foreground/40 shrink-0" />
@@ -1481,7 +1513,7 @@ export function ContractAnalysisView({
                       )}
                       {negotiationQuestions && negotiationQuestions.length > 0 && (
                         <div>
-                          <p className="text-[10px] text-muted-foreground/60 uppercase tracking-wider mb-1">Questions to Ask</p>
+                          <p className="text-[10px] text-muted-foreground/60 uppercase tracking-wider mb-1">Questions to Ask Your Lawyer</p>
                           <ul className="text-xs text-foreground space-y-1.5">
                             {negotiationQuestions.map((q, idx) => (
                               <li key={idx} className="flex items-start gap-2">

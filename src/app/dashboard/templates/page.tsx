@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useMemo, useEffect, useCallback } from "react";
+import { useState, useMemo, useEffect, useCallback, useRef } from "react";
 import { useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
+import anime from "animejs";
 import {
   FileText,
   Plus,
@@ -160,26 +161,16 @@ const iconMap: Record<string, any> = {
 const ExpandedTemplateCard = ({
   template,
   onUse,
-  index = 0,
 }: {
   template: ContractTemplate;
   onUse: () => void;
-  index?: number;
 }) => {
   const icon = iconMap[template.icon];
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: 20 }}
-      transition={{
-        duration: 0.3,
-        delay: index * 0.05,
-        ease: "easeOut"
-      }}
+    <div
       onClick={onUse}
-      className="border border-dashed border-border rounded-2xl overflow-hidden hover:border-purple-500/50 transition-all cursor-pointer"
+      className="template-card border border-dashed border-border rounded-2xl overflow-hidden hover:border-purple-500/50 transition-all cursor-pointer opacity-0"
     >
       {/* Title section with different background */}
       <div className="flex items-center gap-3 p-5 bg-muted/30 border-b border-dashed border-border">
@@ -218,7 +209,7 @@ const ExpandedTemplateCard = ({
           )}
         </div>
       </div>
-    </motion.div>
+    </div>
   );
 };
 
@@ -756,6 +747,268 @@ export default function TemplatesPage() {
   // Transition state for step animations
   const [isTransitioning, setIsTransitioning] = useState(false);
 
+  // Refs for anime.js animations
+  const templateGridRef = useRef<HTMLDivElement>(null);
+  const infoNoticeRef = useRef<HTMLDivElement>(null);
+  const hasAnimatedStep1 = useRef(false);
+
+  // Step 3 animation refs
+  const step3ContainerRef = useRef<HTMLDivElement>(null);
+  const step3ContentRef = useRef<HTMLDivElement>(null);
+  const step3HeaderRef = useRef<HTMLDivElement>(null);
+  const step3FooterRef = useRef<HTMLDivElement>(null);
+  const progressBarRef = useRef<HTMLDivElement>(null);
+  const prevClauseIndexRef = useRef<number>(0);
+  const isAnimatingClause = useRef(false);
+
+  // Step 4 animation refs
+  const step4ContainerRef = useRef<HTMLDivElement>(null);
+  const step4HeaderRef = useRef<HTMLDivElement>(null);
+  const step4PdfPanelRef = useRef<HTMLDivElement>(null);
+  const step4BreakdownPanelRef = useRef<HTMLDivElement>(null);
+  const step4FooterRef = useRef<HTMLDivElement>(null);
+
+  // Animate template cards with anime.js when Step 1 is visible
+  useEffect(() => {
+    if (builderStep === 1 && !isTransitioning && templateGridRef.current && !hasAnimatedStep1.current) {
+      hasAnimatedStep1.current = true;
+
+      // Animate info notice
+      if (infoNoticeRef.current) {
+        anime({
+          targets: infoNoticeRef.current,
+          opacity: [0, 1],
+          translateY: [10, 0],
+          duration: 400,
+          easing: 'easeOutCubic',
+        });
+      }
+
+      // Animate template cards with stagger
+      const cards = templateGridRef.current.querySelectorAll('.template-card');
+      anime({
+        targets: cards,
+        opacity: [0, 1],
+        translateY: [20, 0],
+        duration: 500,
+        delay: anime.stagger(50, { start: 100 }),
+        easing: 'easeOutCubic',
+      });
+    }
+
+    // Reset animation flag when leaving step 1
+    if (builderStep !== 1) {
+      hasAnimatedStep1.current = false;
+    }
+  }, [builderStep, isTransitioning]);
+
+  // Handle exit animation for transitioning
+  useEffect(() => {
+    if (isTransitioning && templateGridRef.current) {
+      const cards = templateGridRef.current.querySelectorAll('.template-card');
+      anime({
+        targets: cards,
+        opacity: 0,
+        translateY: 20,
+        duration: 300,
+        delay: anime.stagger(30),
+        easing: 'easeInCubic',
+      });
+
+      if (infoNoticeRef.current) {
+        anime({
+          targets: infoNoticeRef.current,
+          opacity: 0,
+          translateY: 10,
+          duration: 300,
+          easing: 'easeInCubic',
+        });
+      }
+    }
+  }, [isTransitioning]);
+
+  // Step 3 container entry animation
+  useEffect(() => {
+    if (builderStep === 3 && step3ContainerRef.current) {
+      // Reset initial state
+      anime.set(step3ContainerRef.current, { opacity: 0, translateX: 40 });
+      anime.set(step3HeaderRef.current, { opacity: 0, translateY: -10 });
+      anime.set(step3ContentRef.current, { opacity: 0, translateY: 30 });
+      anime.set(step3FooterRef.current, { opacity: 0, translateY: 10 });
+
+      // Animate container sliding in from right
+      anime({
+        targets: step3ContainerRef.current,
+        opacity: [0, 1],
+        translateX: [40, 0],
+        duration: 500,
+        easing: 'easeOutCubic',
+      });
+
+      // Stagger the header, content, footer
+      anime({
+        targets: step3HeaderRef.current,
+        opacity: [0, 1],
+        translateY: [-10, 0],
+        duration: 400,
+        delay: 150,
+        easing: 'easeOutCubic',
+      });
+
+      anime({
+        targets: step3ContentRef.current,
+        opacity: [0, 1],
+        translateY: [30, 0],
+        duration: 500,
+        delay: 200,
+        easing: 'easeOutCubic',
+      });
+
+      anime({
+        targets: step3FooterRef.current,
+        opacity: [0, 1],
+        translateY: [10, 0],
+        duration: 400,
+        delay: 300,
+        easing: 'easeOutCubic',
+      });
+
+      // Animate progress bar segments
+      if (progressBarRef.current) {
+        const segments = progressBarRef.current.querySelectorAll('.progress-segment');
+        anime({
+          targets: segments,
+          scaleX: [0, 1],
+          duration: 400,
+          delay: anime.stagger(30, { start: 350 }),
+          easing: 'easeOutCubic',
+        });
+      }
+    }
+  }, [builderStep]);
+
+  // Step 4 entry animation
+  useEffect(() => {
+    if (builderStep === 4) {
+      // Set initial states
+      if (step4HeaderRef.current) {
+        anime.set(step4HeaderRef.current, { opacity: 0, translateY: -20 });
+      }
+      if (step4PdfPanelRef.current) {
+        anime.set(step4PdfPanelRef.current, { opacity: 0, translateX: -40 });
+      }
+      if (step4BreakdownPanelRef.current) {
+        anime.set(step4BreakdownPanelRef.current, { opacity: 0, translateX: 40 });
+      }
+      if (step4FooterRef.current) {
+        anime.set(step4FooterRef.current, { opacity: 0, translateY: 20 });
+      }
+
+      // Animate header from top
+      anime({
+        targets: step4HeaderRef.current,
+        opacity: [0, 1],
+        translateY: [-20, 0],
+        duration: 500,
+        delay: 100,
+        easing: 'easeOutCubic',
+      });
+
+      // Animate PDF panel from left
+      anime({
+        targets: step4PdfPanelRef.current,
+        opacity: [0, 1],
+        translateX: [-40, 0],
+        duration: 600,
+        delay: 200,
+        easing: 'easeOutCubic',
+      });
+
+      // Animate breakdown panel from right
+      anime({
+        targets: step4BreakdownPanelRef.current,
+        opacity: [0, 1],
+        translateX: [40, 0],
+        duration: 600,
+        delay: 250,
+        easing: 'easeOutCubic',
+      });
+
+      // Animate footer from bottom
+      anime({
+        targets: step4FooterRef.current,
+        opacity: [0, 1],
+        translateY: [20, 0],
+        duration: 400,
+        delay: 400,
+        easing: 'easeOutCubic',
+      });
+    }
+  }, [builderStep]);
+
+  // Clause navigation function with animation
+  const animateClauseChange = useCallback((newIndex: number, direction: number) => {
+    if (!step3ContentRef.current || isAnimatingClause.current) return;
+
+    isAnimatingClause.current = true;
+
+    // Card stack effect: slide up for forward, slide down for back
+    const exitY = direction === 1 ? -40 : 40;
+    const enterY = direction === 1 ? 40 : -40;
+
+    // Animate out current content
+    anime({
+      targets: step3ContentRef.current,
+      opacity: [1, 0],
+      translateY: [0, exitY],
+      duration: 200,
+      easing: 'easeInCubic',
+      complete: () => {
+        // NOW update the state after exit animation
+        setCurrentClauseIndex(newIndex);
+
+        // Animate in new content
+        requestAnimationFrame(() => {
+          anime({
+            targets: step3ContentRef.current,
+            opacity: [0, 1],
+            translateY: [enterY, 0],
+            duration: 300,
+            easing: 'easeOutCubic',
+            complete: () => {
+              isAnimatingClause.current = false;
+            }
+          });
+        });
+      }
+    });
+
+    // Animate header text change
+    if (step3HeaderRef.current) {
+      const headerContent = step3HeaderRef.current.querySelector('.header-content');
+      if (headerContent) {
+        anime({
+          targets: headerContent,
+          opacity: [1, 0],
+          translateY: [0, direction * -5],
+          duration: 200,
+          easing: 'easeInCubic',
+          complete: () => {
+            requestAnimationFrame(() => {
+              anime({
+                targets: headerContent,
+                opacity: [0, 1],
+                translateY: [direction * 5, 0],
+                duration: 300,
+                easing: 'easeOutCubic',
+              });
+            });
+          }
+        });
+      }
+    }
+  }, []);
+
   // Start builder with a template - goes directly to Step 2
   const startWithTemplate = useCallback((template: ContractTemplate) => {
     // Start exit animation
@@ -1029,9 +1282,10 @@ export default function TemplatesPage() {
   ];
 
   return (
-    <div className="p-6 max-w-6xl mx-auto">
-      {/* Breadcrumb Stepper - Always visible */}
-      <div className="flex items-center gap-1 mb-6">
+    <div className="fixed inset-0 top-12 bottom-12 left-0 md:left-[var(--sidebar-width)] flex flex-col overflow-hidden bg-background">
+      {/* Breadcrumb Stepper - Fixed at top */}
+      <div className="shrink-0 bg-background px-6 pt-6 pb-4 max-w-6xl mx-auto w-full">
+        <div className="flex items-center gap-1">
         {[
           { step: 1, label: "Choose Template" },
           { step: 2, label: "Select Clauses" },
@@ -1072,82 +1326,96 @@ export default function TemplatesPage() {
             )}
           </div>
         ))}
+        </div>
       </div>
 
+      {/* Step 1 Info notice - Fixed below stepper */}
+      {builderStep === 1 && (
+        <div className="shrink-0 px-6 pb-4 max-w-6xl mx-auto w-full">
+          <div
+            ref={infoNoticeRef}
+            className="rounded-2xl border border-purple-500/30 bg-purple-500/5 px-5 py-4 flex items-center gap-3 opacity-0"
+          >
+            <HugeiconsIcon icon={AiIdeaIcon} size={20} className="text-purple-400 shrink-0" />
+            <p className="text-sm text-purple-400">
+              Each template comes with predefined clauses tailored to that contract type. You can add, remove, or customize any clause in the next step to perfectly fit your needs.
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* Step 2 Header - Fixed below stepper */}
+      {builderStep === 2 && (
+        <div className="shrink-0 px-6 pb-4 max-w-6xl mx-auto w-full">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+            <h2 className="text-lg font-medium whitespace-nowrap">Select Clauses</h2>
+            <div className="flex items-center gap-2 overflow-x-auto pb-1 -mb-1">
+              {clauseCategories.map((cat) => (
+                <button
+                  key={cat.id}
+                  onClick={() => setClauseFilter(cat.id)}
+                  className={cn(
+                    "px-3 py-1.5 rounded-md text-xs font-bold transition-colors flex items-center gap-1.5 whitespace-nowrap shrink-0",
+                    clauseFilter === cat.id
+                      ? "bg-purple-500 text-white"
+                      : "bg-muted text-muted-foreground hover:bg-muted/80"
+                  )}
+                >
+                  <HugeiconsIcon icon={cat.icon} size={14} />
+                  {cat.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Main content area - Scrollable */}
+      <div className="flex-1 overflow-y-auto overflow-x-hidden">
+        <div className="px-6 pb-6 max-w-6xl mx-auto">
       {/* Step 1: Choose Template */}
       {builderStep === 1 && (
-        <div className="space-y-6">
-          {/* Info notice */}
-          <AnimatePresence>
-            {!isTransitioning && (
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: 10 }}
-                transition={{ duration: 0.3, ease: "easeOut" }}
-                className="rounded-2xl border border-purple-500/30 bg-purple-500/5 px-5 py-4 flex items-center gap-3"
-              >
-                <HugeiconsIcon icon={AiIdeaIcon} size={20} className="text-purple-400 shrink-0" />
-                <p className="text-sm text-purple-400">
-                  Each template comes with predefined clauses tailored to that contract type. You can add, remove, or customize any clause in the next step to perfectly fit your needs.
-                </p>
-              </motion.div>
-            )}
-          </AnimatePresence>
-
+        <div>
           {/* Template cards */}
-          <div className="grid md:grid-cols-2 gap-4">
-            <AnimatePresence>
-              {/* Create your own template card */}
-              {!isTransitioning && (
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: 20 }}
-                  transition={{
-                    duration: 0.3,
-                    delay: 0,
-                    ease: "easeOut"
-                  }}
-                  onClick={startFromScratch}
-                  className="border border-dashed border-purple-500/50 rounded-2xl overflow-hidden hover:border-purple-500 hover:bg-purple-500/5 transition-all cursor-pointer"
-                >
-                  {/* Title section */}
-                  <div className="flex items-center gap-3 p-5 bg-purple-500/10 border-b border-dashed border-purple-500/30">
-                    <div className="w-12 h-12 rounded-xl bg-purple-500/20 flex items-center justify-center shrink-0">
-                      <Plus className="w-6 h-6 text-purple-400" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <h3 className="font-normal text-base text-purple-400">Create Your Own</h3>
-                    </div>
-                  </div>
+          <div ref={templateGridRef} className="grid md:grid-cols-2 gap-4">
+            {/* Create your own template card */}
+            <div
+              onClick={startFromScratch}
+              className="template-card border border-dashed border-purple-500/50 rounded-2xl overflow-hidden hover:border-purple-500 hover:bg-purple-500/5 transition-all cursor-pointer opacity-0"
+            >
+              {/* Title section */}
+              <div className="flex items-center gap-3 p-5 bg-purple-500/10 border-b border-dashed border-purple-500/30">
+                <div className="w-12 h-12 rounded-xl bg-purple-500/20 flex items-center justify-center shrink-0">
+                  <Plus className="w-6 h-6 text-purple-400" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-normal text-base text-purple-400">Create Your Own</h3>
+                </div>
+              </div>
 
-                  {/* Content section */}
-                  <div className="p-5">
-                    <p className="text-sm text-foreground/70 mb-4 leading-relaxed">
-                      Start from scratch and build a custom contract by selecting exactly the clauses you need. Perfect for unique agreements or specialized deals.
-                    </p>
+              {/* Content section */}
+              <div className="p-5">
+                <p className="text-sm text-foreground/70 mb-4 leading-relaxed">
+                  Start from scratch and build a custom contract by selecting exactly the clauses you need. Perfect for unique agreements or specialized deals.
+                </p>
 
-                    <div className="flex flex-wrap gap-1.5">
-                      <Badge variant="secondary" className="text-xs bg-purple-500/10 text-purple-400 border-purple-500/30">
-                        Full Customization
-                      </Badge>
-                      <Badge variant="secondary" className="text-xs bg-purple-500/10 text-purple-400 border-purple-500/30">
-                        Any Clause Combination
-                      </Badge>
-                    </div>
-                  </div>
-                </motion.div>
-              )}
-              {!isTransitioning && contractTemplates.map((template, index) => (
-                <ExpandedTemplateCard
-                  key={template.id}
-                  template={template}
-                  index={index + 1}
-                  onUse={() => startWithTemplate(template)}
-                />
-              ))}
-            </AnimatePresence>
+                <div className="flex flex-wrap gap-1.5">
+                  <Badge variant="secondary" className="text-xs bg-purple-500/10 text-purple-400 border-purple-500/30">
+                    Full Customization
+                  </Badge>
+                  <Badge variant="secondary" className="text-xs bg-purple-500/10 text-purple-400 border-purple-500/30">
+                    Any Clause Combination
+                  </Badge>
+                </div>
+              </div>
+            </div>
+            {contractTemplates.map((template) => (
+              <ExpandedTemplateCard
+                key={template.id}
+                template={template}
+                onUse={() => startWithTemplate(template)}
+              />
+            ))}
           </div>
         </div>
       )}
@@ -1163,32 +1431,6 @@ export default function TemplatesPage() {
               animate={{ opacity: 1 }}
               transition={{ duration: 0.3 }}
             >
-              <motion.div
-                className="flex flex-col md:flex-row md:items-center md:justify-between gap-3"
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3, delay: 0.1 }}
-              >
-                <h2 className="text-lg font-medium whitespace-nowrap">Select Clauses</h2>
-                <div className="flex items-center gap-2 overflow-x-auto pb-1 -mb-1">
-                  {clauseCategories.map((cat) => (
-                    <button
-                      key={cat.id}
-                      onClick={() => setClauseFilter(cat.id)}
-                      className={cn(
-                        "px-3 py-1.5 rounded-md text-xs font-bold transition-colors flex items-center gap-1.5 whitespace-nowrap shrink-0",
-                        clauseFilter === cat.id
-                          ? "bg-purple-500 text-white"
-                          : "bg-muted text-muted-foreground hover:bg-muted/80"
-                      )}
-                    >
-                      <HugeiconsIcon icon={cat.icon} size={14} />
-                      {cat.label}
-                    </button>
-                  ))}
-                </div>
-              </motion.div>
-
               {/* Conflict Warnings */}
               <AnimatePresence>
                 {activeConflicts.length > 0 && (
@@ -1271,10 +1513,10 @@ export default function TemplatesPage() {
 
           {/* Step 3: Customize */}
           {builderStep === 3 && (
-            <div className="rounded-xl overflow-hidden flex flex-col border border-dashed border-border bg-background mb-12 md:mb-0">
+            <div ref={step3ContainerRef} className="rounded-xl overflow-hidden flex flex-col border border-dashed border-border bg-background mb-12 md:mb-0">
               {/* Header */}
-              <div className="px-5 py-4">
-                <div className="flex items-center justify-between">
+              <div ref={step3HeaderRef} className="px-5 py-4">
+                <div className="flex items-center justify-between header-content">
                   <div className="flex items-center gap-3">
                     {currentClauseIndex === 0 ? (
                       <>
@@ -1306,10 +1548,10 @@ export default function TemplatesPage() {
                   </span>
                 </div>
                 {/* Progress bar */}
-                <div className="flex items-center gap-1 mt-3">
+                <div ref={progressBarRef} className="flex items-center gap-1 mt-3">
                   <div
                     className={cn(
-                      "h-1 rounded-full transition-all",
+                      "progress-segment h-1 rounded-full transition-colors origin-left",
                       currentClauseIndex === 0 ? "bg-purple-500 flex-[0.5]" : "bg-purple-500/30 flex-[0.5]"
                     )}
                   />
@@ -1317,7 +1559,7 @@ export default function TemplatesPage() {
                     <div
                       key={idx}
                       className={cn(
-                        "h-1 flex-1 rounded-full transition-all",
+                        "progress-segment h-1 flex-1 rounded-full transition-colors origin-left",
                         idx + 1 <= currentClauseIndex
                           ? "bg-purple-500"
                           : "bg-muted-foreground/20"
@@ -1328,8 +1570,8 @@ export default function TemplatesPage() {
               </div>
 
               {/* Content */}
-              <div className="flex-1 overflow-auto border-t border-dashed border-border">
-                <div className="p-6">
+              <div className="flex-1 overflow-hidden border-t border-dashed border-border">
+                <div ref={step3ContentRef} className="p-6 h-full overflow-auto">
                   {currentClauseIndex === 0 ? (
                     <div className="grid md:grid-cols-3 gap-6">
                       <div className="space-y-2">
@@ -1388,15 +1630,14 @@ export default function TemplatesPage() {
               </div>
 
               {/* Footer */}
-              <div className="px-5 py-4 flex items-center justify-between border-t border-dashed border-border">
+              <div ref={step3FooterRef} className="px-5 py-4 flex items-center justify-between border-t border-dashed border-border">
                 <Button
                   variant="outline"
                   onClick={() => {
-                    setNavigationDirection(-1);
                     if (currentClauseIndex === 0) {
                       setBuilderStep(2);
                     } else {
-                      setCurrentClauseIndex(currentClauseIndex - 1);
+                      animateClauseChange(currentClauseIndex - 1, -1);
                     }
                   }}
                 >
@@ -1407,9 +1648,8 @@ export default function TemplatesPage() {
                 <Button
                   variant="outline"
                   onClick={() => {
-                    setNavigationDirection(1);
                     if (currentClauseIndex < selectedClauses.length) {
-                      setCurrentClauseIndex(currentClauseIndex + 1);
+                      animateClauseChange(currentClauseIndex + 1, 1);
                     } else {
                       setBuilderStep(4);
                     }
@@ -1425,8 +1665,8 @@ export default function TemplatesPage() {
 
           {/* Step 4: Review & Export */}
           {builderStep === 4 && (
-            <div className="space-y-4">
-              <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+            <div ref={step4ContainerRef} className="space-y-4">
+              <div ref={step4HeaderRef} className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
                 <h2 className="text-lg font-medium whitespace-nowrap">Review Your Contract</h2>
                 <div className="flex gap-2">
                   <Button variant="outline" size="sm" onClick={copyToClipboard}>
@@ -1465,7 +1705,7 @@ export default function TemplatesPage() {
               {/* Side by side: PDF + Breakdown */}
               <div className="flex flex-col md:flex-row gap-6 h-auto md:h-[calc(100vh-220px)] md:min-h-[600px]">
                 {/* Left: PDF Preview */}
-                <div className={cn(
+                <div ref={step4PdfPanelRef} className={cn(
                   "flex-1 border border-border rounded-xl overflow-hidden bg-muted/30 h-[500px] md:h-auto",
                   mobileReviewView !== "pdf" && "hidden md:block"
                 )}>
@@ -1490,7 +1730,7 @@ export default function TemplatesPage() {
                 </div>
 
                 {/* Right: Contract Breakdown */}
-                <div className={cn(
+                <div ref={step4BreakdownPanelRef} className={cn(
                   "w-full md:w-[400px] border border-dashed border-border rounded-xl overflow-hidden flex flex-col bg-card h-[500px] md:h-auto",
                   mobileReviewView !== "breakdown" && "hidden md:flex"
                 )}>
@@ -1621,7 +1861,7 @@ export default function TemplatesPage() {
                 </div>
               </div>
 
-              <div className="flex items-center pt-4 border-t border-border">
+              <div ref={step4FooterRef} className="flex items-center pt-4 border-t border-border">
                 <Button variant="outline" onClick={() => setBuilderStep(3)}>
                   <ChevronLeft className="w-4 h-4 mr-2" />
                   Back to Edit
@@ -1631,6 +1871,8 @@ export default function TemplatesPage() {
           )}
         </>
       )}
+        </div>
+      </div>
     </div>
   );
 }

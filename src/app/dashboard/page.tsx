@@ -328,7 +328,7 @@ export default function DashboardPage() {
   }
 
   return (
-    <div>
+    <div className="min-h-full">
       {/* Extension Auth Success Overlay */}
       {showExtensionSuccess && (
         <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-[9999]">
