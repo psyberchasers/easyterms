@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
+import { encryptText } from "@/lib/encryption";
 
 export async function POST(request: Request) {
   try {
@@ -36,7 +37,7 @@ export async function POST(request: Request) {
         title,
         file_name: fileName,
         file_type: fileType,
-        extracted_text: extractedText,
+        extracted_text: extractedText ? encryptText(extractedText) : null,
         analysis,
         contract_type: contractType,
         overall_risk: overallRisk,
@@ -48,7 +49,7 @@ export async function POST(request: Request) {
     if (error) {
       console.error("Supabase insert error:", error);
       return NextResponse.json(
-        { error: error.message, details: error },
+        { error: "Failed to save contract" },
         { status: 500 }
       );
     }
@@ -84,7 +85,8 @@ export async function GET() {
 
     const { data, error } = await supabase
       .from("contracts")
-      .select("*")
+      .select("id, user_id, title, file_name, file_url, file_type, analysis, contract_type, status, overall_risk, is_starred, created_at, updated_at")
+      .eq("user_id", user.id)
       .order("created_at", { ascending: false });
 
     if (error) {

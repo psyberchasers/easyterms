@@ -82,23 +82,19 @@ export default function ContractDetailPage() {
     }
   }, [contractId]);
 
-  // Fetch contract
+  // Fetch contract via API route (handles decryption server-side)
   useEffect(() => {
     async function fetchContract() {
       if (!contractId) return;
 
       try {
-        const { data, error } = await supabase
-          .from("contracts")
-          .select("*")
-          .eq("id", contractId)
-          .single();
-
-        if (error) {
+        const response = await fetch(`/api/contracts/${contractId}`);
+        if (!response.ok) {
           setError("Contract not found");
           return;
         }
 
+        const { contract: data } = await response.json();
         setContract(data as Contract);
         // Fetch signed URL after contract is loaded
         fetchSignedUrl();
@@ -112,7 +108,7 @@ export default function ContractDetailPage() {
     if (!authLoading) {
       fetchContract();
     }
-  }, [contractId, authLoading, supabase, fetchSignedUrl]);
+  }, [contractId, authLoading, fetchSignedUrl]);
 
   // Fetch versions
   const fetchVersions = useCallback(async () => {

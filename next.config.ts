@@ -5,6 +5,7 @@ const nextConfig: NextConfig = {
     "easyterms.ngrok.dev",
     "https://easyterms.ngrok.dev",
     "*.ngrok.dev",
+    "*.ngrok-free.dev",
   ],
 };
 

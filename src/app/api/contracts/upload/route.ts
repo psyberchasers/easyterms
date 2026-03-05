@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { prepareBenchmarkContribution } from "@/lib/benchmarking";
 import { IndustryType } from "@/config/industries";
 import { convertToPdf } from "@/lib/convertToPdf";
+import { encryptText } from "@/lib/encryption";
 
 export async function POST(request: Request) {
   try {
@@ -107,7 +108,7 @@ export async function POST(request: Request) {
         file_name: uploadFileName,
         file_url: fileUrl,
         file_type: uploadContentType,
-        extracted_text: extractedText,
+        extracted_text: extractedText ? encryptText(extractedText) : null,
         analysis,
         contract_type: contractType,
         overall_risk: overallRisk,
@@ -119,7 +120,7 @@ export async function POST(request: Request) {
     if (error) {
       console.error("Database insert error:", error);
       return NextResponse.json(
-        { error: error.message, details: error },
+        { error: "Failed to save contract" },
         { status: 500 }
       );
     }

@@ -235,6 +235,17 @@ export function ContractAnalysisView({
   // Version selection state - null means original (Version 1)
   const [selectedVersionId, setSelectedVersionId] = useState<string | null>(null);
   const [versionFileUrls, setVersionFileUrls] = useState<Record<string, string>>({});
+  const [prevVersionCount, setPrevVersionCount] = useState(0);
+
+  // Auto-select latest version when a new version is uploaded
+  useEffect(() => {
+    if (versions.length > prevVersionCount && versions.length > 0) {
+      // A new version was added - select the latest one
+      const latest = versions.reduce((a, b) => a.version_number > b.version_number ? a : b);
+      setSelectedVersionId(latest.id);
+    }
+    setPrevVersionCount(versions.length);
+  }, [versions, prevVersionCount]);
 
   // Compute active analysis and file URL based on selected version
   const selectedVersion = versions.find(v => v.id === selectedVersionId);
@@ -1814,10 +1825,8 @@ export function ContractAnalysisView({
                       <span className="flex items-center gap-2">
                         {sharePermission === "view" && <AiVisionIcon size={14} className="text-muted-foreground" />}
                         {sharePermission === "comment" && <HugeiconsIcon icon={Comment01Icon} size={14} className="text-muted-foreground" />}
-                        {sharePermission === "sign" && <HugeiconsIcon icon={SignatureIcon} size={14} className="text-muted-foreground" />}
                         {sharePermission === "view" && "Can view"}
                         {sharePermission === "comment" && "Can comment"}
-                        {sharePermission === "sign" && "Request signature"}
                       </span>
                       <ChevronDown className="h-4 w-4 text-muted-foreground" />
                     </button>
@@ -1835,10 +1844,7 @@ export function ContractAnalysisView({
                         <HugeiconsIcon icon={Comment01Icon} size={14} className="text-muted-foreground" />
                         Can comment
                       </DropdownMenuRadioItem>
-                      <DropdownMenuRadioItem value="sign" className="flex items-center gap-2">
-                        <HugeiconsIcon icon={SignatureIcon} size={14} className="text-muted-foreground" />
-                        Request signature
-                      </DropdownMenuRadioItem>
+                      {/* Sign option hidden - to be re-enabled later */}
                     </DropdownMenuRadioGroup>
                   </DropdownMenuContent>
                 </DropdownMenu>

@@ -4,6 +4,7 @@ import { extractTextFromPDF, extractTextFromWord } from "@/lib/extractText";
 import { getAnalysisPrompt, getOutputSchema } from "@/config/analysis-prompts";
 import { IndustryType } from "@/config/industries";
 import OpenAI from "openai";
+import { encryptText, maybeDecryptText } from "@/lib/encryption";
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
@@ -34,7 +35,7 @@ export async function GET(
   // Fetch versions
   const { data: versions, error } = await supabase
     .from("contract_versions")
-    .select("*")
+    .select("id, contract_id, version_number, file_url, analysis, changes_summary, created_at")
     .eq("contract_id", contractId)
     .order("version_number", { ascending: false });
 
@@ -179,8 +180,11 @@ export async function POST(
       return avgSimilarity;
     };
 
+    // Decrypt stored text for comparison (handles both encrypted and plaintext)
+    const originalPlaintext = maybeDecryptText(contract.extracted_text) || '';
+
     const normalizedNewText = normalizeForComparison(extractedText);
-    const normalizedOriginalText = normalizeForComparison(contract.extracted_text || '');
+    const normalizedOriginalText = normalizeForComparison(originalPlaintext);
 
     console.log(`[Duplicate Check] New text length: ${normalizedNewText.length}, Original length: ${normalizedOriginalText.length}`);
 
@@ -223,7 +227,7 @@ export async function POST(
     if (existingVersions) {
       for (let i = 0; i < existingVersions.length; i++) {
         const version = existingVersions[i];
-        const normalizedVersionText = normalizeForComparison(version.extracted_text || '');
+        const normalizedVersionText = normalizeForComparison(maybeDecryptText(version.extracted_text) || '');
         const similarity = calculateSimilarity(normalizedNewText, normalizedVersionText);
 
         if (normalizedNewText === normalizedVersionText || similarity >= 0.95) {
@@ -281,7 +285,7 @@ ${extractedText.substring(0, 15000)}`;
     const fullAnalysis = JSON.parse(fullAnalysisResponse.choices[0].message.content || "{}");
 
     // Compare actual contract text to determine if there are real changes
-    const previousText = normalizeForComparison(contract.extracted_text || '');
+    const previousText = normalizeForComparison(originalPlaintext);
     const newText = normalizeForComparison(extractedText);
     const textSimilarity = calculateSimilarity(newText, previousText);
 
@@ -345,11 +349,11 @@ Return JSON with:
         contract_id: contractId,
         version_number: newVersionNumber,
         file_url: fileName,
-        extracted_text: extractedText,
+        extracted_text: encryptText(extractedText),
         analysis: analysis,
         changes_summary: analysis.changesSummary || "No changes detected",
       })
-      .select()
+      .select("id, contract_id, version_number, file_url, analysis, changes_summary, created_at")
       .single();
 
     if (versionError) {
@@ -357,7 +361,7 @@ Return JSON with:
     }
 
     // Update main contract with new analysis if this is an improvement
-    if (analysis.overallRiskAssessment === "low" || 
+    if (analysis.overallRiskAssessment === "low" ||
         (analysis.overallRiskAssessment === "medium" && previousAnalysis?.overallRiskAssessment === "high")) {
       await supabase
         .from("contracts")
@@ -416,7 +420,7 @@ export async function DELETE(
   // Get the version to delete (to get the file path)
   const { data: version } = await supabase
     .from("contract_versions")
-    .select("*")
+    .select("id, file_url")
     .eq("id", versionId)
     .eq("contract_id", contractId)
     .single();

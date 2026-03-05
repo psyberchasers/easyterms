@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import OpenAI from "openai";
+import { createClient } from "@/lib/supabase/server";
 import { ContractAnalysis } from "@/types/contract";
 
 const openai = new OpenAI({
@@ -19,6 +20,12 @@ interface NegotiateRequest {
 
 export async function POST(request: Request) {
   try {
+    const supabase = await createClient();
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user) {
+      return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+    }
+
     const body: NegotiateRequest = await request.json();
     const { analysis, contractTitle, concerns, highRiskTerms } = body;
 

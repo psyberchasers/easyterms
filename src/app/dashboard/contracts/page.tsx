@@ -64,7 +64,7 @@ export default function ContractsPage() {
     try {
       const { data, error } = await supabase
         .from("contracts")
-        .select("*")
+        .select("id, user_id, title, file_name, file_url, file_type, analysis, contract_type, status, overall_risk, is_starred, created_at, updated_at")
         .order("created_at", { ascending: false });
 
       if (error) {

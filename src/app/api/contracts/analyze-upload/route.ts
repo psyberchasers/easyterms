@@ -4,16 +4,27 @@ import { prepareBenchmarkContribution } from "@/lib/benchmarking";
 import { IndustryType } from "@/config/industries";
 import { convertToPdf } from "@/lib/convertToPdf";
 import { getAnalysisPrompt, getOutputSchema } from "@/config/analysis-prompts";
+import { encryptText } from "@/lib/encryption";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type, Authorization",
-  "Access-Control-Allow-Credentials": "true",
-};
+const ALLOWED_ORIGINS = [
+  process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000",
+  "https://easyterms.app",
+  "https://www.easyterms.app",
+];
 
-export async function OPTIONS() {
-  return NextResponse.json({}, { headers: corsHeaders });
+function getCorsHeaders(request?: Request) {
+  const origin = request?.headers.get("origin") || "";
+  const isAllowed = ALLOWED_ORIGINS.includes(origin) || origin.startsWith("chrome-extension://");
+  return {
+    "Access-Control-Allow-Origin": isAllowed ? origin : ALLOWED_ORIGINS[0],
+    "Access-Control-Allow-Methods": "POST, OPTIONS",
+    "Access-Control-Allow-Headers": "Content-Type, Authorization",
+    "Access-Control-Allow-Credentials": "true",
+  };
+}
+
+export async function OPTIONS(request: Request) {
+  return NextResponse.json({}, { headers: getCorsHeaders(request) });
 }
 
 async function extractTextFromPDF(data: Uint8Array): Promise<string> {
@@ -75,7 +86,7 @@ export async function POST(request: Request) {
       console.error("Auth error: No valid authentication");
       return NextResponse.json(
         { error: "Not authenticated" },
-        { status: 401, headers: corsHeaders }
+        { status: 401, headers: getCorsHeaders(request) }
       );
     }
 
@@ -87,7 +98,7 @@ export async function POST(request: Request) {
     if (!file) {
       return NextResponse.json(
         { error: "File is required" },
-        { status: 400, headers: corsHeaders }
+        { status: 400, headers: getCorsHeaders(request) }
       );
     }
 
@@ -102,7 +113,7 @@ export async function POST(request: Request) {
     if (!allowedTypes.includes(file.type)) {
       return NextResponse.json(
         { error: "Unsupported file type. Please upload a PDF, Word document, or text file." },
-        { status: 400, headers: corsHeaders }
+        { status: 400, headers: getCorsHeaders(request) }
       );
     }
 
@@ -110,7 +121,7 @@ export async function POST(request: Request) {
     if (file.size > 10 * 1024 * 1024) {
       return NextResponse.json(
         { error: "File too large. Maximum size is 10MB." },
-        { status: 400, headers: corsHeaders }
+        { status: 400, headers: getCorsHeaders(request) }
       );
     }
 
@@ -127,14 +138,14 @@ export async function POST(request: Request) {
       console.error("Text extraction error:", extractError);
       return NextResponse.json(
         { error: "Failed to parse file. Please ensure it's a valid document." },
-        { status: 400, headers: corsHeaders }
+        { status: 400, headers: getCorsHeaders(request) }
       );
     }
 
     if (!contractText || contractText.trim().length < 100) {
       return NextResponse.json(
         { error: "Could not extract sufficient text from the file." },
-        { status: 400, headers: corsHeaders }
+        { status: 400, headers: getCorsHeaders(request) }
       );
     }
 
@@ -176,7 +187,7 @@ ${contractText}`;
     if (!process.env.OPENAI_API_KEY) {
       return NextResponse.json(
         { error: "AI analysis not configured" },
-        { status: 500, headers: corsHeaders }
+        { status: 500, headers: getCorsHeaders(request) }
       );
     }
 
@@ -262,7 +273,7 @@ ${contractText}`;
         file_name: uploadFileName,
         file_url: fileUrl,
         file_type: uploadContentType,
-        extracted_text: contractText,
+        extracted_text: encryptText(contractText),
         analysis,
         contract_type: contractType,
         overall_risk: overallRisk,
@@ -275,7 +286,7 @@ ${contractText}`;
       console.error("Database insert error:", error);
       return NextResponse.json(
         { error: error.message },
-        { status: 500, headers: corsHeaders }
+        { status: 500, headers: getCorsHeaders(request) }
       );
     }
 
@@ -339,13 +350,13 @@ ${contractText}`;
       contractType,
       overallRisk,
       summary: analysis.summary,
-    }, { headers: corsHeaders });
+    }, { headers: getCorsHeaders(request) });
 
   } catch (err) {
     console.error("Server error:", err);
     return NextResponse.json(
       { error: err instanceof Error ? err.message : "Unknown error" },
-      { status: 500, headers: corsHeaders }
+      { status: 500, headers: getCorsHeaders(request) }
     );
   }
 }

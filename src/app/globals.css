@@ -63,30 +63,30 @@
 :root {
   --radius: 0.75rem;
   /* Step 3 card colors - Dark mode */
-  --step3-header: #101010;
-  --step3-content: #1d1d1d;
-  --step3-footer: #101010;
-  --step3-border: #2b2b2b;
+  --step3-header: #0e0e0e;
+  --step3-content: #161616;
+  --step3-footer: #0e0e0e;
+  --step3-border: #272727;
   /* Dark theme as default - Premium music contract aesthetic */
-  --background: #1a1a1a;
+  --background: #121212;
   --foreground: oklch(0.95 0.01 250);
-  --card: #212121;
+  --card: #1a1a1a;
   --card-foreground: oklch(0.95 0.01 250);
-  --popover: #212121;
+  --popover: #1a1a1a;
   --popover-foreground: oklch(0.95 0.01 250);
   /* Canary yellow primary */
   --primary: #FFEF00;
-  --primary-foreground: #1a1a1a;
-  --secondary: #2a2a2a;
+  --primary-foreground: #121212;
+  --secondary: #222222;
   --secondary-foreground: oklch(0.9 0.01 250);
-  --muted: #252525;
+  --muted: #1e1e1e;
   --muted-foreground: oklch(0.65 0.01 250);
-  --accent: #2a2a2a;
+  --accent: #222222;
   --accent-foreground: oklch(0.95 0.01 250);
   --destructive: oklch(0.6 0.2 25);
   --destructive-foreground: oklch(0.98 0.01 25);
-  --border: #2d2d2d;
-  --input: #252525;
+  --border: #2a2a2a;
+  --input: #1e1e1e;
   --ring: #a855f7;
   /* Status colors */
   --warning: oklch(0.75 0.15 60);
@@ -100,13 +100,13 @@
   --chart-4: oklch(0.6 0.2 25);
   --chart-5: oklch(0.65 0.18 300);
   /* Sidebar */
-  --sidebar: #1a1a1a;
+  --sidebar: #121212;
   --sidebar-foreground: oklch(0.95 0.01 250);
   --sidebar-primary: #FFEF00;
-  --sidebar-primary-foreground: #1a1a1a;
-  --sidebar-accent: #252525;
+  --sidebar-primary-foreground: #121212;
+  --sidebar-accent: #1e1e1e;
   --sidebar-accent-foreground: oklch(0.95 0.01 250);
-  --sidebar-border: #2d2d2d;
+  --sidebar-border: #2a2a2a;
   --sidebar-ring: #FFEF00;
 }
 

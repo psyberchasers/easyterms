@@ -158,21 +158,21 @@ export default function ContractDetailPage() {
   }, []);
 
   const fetchContract = async () => {
-    const { data, error } = await supabase
-      .from("contracts")
-      .select("*")
-      .eq("id", contractId)
-      .single();
+    try {
+      const response = await fetch(`/api/contracts/${contractId}`);
+      if (!response.ok) {
+        setError("Contract not found");
+      } else {
+        const { contract: data } = await response.json();
+        setContract(data as Contract);
 
-    if (error) {
-      setError("Contract not found");
-    } else {
-      setContract(data as Contract);
-      
-      // Fetch PDF URL if contract has a file
-      if (data?.file_url && data?.file_type === "application/pdf") {
-        fetchPdfUrl();
+        // Fetch PDF URL if contract has a file
+        if (data?.file_url && data?.file_type === "application/pdf") {
+          fetchPdfUrl();
+        }
       }
+    } catch {
+      setError("Failed to load contract");
     }
     setLoading(false);
   };

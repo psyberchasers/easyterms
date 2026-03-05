@@ -120,7 +120,7 @@ export default function SharedContractPage() {
 
       const { data: contractData, error: contractError } = await supabase
         .from("contracts")
-        .select("id, title, file_url, file_type, extracted_text, analysis")
+        .select("id, title, file_url, file_type, analysis")
         .eq("id", shareData.contract_id)
         .single();
 

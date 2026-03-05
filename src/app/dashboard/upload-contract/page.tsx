@@ -2987,10 +2987,8 @@ export default function UploadContractPage() {
                     <span className="flex items-center gap-2">
                       {sharePermission === "view" && <AiVisionIcon size={14} className="text-muted-foreground" />}
                       {sharePermission === "comment" && <HugeiconsIcon icon={Comment01Icon} size={14} className="text-muted-foreground" />}
-                      {sharePermission === "sign" && <HugeiconsIcon icon={SignatureIcon} size={14} className="text-muted-foreground" />}
                       {sharePermission === "view" && "Can view"}
                       {sharePermission === "comment" && "Can comment"}
-                      {sharePermission === "sign" && "Request signature"}
                     </span>
                     <ChevronDown className="h-4 w-4 text-muted-foreground" />
                   </button>
@@ -3008,10 +3006,7 @@ export default function UploadContractPage() {
                       <HugeiconsIcon icon={Comment01Icon} size={14} className="text-muted-foreground" />
                       Can comment
                     </DropdownMenuRadioItem>
-                    <DropdownMenuRadioItem value="sign" className="flex items-center gap-2">
-                      <HugeiconsIcon icon={SignatureIcon} size={14} className="text-muted-foreground" />
-                      Request signature
-                    </DropdownMenuRadioItem>
+                    {/* Sign option hidden - to be re-enabled later */}
                   </DropdownMenuRadioGroup>
                 </ShareDropdownMenuContent>
               </ShareDropdownMenu>
