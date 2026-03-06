@@ -278,7 +278,7 @@ export default function ContractsPage() {
             Looks like there's nothing to see here! Go ahead and add some new data to kick things off.
           </p>
 
-          <Link href="/analyze">
+          <Link href="/dashboard/upload-contract">
             <Button className="rounded-full px-5 bg-foreground text-background hover:bg-foreground/90">
               Add Contract
             </Button>
