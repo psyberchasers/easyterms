@@ -29,7 +29,7 @@ function generateReportHTML(
   const riskColor = riskColors[riskLevel] || "#6b7280";
   const riskBg = riskBgColors[riskLevel] || "rgba(107, 114, 128, 0.1)";
   const riskBorder = riskBorderColors[riskLevel] || "rgba(107, 114, 128, 0.3)";
-  const primaryColor = "#facc15"; // Yellow primary
+  const primaryColor = "#a855f7"; // Purple primary
 
   return `
 <!DOCTYPE html>
@@ -300,7 +300,7 @@ function generateReportHTML(
       border-color: rgba(245, 158, 11, 0.3);
     }
     .missing-clause.medium {
-      border-color: rgba(250, 204, 21, 0.3);
+      border-color: rgba(168, 85, 247, 0.3);
     }
     .missing-clause-severity {
       font-size: 10px;
@@ -319,7 +319,7 @@ function generateReportHTML(
     }
     .missing-clause.medium .missing-clause-severity {
       color: ${primaryColor};
-      background: rgba(250, 204, 21, 0.1);
+      background: rgba(168, 85, 247, 0.1);
     }
     .missing-clause-content {
       flex: 1;
@@ -339,20 +339,22 @@ function generateReportHTML(
     .recommendation {
       display: flex;
       gap: 12px;
-      padding: 14px;
-      background: rgba(34, 197, 94, 0.05);
-      border: 1px solid rgba(34, 197, 94, 0.2);
+      padding: 16px;
+      background: rgba(168, 85, 247, 0.05);
+      border: 1px solid rgba(168, 85, 247, 0.15);
+      border-left: 3px solid ${primaryColor};
       margin-bottom: 8px;
     }
     .recommendation-icon {
-      color: #22c55e;
+      color: ${primaryColor};
       font-size: 14px;
       flex-shrink: 0;
+      margin-top: 2px;
     }
     .recommendation-text {
       font-size: 13px;
       color: #d4d4d4;
-      line-height: 1.5;
+      line-height: 1.6;
     }
 
     /* Footer */
@@ -520,12 +522,22 @@ function generateReportHTML(
   ${analysis.recommendations && analysis.recommendations.length > 0 ? `
   <div class="section">
     <h2 class="section-title">Recommendations</h2>
-    ${analysis.recommendations.map((rec) => `
+    ${analysis.recommendations.map((rec: string | { advice?: string; rationale?: string; priority?: string; howToImplement?: string }) => {
+      const advice = typeof rec === "string" ? rec : (rec.advice || "");
+      const rationale = typeof rec === "string" ? "" : (rec.rationale || "");
+      const priority = typeof rec === "string" ? "" : (rec.priority || "");
+      const howTo = typeof rec === "string" ? "" : (rec.howToImplement || "");
+      return `
       <div class="recommendation">
         <div class="recommendation-icon">→</div>
-        <div class="recommendation-text">${rec}</div>
-      </div>
-    `).join("")}
+        <div class="recommendation-text">
+          ${priority ? `<span style="font-size:10px;text-transform:uppercase;letter-spacing:0.05em;color:${priority === 'high' ? '#ef4444' : priority === 'medium' ? '#f59e0b' : '#22c55e'};margin-right:8px;font-weight:600;">${priority}</span>` : ""}
+          <strong>${advice}</strong>
+          ${rationale ? `<div style="margin-top:6px;color:#737373;font-size:12px;">${rationale}</div>` : ""}
+          ${howTo ? `<div style="margin-top:6px;color:#a3a3a3;font-size:12px;">→ ${howTo}</div>` : ""}
+        </div>
+      </div>`;
+    }).join("")}
   </div>
   ` : ""}
 
