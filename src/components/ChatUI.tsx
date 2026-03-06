@@ -765,11 +765,18 @@ const ChatUI = () => {
       currentIndex === 0 ? currentIndex + 1 : currentIndex + 2,
     );
 
+    // Snapshot attached contracts before creating conversation (which clears them)
+    const snapshotAttachedContracts = [...attachedContracts];
+
     // Create conversation if needed
     let convId = currentConversationId;
     const isFirstMessage = chatMessages.length === 0;
     if (!convId) {
       convId = await createNewConversation();
+      // Restore attached contracts that were cleared during conversation creation
+      if (snapshotAttachedContracts.length > 0) {
+        setAttachedContracts(snapshotAttachedContracts);
+      }
     }
 
     // Add user message
@@ -782,7 +789,7 @@ const ChatUI = () => {
     setChatMessages((prev) => [...prev, userMessage]);
 
     // Save user message
-    const attachedIds = attachedContracts.map(c => c.id);
+    const attachedIds = snapshotAttachedContracts.map(c => c.id);
     if (convId) {
       saveMessage(convId, currentInput, true, "text", undefined, undefined, attachedIds.length > 0 ? attachedIds : undefined);
       // Generate title from first message
@@ -809,8 +816,8 @@ const ChatUI = () => {
           content: m.message,
         }));
 
-      // Build attached contracts context
-      const attachedAnalyses = attachedContracts
+      // Build attached contracts context (use snapshot to avoid race with state clearing)
+      const attachedAnalyses = snapshotAttachedContracts
         .filter(c => c.analysis)
         .map(c => ({
           id: c.id,
