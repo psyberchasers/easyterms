@@ -106,31 +106,64 @@ The user hasn't uploaded a contract yet. You can:
 - Discuss what to look for in music/entertainment contracts`;
     }
 
-    // Add attached contracts context
+    // Add attached contracts context — full detail just like the main analysis
     if (attachedContracts && attachedContracts.length > 0) {
       systemPrompt += `
 
-The user has attached ${attachedContracts.length} contract(s) for reference:`;
+The user has attached ${attachedContracts.length} contract(s). You have FULL analysis data for each:`;
 
       for (const contract of attachedContracts) {
         const a = contract.analysis;
         systemPrompt += `
 
---- CONTRACT: "${contract.title}" ---
-Contract Type: ${a.contractType || "Unknown"}
-Risk Level: ${a.overallRiskAssessment || "Unknown"}
-Term Length: ${a.termLength || "Not specified"}
-Summary: ${a.summary || "No summary available"}
-${a.financialTerms ? `Financial Terms:
-- Royalty Rate: ${a.financialTerms.royaltyRate || "Not specified"}
-- Advance: ${a.financialTerms.advanceAmount || "Not specified"}` : ""}
-${a.potentialConcerns?.length ? `Key Concerns: ${a.potentialConcerns.slice(0, 3).join("; ")}` : ""}
---- END CONTRACT ---`;
+=== CONTRACT: "${contract.title}" ===
+CONTRACT TYPE: ${a.contractType || "Unknown"}
+RISK LEVEL: ${a.overallRiskAssessment?.toUpperCase() || "Unknown"}
+TERM LENGTH: ${a.termLength || "Not specified"}
+EFFECTIVE DATE: ${a.effectiveDate || "Not specified"}
+
+SUMMARY: ${a.summary || "No summary available"}
+
+PARTIES:
+${a.parties ? Object.entries(a.parties).filter(([, v]) => v && (typeof v === 'string' ? v : (v as string[]).length > 0)).map(([k, v]) => `- ${k}: ${Array.isArray(v) ? (v as string[]).join(", ") : v}`).join("\n") : "Not specified"}
+
+FINANCIAL TERMS:
+- Royalty Rate: ${a.financialTerms?.royaltyRate || "Not specified"}
+- Advance: ${a.financialTerms?.advanceAmount || "Not specified"}
+- Payment Schedule: ${a.financialTerms?.paymentSchedule || "Not specified"}
+- Recoupment: ${a.financialTerms?.recoupment || "Not specified"}
+
+RIGHTS & OWNERSHIP:
+- Master Ownership: ${a.rightsAndOwnership?.masterOwnership || "Not specified"}
+- Publishing Rights: ${a.rightsAndOwnership?.publishingRights || "Not specified"}
+- Territorial Rights: ${a.rightsAndOwnership?.territorialRights || "Not specified"}
+- Exclusivity: ${a.rightsAndOwnership?.exclusivity || "Not specified"}
+- Reversion: ${a.rightsAndOwnership?.reversion || "Not specified"}
+
+${a.obligationsAndDeliverables ? `OBLIGATIONS:
+${a.obligationsAndDeliverables.artistObligations?.length ? `Artist: ${a.obligationsAndDeliverables.artistObligations.join("; ")}` : ""}
+${a.obligationsAndDeliverables.labelObligations?.length ? `Company: ${a.obligationsAndDeliverables.labelObligations.join("; ")}` : ""}` : ""}
+
+ALL KEY TERMS/CLAUSES (${a.keyTerms?.length || 0}):
+${a.keyTerms?.map((t, i) => `${i + 1}. [${t.riskLevel?.toUpperCase()}] ${t.title}: ${t.content}${t.explanation ? ` — ${t.explanation}` : ""}${t.originalText ? ` (Original: "${t.originalText}")` : ""}`).join("\n") || "None"}
+
+CONCERNS (${a.potentialConcerns?.length || 0}):
+${a.potentialConcerns?.map((c, i) => `${i + 1}. ${c}${a.concernExplanations?.[i] ? ` — ${a.concernExplanations[i]}` : ""}`).join("\n") || "None"}
+
+${a.missingClauses?.length ? `MISSING CLAUSES:
+${a.missingClauses.map(mc => `- [${mc.severity.toUpperCase()}] ${mc.clause}: ${mc.description}`).join("\n")}` : ""}
+
+RECOMMENDATIONS:
+${a.recommendations?.map((r, i) => {
+  if (typeof r === 'string') return `${i + 1}. ${r}`;
+  return `${i + 1}. [${r.priority?.toUpperCase()}] ${r.advice}: ${r.rationale}`;
+}).join("\n") || "None"}
+=== END CONTRACT ===`;
       }
 
       systemPrompt += `
 
-When the user asks about their contracts, reference the specific contract(s) by name. If they ask to compare contracts, highlight the differences between them.`;
+You have ALL of this data. Answer questions about these contracts DIRECTLY. Never hedge or say "likely" — you know exactly what's in them. When the user asks about clauses, list the actual key terms found. If they ask to compare, highlight specific differences.`;
     }
 
     // Check if API key is configured
