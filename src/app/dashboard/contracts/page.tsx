@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
 import { Star, StarOff, Trash2, Check, Share2, Search, X } from "lucide-react";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { ContractsIcon, PlusSignIcon, PlayIcon, FilterIcon, ViewIcon } from "@hugeicons-pro/core-stroke-rounded";
+import { ContractsIcon, FilterIcon, ViewIcon } from "@hugeicons-pro/core-stroke-rounded";
 import { FolderShared02Icon } from "@hugeicons-pro/core-bulk-rounded";
 import { cn } from "@/lib/utils";
 import { MusicLoader } from "@/components/MusicLoader";
@@ -278,22 +278,11 @@ export default function ContractsPage() {
             Looks like there's nothing to see here! Go ahead and add some new data to kick things off.
           </p>
 
-          <div className="flex items-center gap-3">
-            <Link href="/analyze">
-              <Button className="rounded-full px-5 bg-foreground text-background hover:bg-foreground/90">
-                <HugeiconsIcon icon={PlusSignIcon} size={16} className="mr-2" />
-                Add Contract
-              </Button>
-            </Link>
-
-            <Button
-              variant="outline"
-              className="rounded-full px-5 border-border text-muted-foreground"
-            >
-              <HugeiconsIcon icon={PlayIcon} size={16} className="mr-2" />
-              Watch Demo
+          <Link href="/analyze">
+            <Button className="rounded-full px-5 bg-foreground text-background hover:bg-foreground/90">
+              Add Contract
             </Button>
-          </div>
+          </Link>
         </div>
       </div>
     );
