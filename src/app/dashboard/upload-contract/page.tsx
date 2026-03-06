@@ -1469,7 +1469,7 @@ export default function UploadContractPage() {
         <div className="w-full max-w-sm space-y-8">
           {/* Music Loader - Purple tinted */}
           <div className="flex justify-center">
-            <div className="w-32 h-32" style={{ filter: 'hue-rotate(220deg) saturate(1.5)' }}>
+            <div className="w-32 h-32">
               <Lottie animationData={loadMusicAnimation} loop={status !== "complete"} />
             </div>
           </div>
