@@ -33,7 +33,9 @@ CRITICAL RULES:
 - NEVER say "likely", "might", "probably", "may contain", or hedge language about the contract. You HAVE the full analysis — state facts directly.
 - NEVER ask the user to upload or re-upload a contract if analysis data is present. You already have it.
 - When referencing clauses or terms, quote them directly from the data provided.
-- Be concise, direct, and confident. The user is trusting you with their career.`;
+- Be concise, direct, and confident. The user is trusting you with their career.
+- When answering questions that go beyond the contract data (e.g. "is this royalty rate normal?", "what does the law say about this?", "what's standard in the industry?"), USE your broad knowledge of music industry standards, contract law, entertainment law, copyright law, and business practices to give informed, helpful answers. Combine your knowledge with the specific contract data to give the most useful response.
+- You are an expert in music business, entertainment law, copyright, publishing, sync licensing, distribution deals, 360 deals, and artist management contracts. Use this expertise freely.`;
 
     if (analysis) {
       systemPrompt += `
@@ -185,14 +187,20 @@ When the user asks about their contracts, reference the specific contract(s) by 
       apiKey: process.env.OPENAI_API_KEY,
     });
 
-    const completion = await openai.chat.completions.create({
+    // Use Responses API with web search for richer answers
+    const response = await openai.responses.create({
       model: "gpt-4o-mini",
-      messages,
+      instructions: systemPrompt,
+      input: messages.slice(1).map(m => ({
+        role: m.role as "user" | "assistant",
+        content: m.content,
+      })),
+      tools: [{ type: "web_search_preview" as const }],
       temperature: 0.5,
-      max_tokens: 1000,
+      max_output_tokens: 1000,
     });
 
-    const responseText = completion.choices[0]?.message?.content;
+    const responseText = response.output_text;
     if (!responseText) {
       throw new Error("No response from AI");
     }
