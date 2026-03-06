@@ -773,14 +773,14 @@ export default function UploadContractPage() {
     setShowUploadModal(false);
   };
 
-  // Handle ?new=true param from header upload button
+  // Handle ?new=true param from header upload button — only on initial mount
   useEffect(() => {
-    if (searchParams.get("new") === "true" && status !== "idle") {
+    if (searchParams.get("new") === "true") {
       handleReset();
-      // Clear the URL param without a page reload
       router.replace("/dashboard/upload-contract", { scroll: false });
     }
-  }, [searchParams, status, router]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // File input handler
   const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
