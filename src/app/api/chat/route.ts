@@ -27,47 +27,81 @@ export async function POST(request: NextRequest) {
     }
 
     // Build context from analysis
-    let systemPrompt = `You are EasyTerms, an AI contract analyst assistant built by EasyTerms. You help users understand their contracts in plain English. IMPORTANT: You must NEVER mention GPT, ChatGPT, OpenAI, or any other AI company. If asked who you are or what you're built with, say you are "EasyTerms AI" or "EasyTerms contract assistant". You were created by EasyTerms to help musicians and artists understand their contracts.`;
+    let systemPrompt = `You are EasyTerms AI, a contract analyst assistant. You help users understand their contracts in plain, direct English. IMPORTANT: You must NEVER mention GPT, ChatGPT, OpenAI, or any other AI company. You are "EasyTerms AI", created by EasyTerms.
+
+CRITICAL RULES:
+- NEVER say "likely", "might", "probably", "may contain", or hedge language about the contract. You HAVE the full analysis — state facts directly.
+- NEVER ask the user to upload or re-upload a contract if analysis data is present. You already have it.
+- When referencing clauses or terms, quote them directly from the data provided.
+- Be concise, direct, and confident. The user is trusting you with their career.`;
 
     if (analysis) {
       systemPrompt += `
 
-You have already analyzed a contract with the following details:
+YOU HAVE FULLY ANALYZED THIS CONTRACT. Here is everything you know:
 
-Contract Type: ${analysis.contractType || "Unknown"}
-Risk Level: ${analysis.overallRiskAssessment || "Unknown"}
-Term Length: ${analysis.termLength || "Not specified"}
+CONTRACT TYPE: ${analysis.contractType || "Unknown"}
+RISK LEVEL: ${analysis.overallRiskAssessment?.toUpperCase() || "Unknown"}
+TERM LENGTH: ${analysis.termLength || "Not specified"}
+EFFECTIVE DATE: ${analysis.effectiveDate || "Not specified"}
 
-Summary: ${analysis.summary || "No summary available"}
+SUMMARY:
+${analysis.summary || "No summary available"}
 
-${analysis.financialTerms ? `Financial Terms:
-- Royalty Rate: ${analysis.financialTerms.royaltyRate || "Not specified"}
-- Advance: ${analysis.financialTerms.advanceAmount || "Not specified"}
-- Payment Schedule: ${analysis.financialTerms.paymentSchedule || "Not specified"}` : ""}
+PARTIES:
+${analysis.parties ? Object.entries(analysis.parties).filter(([, v]) => v && (typeof v === 'string' ? v : (v as string[]).length > 0)).map(([k, v]) => `- ${k}: ${Array.isArray(v) ? (v as string[]).join(", ") : v}`).join("\n") : "Not specified"}
 
-${analysis.potentialConcerns?.length ? `Key Concerns:
-${analysis.potentialConcerns.map((c, i) => `${i + 1}. ${c}`).join("\n")}` : ""}
+FINANCIAL TERMS:
+- Royalty Rate: ${analysis.financialTerms?.royaltyRate || "Not specified"}
+- Advance: ${analysis.financialTerms?.advanceAmount || "Not specified"}
+- Payment Schedule: ${analysis.financialTerms?.paymentSchedule || "Not specified"}
+- Recoupment: ${analysis.financialTerms?.recoupment || "Not specified"}
+${analysis.financialTerms?.additionalNotes ? `- Notes: ${analysis.financialTerms.additionalNotes}` : ""}
 
-${analysis.recommendations?.length ? `Recommendations:
-${analysis.recommendations.map((r, i) => {
-  const advice = typeof r === 'object' ? r.advice : r;
-  return `${i + 1}. ${advice}`;
-}).join("\n")}` : ""}
+RIGHTS & OWNERSHIP:
+- Master Ownership: ${analysis.rightsAndOwnership?.masterOwnership || "Not specified"}
+- Publishing Rights: ${analysis.rightsAndOwnership?.publishingRights || "Not specified"}
+- Territorial Rights: ${analysis.rightsAndOwnership?.territorialRights || "Not specified"}
+- Exclusivity: ${analysis.rightsAndOwnership?.exclusivity || "Not specified"}
+- Reversion: ${analysis.rightsAndOwnership?.reversion || "Not specified"}
+${analysis.rightsAndOwnership?.additionalNotes ? `- Notes: ${analysis.rightsAndOwnership.additionalNotes}` : ""}
 
-${analysis.keyTerms?.length ? `Key Terms Found:
-${analysis.keyTerms.slice(0, 5).map(t => `- ${t.title}: ${t.content} (Risk: ${t.riskLevel})`).join("\n")}` : ""}
+${analysis.obligationsAndDeliverables ? `OBLIGATIONS & DELIVERABLES:
+${analysis.obligationsAndDeliverables.artistObligations?.length ? `Artist Obligations:\n${analysis.obligationsAndDeliverables.artistObligations.map(o => `  - ${o}`).join("\n")}` : ""}
+${analysis.obligationsAndDeliverables.labelObligations?.length ? `Label/Company Obligations:\n${analysis.obligationsAndDeliverables.labelObligations.map(o => `  - ${o}`).join("\n")}` : ""}
+${analysis.obligationsAndDeliverables.deliverables?.length ? `Deliverables:\n${analysis.obligationsAndDeliverables.deliverables.map(d => `  - ${d}`).join("\n")}` : ""}
+${analysis.obligationsAndDeliverables.timeline ? `Timeline: ${analysis.obligationsAndDeliverables.timeline}` : ""}` : ""}
 
-Answer the user's questions about this specific contract. Be helpful, accurate, and explain things in plain English. If asked about something not in the contract, say so clearly.`;
+ALL KEY TERMS/CLAUSES FOUND (${analysis.keyTerms?.length || 0} total):
+${analysis.keyTerms?.map((t, i) => `${i + 1}. [${t.riskLevel?.toUpperCase()} RISK] ${t.title}
+   Content: ${t.content}
+   Explanation: ${t.explanation}${t.originalText ? `\n   Original text: "${t.originalText}"` : ""}${t.actionItems?.length ? `\n   Action items: ${t.actionItems.join("; ")}` : ""}`).join("\n\n") || "None found"}
+
+POTENTIAL CONCERNS (${analysis.potentialConcerns?.length || 0}):
+${analysis.potentialConcerns?.map((c, i) => `${i + 1}. ${c}${analysis.concernExplanations?.[i] ? ` — ${analysis.concernExplanations[i]}` : ""}`).join("\n") || "None"}
+
+${analysis.missingClauses?.length ? `MISSING CLAUSES:
+${analysis.missingClauses.map(mc => `- [${mc.severity.toUpperCase()}] ${mc.clause}: ${mc.description}`).join("\n")}` : ""}
+
+RECOMMENDATIONS:
+${analysis.recommendations?.map((r, i) => {
+  if (typeof r === 'string') return `${i + 1}. ${r}`;
+  return `${i + 1}. [${r.priority?.toUpperCase()}] ${r.advice}
+   Rationale: ${r.rationale}
+   How to implement: ${r.howToImplement}${r.riskIfIgnored ? `\n   Risk if ignored: ${r.riskIfIgnored}` : ""}${r.sampleLanguage ? `\n   Suggested language: "${r.sampleLanguage}"` : ""}`;
+}).join("\n\n") || "None"}
+
+CONFIDENCE: ${analysis.confidenceScore ? `${Math.round(analysis.confidenceScore * 100)}%` : "N/A"}
+
+You have ALL of this data. Answer questions about this contract DIRECTLY and DEFINITIVELY. Never say you need to see the contract — you already have the full analysis.`;
     } else {
       systemPrompt += `
 
-The user hasn't uploaded a contract yet. Encourage them to drop a contract file so you can analyze it and answer specific questions about it.
-
-You can help with general questions about:
-- How contract analysis works
-- What types of files you can analyze (PDF, Word, TXT)
-- What to look for in music contracts
-- General contract terms and their meanings`;
+The user hasn't uploaded a contract yet. You can:
+- Encourage them to drop a contract file for analysis
+- Answer general questions about contract terms
+- Explain what types of files you accept (PDF, Word, TXT)
+- Discuss what to look for in music/entertainment contracts`;
     }
 
     // Add attached contracts context
@@ -154,8 +188,8 @@ When the user asks about their contracts, reference the specific contract(s) by 
     const completion = await openai.chat.completions.create({
       model: "gpt-4o-mini",
       messages,
-      temperature: 0.7,
-      max_tokens: 500,
+      temperature: 0.5,
+      max_tokens: 1000,
     });
 
     const responseText = completion.choices[0]?.message?.content;
