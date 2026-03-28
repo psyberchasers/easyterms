@@ -257,7 +257,6 @@ export default function Home() {
                     </div>
                   </div>
                 </div>
-                <span className="absolute -bottom-6 right-[-5%] select-none pointer-events-none" style={{ fontFamily: 'var(--font-circular)', fontWeight: 700, fontSize: 'clamp(80px, 10vw, 160px)', lineHeight: 1, color: 'rgba(255,255,255,0.03)' }}>01</span>
               </div>
               <div className="hidden lg:flex absolute left-1/2 -translate-x-1/2 w-4 h-4 rounded-full border-2 border-white/20 bg-[#0a0a0a] z-10 items-center justify-center">
                 <div className="w-1.5 h-1.5 rounded-full bg-white/30" />
@@ -328,7 +327,6 @@ export default function Home() {
                     </div>
                   </div>
                 </div>
-                <span className="absolute -bottom-6 left-[-5%] select-none pointer-events-none" style={{ fontFamily: 'var(--font-circular)', fontWeight: 700, fontSize: 'clamp(80px, 10vw, 160px)', lineHeight: 1, color: 'rgba(255,255,255,0.03)' }}>02</span>
               </div>
               <div className="hidden lg:flex absolute left-1/2 -translate-x-1/2 w-4 h-4 rounded-full border-2 border-white/20 bg-[#0a0a0a] z-10 items-center justify-center">
                 <div className="w-1.5 h-1.5 rounded-full bg-white/30" />
@@ -391,7 +389,6 @@ export default function Home() {
                     </div>
                   </div>
                 </div>
-                <span className="absolute -bottom-6 right-[-5%] select-none pointer-events-none" style={{ fontFamily: 'var(--font-circular)', fontWeight: 700, fontSize: 'clamp(80px, 10vw, 160px)', lineHeight: 1, color: 'rgba(255,255,255,0.03)' }}>03</span>
               </div>
               <div className="hidden lg:flex absolute left-1/2 -translate-x-1/2 w-4 h-4 rounded-full border-2 border-white/20 bg-[#0a0a0a] z-10 items-center justify-center">
                 <div className="w-1.5 h-1.5 rounded-full bg-white/30" />
