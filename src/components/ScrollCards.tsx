@@ -109,7 +109,7 @@ export default function ScrollCards() {
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            paddingLeft: "6vw",
+            paddingLeft: "clamp(48px, 6vw, 100px)",
             overflow: "hidden",
           }}
         >
@@ -120,21 +120,21 @@ export default function ScrollCards() {
                 key={card.title}
                 className={`scroll-cards__card bg-gradient-to-br ${card.color} border ${card.border}`}
                 style={{
-                  width: "18vw",
+                  width: "clamp(140px, 18vw, 280px)",
                   aspectRatio: "0.75",
-                  borderRadius: "1vw",
-                  marginLeft: "-6vw",
+                  borderRadius: "clamp(8px, 1vw, 16px)",
+                  marginLeft: "clamp(-48px, -6vw, -80px)",
                   display: "flex",
                   flexDirection: "column",
                   justifyContent: "space-between",
-                  padding: "1.2vw",
+                  padding: "clamp(12px, 1.2vw, 20px)",
                   backdropFilter: "blur(6px)",
                   WebkitBackdropFilter: "blur(6px)",
                 }}
               >
                 <div className="flex items-center justify-between">
-                  <IconComponent className="w-[1.8vw] h-[1.8vw] text-white/60" strokeWidth={1.5} />
-                  <p className="text-white/60 text-[0.9vw] font-medium uppercase tracking-wider text-right font-mono">
+                  <IconComponent className="w-5 h-5 md:w-[1.8vw] md:h-[1.8vw] text-white/60" strokeWidth={1.5} />
+                  <p className="text-white/60 text-[10px] md:text-[0.9vw] font-medium uppercase tracking-wider text-right font-mono">
                     {card.title}
                   </p>
                 </div>
@@ -142,11 +142,11 @@ export default function ScrollCards() {
                   <img
                     src={card.svg}
                     alt=""
-                    className="w-[8vw] opacity-30"
+                    className="w-16 md:w-[8vw] opacity-30"
                     style={{ filter: "invert(1)" }}
                   />
                 </div>
-                <p className="text-white text-[0.9vw] font-medium uppercase tracking-wider font-mono">
+                <p className="text-white text-[10px] md:text-[0.9vw] font-medium uppercase tracking-wider font-mono">
                   {card.title}
                 </p>
               </div>

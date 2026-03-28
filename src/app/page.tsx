@@ -2,6 +2,7 @@
 
 import { motion } from "framer-motion";
 import Link from "next/link";
+import { useAuth } from "@/components/providers/AuthProvider";
 import {
   Upload, Zap, FileText, Shield, Lock, Eye, Clock, X,
   ArrowRight, Sparkles, Scale, MessageSquare, Share2,
@@ -64,17 +65,13 @@ const steps = [
   { num: "03", title: "Act", description: "Get actionable recommendations on what to negotiate before you sign.", icon: ArrowRight },
 ];
 
-const stats = [
-  { value: "50K+", label: "Contracts analyzed" },
-  { value: "98%", label: "Risk detection rate" },
-  { value: "<30s", label: "Average analysis time" },
-  { value: "AES-256", label: "Encryption standard" },
-];
 
 /* ═══════════════════════════════════════════════
    V2 — ngrok-inspired landing page
    ═══════════════════════════════════════════════ */
 export default function Home() {
+  const { user } = useAuth();
+
   return (
     <main className="min-h-screen bg-[#0a0a0a] text-white selection:bg-purple-500/30">
 
@@ -92,15 +89,21 @@ export default function Home() {
             <Link href="/pricing" className="text-sm text-white/50 hover:text-white transition-colors hidden sm:block" style={{ fontFamily: 'var(--font-circular)' }}>
               Pricing
             </Link>
-            <Link href="/login" className="text-sm text-white/50 hover:text-white transition-colors" style={{ fontFamily: 'var(--font-circular)' }}>
-              Log in
-            </Link>
+            {user ? (
+              <Link href="/dashboard" className="text-sm text-white/50 hover:text-white transition-colors" style={{ fontFamily: 'var(--font-circular)' }}>
+                Dashboard
+              </Link>
+            ) : (
+              <Link href="/login" className="text-sm text-white/50 hover:text-white transition-colors" style={{ fontFamily: 'var(--font-circular)' }}>
+                Log in
+              </Link>
+            )}
             <Link
-              href="/analyze"
+              href={user ? "/dashboard" : "/analyze"}
               className="h-9 px-4 text-sm font-medium rounded-lg bg-white text-black hover:bg-white/90 transition-all flex items-center"
               style={{ fontFamily: 'var(--font-circular)' }}
             >
-              Get Started
+              {user ? "Dashboard" : "Get Started"}
             </Link>
           </div>
         </div>
@@ -151,29 +154,6 @@ export default function Home() {
               See how it works
             </Link>
           </motion.div>
-        </div>
-      </section>
-
-      {/* ── STATS BAR ──────────────────────── */}
-      <section className="py-16 px-6">
-        <div className="max-w-5xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-4">
-          {stats.map((stat, i) => (
-            <motion.div
-              key={stat.label}
-              initial={{ opacity: 0, y: 16 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: i * 0.1, duration: 0.5 }}
-              className="relative rounded-2xl border border-white/[0.06] bg-white/[0.02] p-6 text-center overflow-hidden group hover:border-white/[0.12] transition-colors"
-            >
-              <p className="text-3xl sm:text-4xl font-bold tracking-tight mb-1.5 bg-gradient-to-b from-white to-white/50 bg-clip-text text-transparent" style={{ fontFamily: 'var(--font-circular)' }}>
-                {stat.value}
-              </p>
-              <p className="text-xs text-white/30 uppercase tracking-widest" style={{ fontFamily: 'var(--font-circular)' }}>
-                {stat.label}
-              </p>
-            </motion.div>
-          ))}
         </div>
       </section>
 
