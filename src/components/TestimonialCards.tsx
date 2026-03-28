@@ -259,7 +259,7 @@ export default function TestimonialCards() {
 
         @media (max-width: 768px) {
           .mwg025-title {
-            font-size: 35px;
+            font-size: 28px;
             padding: 15px;
           }
           .mwg025-card {
@@ -268,9 +268,23 @@ export default function TestimonialCards() {
           .mwg025-card:not(:first-child) {
             margin: 0 0 0 -25vw;
           }
-          .mwg025-quote,
+          .mwg025-content {
+            padding: 14px;
+          }
+          .mwg025-quote {
+            font-size: 11px;
+            line-height: 1.2;
+          }
           .mwg025-bottom {
-            opacity: 0;
+            font-size: 10px;
+            column-gap: 8px;
+            padding: 10px 0 0;
+          }
+          .mwg025-bubble {
+            width: 24px;
+          }
+          .mwg025-role {
+            font-size: 8px;
           }
         }
       `}</style>
