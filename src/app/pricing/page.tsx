@@ -392,7 +392,7 @@ export default function PricingPage() {
         </div>
 
         {/* FAQ */}
-        <div className="mb-16">
+        <div id="faq" className="mb-16 scroll-mt-24">
           <div className="text-center mb-12">
             <h2 className="text-3xl sm:text-4xl font-bold tracking-tight mb-3" style={{ fontFamily: "var(--font-circular)" }}>
               Frequently Asked Questions

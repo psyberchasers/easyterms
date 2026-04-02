@@ -83,7 +83,7 @@ export default function Home() {
             <span className="text-base font-semibold text-white" style={{ fontFamily: 'var(--font-circular)' }}>EasyTerms</span>
           </Link>
           <div className="flex items-center gap-6">
-            <Link href="/dashboard/faq" className="text-sm text-white/50 hover:text-white transition-colors hidden sm:block" style={{ fontFamily: 'var(--font-circular)' }}>
+            <Link href="/pricing#faq" className="text-sm text-white/50 hover:text-white transition-colors hidden sm:block" style={{ fontFamily: 'var(--font-circular)' }}>
               FAQ
             </Link>
             <Link href="/pricing" className="text-sm text-white/50 hover:text-white transition-colors hidden sm:block" style={{ fontFamily: 'var(--font-circular)' }}>
@@ -784,7 +784,7 @@ export default function Home() {
             </div>
             {[
               { title: "Product", links: [["Analyze", "/analyze"], ["Dashboard", "/dashboard"], ["Templates", "/dashboard/templates"], ["Pricing", "/pricing"]] },
-              { title: "Resources", links: [["FAQ", "/dashboard/faq"], ["Blog", "/dashboard/blog"]] },
+              { title: "Resources", links: [["FAQ", "/pricing#faq"], ["Blog", "/dashboard/blog"]] },
               { title: "Company", links: [["About", "/about"], ["Contact", "#"]] },
               { title: "Legal", links: [["Privacy", "/privacy"], ["Terms", "/terms"]] },
             ].map((section) => (
