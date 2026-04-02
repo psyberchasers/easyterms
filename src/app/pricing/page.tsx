@@ -229,7 +229,7 @@ export default function PricingPage() {
 
   const handleSubscribe = async (planId: string) => {
     if (!user) {
-      router.push(`/signup?redirect=/pricing&plan=${planId}`);
+      router.push(`/login?mode=signup&redirect=/pricing&plan=${planId}`);
       return;
     }
     if (planId === "free") {
