@@ -785,7 +785,7 @@ export default function Home() {
             {[
               { title: "Product", links: [["Analyze", "/analyze"], ["Dashboard", "/dashboard"], ["Templates", "/dashboard/templates"], ["Pricing", "/pricing"]] },
               { title: "Resources", links: [["FAQ", "/dashboard/faq"], ["Blog", "/dashboard/blog"]] },
-              { title: "Company", links: [["About", "#"], ["Contact", "#"]] },
+              { title: "Company", links: [["About", "/about"], ["Contact", "#"]] },
               { title: "Legal", links: [["Privacy", "/privacy"], ["Terms", "/terms"]] },
             ].map((section) => (
               <div key={section.title}>
