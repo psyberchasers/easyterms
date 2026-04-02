@@ -9,123 +9,134 @@ import {
   AccordionContent,
 } from "@/components/animate-ui/components/radix/accordion";
 
-const faqs = [
+const faqSections = [
   {
-    category: "Contract Types",
+    category: "About EasyTerms",
     questions: [
       {
-        q: "What is a 360 deal?",
-        a: "A 360 deal (or multiple rights deal) is a contract where a record label receives a percentage of all revenue streams from an artist, including touring, merchandise, endorsements, and publishing—not just recorded music sales. While these deals often come with larger advances and more label support, they significantly reduce your earnings across all income sources."
+        q: "What is EasyTerms?",
+        a: "EasyTerms is an AI-powered contract tool that helps you understand, review, and manage your agreements. You upload a contract, and EasyTerms breaks it down into plain English — flagging key terms, risks, and anything you should pay attention to before signing. It also includes contract templates, a pre-send review tool, and an AI chatbot for follow-up questions.",
       },
       {
-        q: "What's the difference between a publishing deal and a record deal?",
-        a: "A record deal covers the recording and distribution of your music (masters). A publishing deal covers the underlying compositions (songs you write). Publishing deals involve royalties from streaming, radio play, sync licenses (TV/film), and covers by other artists. You can have different partners for each."
+        q: "Who is EasyTerms built for?",
+        a: "EasyTerms was built primarily for music industry professionals — artists, managers, agents, and independent labels. Whether you're new to the industry and seeing your first contract, or a seasoned professional looking to speed up your workflow, EasyTerms is designed to give you clarity and confidence. We are actively expanding to serve professionals in other industries as well.",
       },
       {
-        q: "What is a distribution deal?",
-        a: "A distribution deal is an agreement where a distributor gets your music onto streaming platforms and into stores in exchange for a percentage of revenue (typically 15-30%). Unlike record deals, you retain ownership of your masters and more creative control. Popular distributors include DistroKid, TuneCore, CD Baby, and AWAL."
+        q: "Is EasyTerms a law firm or legal service?",
+        a: "No. EasyTerms is an informational tool only. It is not a law firm and does not provide legal, tax, accounting, or any other form of professional advice. Using EasyTerms does not create an attorney-client relationship. Our AI analysis is a starting point to help you better understand your documents — it is not a substitute for a qualified attorney. We always recommend consulting a licensed legal professional before signing or acting on any contract.",
       },
       {
-        q: "What is a label services deal?",
-        a: "A label services deal is a hybrid arrangement where you pay for specific services (marketing, radio promotion, playlist pitching) without signing away your masters or long-term rights. You maintain ownership while accessing label-level resources. These are becoming increasingly popular with established independent artists."
+        q: "Who founded EasyTerms?",
+        a: "EasyTerms was co-founded by Augustus Banks, a music artist who experienced firsthand how confusing and costly contracts can be in the industry, and Uri Darnel, a full-stack engineer with a deep concentration in AI. Together, they built EasyTerms to give artists and music professionals the clarity they deserve — without the expensive legal bill.",
       },
-    ]
+    ],
   },
   {
-    category: "Rights & Ownership",
+    category: "Using the Product",
     questions: [
       {
-        q: "What are master recordings and why do they matter?",
-        a: "Master recordings are the original recordings of your songs. Whoever owns the masters controls how the music is used, licensed, and distributed. Owning your masters means you keep more revenue and control over your music's future. Many artists regret signing away their masters early in their careers."
+        q: "How do I upload a contract?",
+        a: "Simply log into your EasyTerms account, navigate to your dashboard, and upload your contract file. Our AI will analyze the document and return a plain-language breakdown, key term summary, and any flagged risk areas — typically within seconds.",
       },
       {
-        q: "What does 'in perpetuity' mean in contracts?",
-        a: "'In perpetuity' means forever. If a label owns your masters 'in perpetuity,' they own them for the duration of copyright (typically 70 years after death in the US). Always try to negotiate reversion clauses where rights return to you after a set period or when certain conditions are met."
+        q: "What types of contracts can EasyTerms analyze?",
+        a: "EasyTerms is built with music industry agreements in mind, including recording contracts, management agreements, artist booking and agency agreements, licensing deals, publishing agreements, 360 deals, and more. While optimized for the music industry, the AI can analyze most standard contract types.",
       },
       {
-        q: "What is a reversion clause?",
-        a: "A reversion clause specifies conditions under which rights to your music return to you. This might be after a set number of years, when the advance is recouped, or if the label fails to meet certain obligations (like keeping your music available). Always push for reversion clauses in any deal."
+        q: "How accurate is the AI analysis?",
+        a: "Our AI is designed to provide helpful, high-quality insights, but it is not infallible. AI-generated analysis may occasionally be incomplete or not fully applicable to your specific situation. EasyTerms is best used as a first step in understanding your contract — not as a final legal opinion. For anything high-stakes, we strongly recommend having a licensed attorney review the document as well.",
       },
       {
-        q: "What's the difference between copyright and masters?",
-        a: "Copyright protects the underlying composition (melody, lyrics, arrangement)—this is handled by publishing. Masters refer to the specific sound recording of that composition. You can have multiple masters of the same copyrighted song. Both generate separate royalty streams."
+        q: "What is the AI chatbot and how does it work?",
+        a: "The AI chatbot (available on the Pro Plan) allows you to ask follow-up questions about any contract or clause in plain English. After uploading a document, you can ask things like 'What does this royalty clause mean?' or 'What happens if I want to leave this deal?' and receive contextual, easy-to-understand answers based on the document you uploaded.",
       },
-    ]
+      {
+        q: "Can I use EasyTerms to send contracts?",
+        a: "Yes — the Pro Plan includes in-app contract signing, allowing you to send contracts and collect signatures directly within EasyTerms. This feature is not available on the Free or Artist plans.",
+      },
+      {
+        q: "What contract templates does EasyTerms offer?",
+        a: "EasyTerms provides professionally crafted templates built specifically for the music industry, including common agreement types for artists, managers, agents, and labels. Templates are available on the Artist and Pro plans and can be customized to suit your needs.",
+      },
+      {
+        q: "What is the pre-send contract review feature?",
+        a: "Before you send a contract to another party, you can run it through EasyTerms' pre-send review tool. The AI will flag unusual clauses, potentially missing terms, or anything that may warrant a second look — helping you send cleaner, more confident agreements.",
+      },
+    ],
   },
   {
-    category: "Money & Royalties",
+    category: "Plans & Pricing",
     questions: [
       {
-        q: "What are typical royalty rates?",
-        a: "Traditional major label deals offer 12-20% of net receipts. Independent labels may offer 40-50%. Distribution deals can be 70-85%. Streaming typically pays $0.003-0.005 per stream. Always clarify whether rates are based on 'net' or 'gross' revenue—net deductions can significantly reduce your earnings."
+        q: "What's included in the free tier?",
+        a: "The Free Tier lets you upload and analyze one contract at no cost, with no credit card required. You'll receive a basic AI analysis and plain-English summary of your document. It's a great way to experience EasyTerms before committing to a paid plan.",
       },
       {
-        q: "What are recoupable expenses?",
-        a: "Recoupable expenses are costs the label pays upfront (recording, marketing, videos, tour support) that are deducted from your royalties before you see any money. Until these are 'recouped,' you won't receive royalty payments. High advances with high recoupment can mean years without royalty income."
+        q: "What is the difference between the Artist and Pro plans?",
+        a: "The Artist Plan ($29.99/year) allows up to 10 contracts per year and includes full AI analysis, industry-specific templates, and email support — ideal for independent artists and those newer to the industry. The Pro Plan ($79.99/year) includes unlimited contracts and adds advanced features: negotiation suggestions, redlining tools, contract comparisons, an AI chatbot, in-app signing, and email support. It's built for managers, agents, and professionals who handle contracts regularly.",
       },
       {
-        q: "What is a mechanical royalty?",
-        a: "Mechanical royalties are paid when your song is reproduced—on CDs, vinyl, or digital downloads. In the US, the statutory rate is 9.1 cents per song (or 1.75 cents per minute for songs over 5 minutes). Streaming services pay a reduced mechanical rate set by the Copyright Royalty Board."
+        q: "Does my subscription auto-renew?",
+        a: "Yes. All paid subscriptions automatically renew on your billing date each year unless you cancel before the renewal date. You will not be charged after cancellation, but your access will continue until the end of the current billing period.",
       },
       {
-        q: "What is a sync license?",
-        a: "A sync (synchronization) license allows your music to be used in TV shows, films, commercials, video games, and other visual media. These can be lucrative one-time payments plus ongoing royalties. Make sure your contract allows you to approve or reject sync opportunities."
+        q: "Can I cancel at any time?",
+        a: "Yes, you can cancel your subscription at any time through your account settings or by contacting our support team at support@easyterms.ai. Cancellations take effect at the end of your current billing cycle.",
       },
       {
-        q: "What are performance royalties?",
-        a: "Performance royalties are paid when your music is publicly performed—radio, TV, live venues, streaming. These are collected by PROs (Performing Rights Organizations) like ASCAP, BMI, or SESAC in the US, or PRS in the UK. You should register as both a writer and publisher to collect all your royalties."
+        q: "Will monthly plans be available?",
+        a: "At launch, EasyTerms will offer annual subscriptions only. Monthly billing options and pay-per-use credits are on our roadmap and may be introduced in a future update.",
       },
-    ]
+    ],
   },
   {
-    category: "Contract Terms",
+    category: "Privacy & Data",
     questions: [
       {
-        q: "What is an option period?",
-        a: "An option period gives the label the right (but not obligation) to extend your contract for additional albums. Labels typically have 30-90 days after delivering an album to decide. Multiple option periods can lock you into a deal for many years. Try to limit the number of options and their duration."
+        q: "Who can see my uploaded contracts?",
+        a: "Only you. Your uploaded contracts are private and processed securely using AES-256 encryption — the same military-grade standard used by banks and governments. Your documents are protected both in transit and at rest, and are never shared with third parties or sold. Period.",
       },
       {
-        q: "What is a commitment or delivery requirement?",
-        a: "This specifies how many albums or songs you must deliver under the contract. A typical deal might require 1 album with 4-5 options for additional albums. Be careful—if each album takes 2+ years and there are 5 options, you could be locked in for over a decade."
+        q: "What happens to my contracts after analysis?",
+        a: "Once your contract has been analyzed, it is automatically purged from our servers. We do not store your documents longer than necessary to provide the Service. Your data moves through an end-to-end encrypted pipeline from the moment you upload to the moment you close the tab.",
       },
       {
-        q: "What is an exclusivity clause?",
-        a: "An exclusivity clause prevents you from recording for other labels or releasing music independently during your contract term. Some contracts extend exclusivity for a period after the term ends. Negotiate for carve-outs for features, collaborations, or side projects."
+        q: "Does EasyTerms use my contracts to train its AI?",
+        a: "No — not unless you choose to. AI training data use is entirely opt-in. Your contracts will never be used to train or improve our AI systems without your explicit consent. You can opt in or out at any time through your account settings, and opting out has no effect on your access to any features.",
       },
       {
-        q: "What is a key person clause?",
-        a: "A key person clause lets you exit or renegotiate if a specific person (usually the A&R who signed you) leaves the label. This protects you from being orphaned at a label where no one champions your career. Always try to include this clause."
+        q: "How is my data protected?",
+        a: "EasyTerms is built on a SOC 2 compliant infrastructure, meeting the highest standards for security, availability, and confidentiality. We use AES-256 encryption across the platform and are GDPR ready, meaning you can request deletion of your personal data at any time. We take your privacy seriously — your contracts are your business, not ours.",
       },
-    ]
+      {
+        q: "Can I delete my data?",
+        a: "Yes. You may request deletion of your account and all associated data at any time by contacting us at support@easyterms.ai. You also have the right to access or correct your personal information at any time.",
+      },
+    ],
   },
   {
-    category: "Career Decisions",
+    category: "Getting Help",
     questions: [
       {
-        q: "Should I sign with a major label or stay independent?",
-        a: "Major labels offer larger advances, global reach, and industry connections, but take larger cuts and more control. Independence means keeping more revenue and creative control, but requires more self-investment and business management. Many artists now use hybrid approaches—independent release with distribution deals or label services deals."
+        q: "How do I contact support?",
+        a: "You can reach our support team at any time by emailing support@easyterms.ai. All users — regardless of plan — have equal access to our support team. We'll get back to you as quickly as possible.",
       },
       {
-        q: "Do I need a lawyer to review my contract?",
-        a: "Yes, absolutely. Entertainment lawyers specialize in music contracts and can identify problematic clauses, negotiate better terms, and explain what you're agreeing to. The cost of a lawyer (typically $300-500/hour or 5% of deal value) is almost always worth it compared to being locked into a bad deal for years."
+        q: "How do I delete my account?",
+        a: "To delete your account and all associated data, please contact us at support@easyterms.ai with your request. We will process your deletion promptly.",
       },
       {
-        q: "What should I look for in a manager contract?",
-        a: "Key terms include: commission rate (typically 15-20%), sunset clause (reduced commission after term ends), scope of services, term length, and termination rights. Avoid managers who want ownership of your music or publishing. Ensure the term aligns with your career timeline."
+        q: "I have a question that isn't answered here. What should I do?",
+        a: "We'd love to hear from you. Send us an email at support@easyterms.ai and our team will be happy to help.",
       },
-      {
-        q: "When should I sign with a publisher?",
-        a: "Consider signing with a publisher when you have a catalog of songs generating income, need sync placement support, want help with co-writing opportunities, or need an advance. If you're primarily a performer of your own songs, a traditional publishing deal may not be necessary early in your career."
-      },
-    ]
+    ],
   },
 ];
 
 export default function FAQPage() {
   const [searchQuery, setSearchQuery] = useState("");
 
-  // Filter FAQs based on search
-  const filteredFaqs = faqs.map(category => ({
+  const filteredFaqs = faqSections.map(category => ({
     ...category,
     questions: category.questions.filter(
       q => q.q.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -136,16 +147,15 @@ export default function FAQPage() {
   return (
     <div className="min-h-full bg-background">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 py-8">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-2xl font-bold text-foreground mb-2">Music Industry FAQ</h1>
+        <div className="mb-2">
+          <h1 className="text-2xl font-bold text-foreground mb-2">Frequently Asked Questions</h1>
           <p className="text-muted-foreground">
-            Common questions about music contracts, royalties, and industry terms.
+            Everything you need to know about EasyTerms.
           </p>
         </div>
 
         {/* Search */}
-        <div className="relative mb-8">
+        <div className="relative mb-8 mt-6">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <input
             type="text"
@@ -160,7 +170,7 @@ export default function FAQPage() {
         <div className="space-y-8">
           {filteredFaqs.map((category, categoryIndex) => (
             <div key={categoryIndex}>
-              <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-4">
+              <h2 className="text-xs font-semibold text-purple-400 uppercase tracking-wider mb-4">
                 {category.category}
               </h2>
               <div className="rounded-xl border border-border bg-card overflow-hidden">
@@ -195,8 +205,7 @@ export default function FAQPage() {
         {/* Disclaimer */}
         <div className="mt-12 p-4 rounded-xl bg-muted/50 border border-border">
           <p className="text-xs text-muted-foreground text-center">
-            This information is for educational purposes only and does not constitute legal advice.
-            Always consult with a qualified entertainment lawyer before signing any contract.
+            EasyTerms is not a substitute for legal advice — always consult a qualified attorney for your specific needs.
           </p>
         </div>
       </div>
