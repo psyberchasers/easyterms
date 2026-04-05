@@ -1706,9 +1706,13 @@ export default function TemplatesPage() {
               <div className="flex flex-col md:flex-row gap-6 h-auto md:h-[calc(100vh-220px)] md:min-h-[600px]">
                 {/* Left: PDF Preview */}
                 <div ref={step4PdfPanelRef} className={cn(
-                  "flex-1 border border-border rounded-xl overflow-hidden bg-muted/30 h-[70vh] md:h-auto",
+                  "flex-1 border border-border rounded-xl bg-muted/30 md:h-auto",
+                  "overflow-auto md:overflow-hidden",
+                  "-webkit-overflow-scrolling-touch",
                   mobileReviewView !== "pdf" && "hidden md:block"
-                )}>
+                )}
+                  style={{ height: isMobile ? "calc(100vh - 280px)" : undefined, WebkitOverflowScrolling: "touch" }}
+                >
                   {isGeneratingPdf ? (
                     <div className="h-full flex items-center justify-center">
                       <div className="flex flex-col items-center gap-3">
@@ -1718,8 +1722,9 @@ export default function TemplatesPage() {
                     </div>
                   ) : pdfUrl ? (
                     <iframe
-                      src={`${pdfUrl}#navpanes=0&scrollbar=1&zoom=${isMobile ? 60 : 67}`}
-                      className="w-full h-full"
+                      src={`${pdfUrl}#navpanes=0&scrollbar=1&zoom=${isMobile ? 80 : 67}`}
+                      className="w-full border-0"
+                      style={{ height: isMobile ? "1200px" : "100%", minHeight: isMobile ? "1200px" : undefined }}
                       title="Contract Preview"
                     />
                   ) : (
