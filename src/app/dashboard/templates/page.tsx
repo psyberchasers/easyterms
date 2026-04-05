@@ -1706,7 +1706,7 @@ export default function TemplatesPage() {
               <div className="flex flex-col md:flex-row gap-6 h-auto md:h-[calc(100vh-220px)] md:min-h-[600px]">
                 {/* Left: PDF Preview */}
                 <div ref={step4PdfPanelRef} className={cn(
-                  "flex-1 border border-border rounded-xl overflow-hidden bg-muted/30 h-[500px] md:h-auto",
+                  "flex-1 border border-border rounded-xl overflow-hidden bg-muted/30 h-[70vh] md:h-auto",
                   mobileReviewView !== "pdf" && "hidden md:block"
                 )}>
                   {isGeneratingPdf ? (
@@ -1718,7 +1718,7 @@ export default function TemplatesPage() {
                     </div>
                   ) : pdfUrl ? (
                     <iframe
-                      src={`${pdfUrl}#navpanes=0&scrollbar=1&zoom=${isMobile ? 45 : 67}`}
+                      src={`${pdfUrl}#navpanes=0&scrollbar=1&zoom=${isMobile ? 60 : 67}`}
                       className="w-full h-full"
                       title="Contract Preview"
                     />
