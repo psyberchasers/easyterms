@@ -89,11 +89,7 @@ export default function Home() {
             <Link href="/pricing" className="text-sm text-white/50 hover:text-white transition-colors hidden sm:block" style={{ fontFamily: 'var(--font-circular)' }}>
               Pricing
             </Link>
-            {user ? (
-              <Link href="/dashboard" className="text-sm text-white/50 hover:text-white transition-colors" style={{ fontFamily: 'var(--font-circular)' }}>
-                Dashboard
-              </Link>
-            ) : (
+            {!user && (
               <Link href="/login" className="text-sm text-white/50 hover:text-white transition-colors" style={{ fontFamily: 'var(--font-circular)' }}>
                 Log in
               </Link>
