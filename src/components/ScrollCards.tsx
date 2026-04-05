@@ -12,11 +12,11 @@ import {
 gsap.registerPlugin(ScrollTrigger, CustomEase);
 
 const cards = [
-  { title: "Recording", icon: Mic, color: "from-red-950/80 to-red-900/40", border: "border-red-800/30", svg: "/cards/1.svg" },
-  { title: "Publishing", icon: PenLine, color: "from-amber-950/80 to-amber-900/40", border: "border-amber-800/30", svg: "/cards/2.svg" },
-  { title: "Management", icon: Handshake, color: "from-yellow-950/80 to-yellow-900/40", border: "border-yellow-800/30", svg: "/cards/3.svg" },
-  { title: "Distribution", icon: Globe, color: "from-emerald-950/80 to-emerald-900/40", border: "border-emerald-800/30", svg: "/cards/4.svg" },
-  { title: "Sync", icon: Clapperboard, color: "from-purple-950/80 to-purple-900/40", border: "border-purple-800/30", svg: "/cards/5.svg" },
+  { title: "Recording", icon: Mic, color: "from-red-950/80 to-red-900/40", border: "border-red-800/30" },
+  { title: "Publishing", icon: PenLine, color: "from-amber-950/80 to-amber-900/40", border: "border-amber-800/30" },
+  { title: "Management", icon: Handshake, color: "from-yellow-950/80 to-yellow-900/40", border: "border-yellow-800/30" },
+  { title: "Distribution", icon: Globe, color: "from-emerald-950/80 to-emerald-900/40", border: "border-emerald-800/30" },
+  { title: "Sync", icon: Clapperboard, color: "from-purple-950/80 to-purple-900/40", border: "border-purple-800/30" },
 ];
 
 export default function ScrollCards() {
@@ -132,19 +132,13 @@ export default function ScrollCards() {
                   WebkitBackdropFilter: "blur(6px)",
                 }}
               >
-                <div className="flex items-center justify-between">
+                <div className="flex items-center">
                   <IconComponent className="w-5 h-5 md:w-[1.8vw] md:h-[1.8vw] text-white/60" strokeWidth={1.5} />
-                  <p className="text-white/60 text-[10px] md:text-[0.9vw] font-medium uppercase tracking-wider text-right font-mono">
-                    {card.title}
-                  </p>
                 </div>
                 <div className="flex justify-center">
-                  <img
-                    src={card.svg}
-                    alt=""
-                    className="w-16 md:w-[8vw] opacity-30"
-                    style={{ filter: "invert(1)" }}
-                  />
+                  <span className="text-white/20 font-bold leading-none" style={{ fontSize: "clamp(48px, 7vw, 120px)", fontFamily: "var(--font-circular)" }}>
+                    {card.title[0]}
+                  </span>
                 </div>
                 <p className="text-white text-[10px] md:text-[0.9vw] font-medium uppercase tracking-wider font-mono">
                   {card.title}
