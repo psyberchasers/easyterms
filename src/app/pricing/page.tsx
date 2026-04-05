@@ -151,7 +151,7 @@ const faqSections = [
       },
       {
         q: "What happens to my contracts after analysis?",
-        a: "Once your contract has been analyzed, it is automatically purged from our servers. We do not store your documents longer than necessary to provide the Service. Your data moves through an end-to-end encrypted pipeline from the moment you upload to the moment you close the tab.",
+        a: "Your contracts are stored securely using AES-256 encryption and are only accessible by you. You can delete any contract or your entire account at any time. Your data moves through an end-to-end encrypted pipeline from the moment you upload it.",
       },
       {
         q: "Does EasyTerms use my contracts to train its AI?",

@@ -689,8 +689,8 @@ export default function Home() {
               },
               {
                 icon: ServerCrash,
-                title: "Auto-Delete",
-                description: "Documents are automatically purged from our servers after analysis. We don't store your contracts longer than needed.",
+                title: "You Own Your Data",
+                description: "Your contracts are stored securely and only accessible by you. Delete your data at any time — no questions asked.",
                 color: "green",
               },
               {
