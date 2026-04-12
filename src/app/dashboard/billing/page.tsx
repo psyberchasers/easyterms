@@ -74,9 +74,13 @@ export default function BillingPage() {
       const data = await response.json();
       if (response.ok && data.checkoutUrl) {
         window.location.href = data.checkoutUrl;
+      } else {
+        console.error("Checkout failed:", data);
+        alert(data.error || "Failed to start checkout. Please try again.");
       }
     } catch (error) {
       console.error("Checkout error:", error);
+      alert("Failed to start checkout. Please try again.");
     } finally {
       setLoading(null);
     }

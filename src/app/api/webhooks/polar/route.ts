@@ -52,7 +52,6 @@ export async function POST(request: NextRequest) {
           .from("profiles")
           .update({
             subscription_tier: tier,
-            subscription_id: subscription.id,
             updated_at: new Date().toISOString(),
           })
           .eq("id", userId);
@@ -75,7 +74,6 @@ export async function POST(request: NextRequest) {
           .from("profiles")
           .update({
             subscription_tier: "free",
-            subscription_id: null,
             updated_at: new Date().toISOString(),
           })
           .eq("id", userId);
