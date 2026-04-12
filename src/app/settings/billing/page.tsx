@@ -1,212 +1,194 @@
 "use client";
 
-import { useState } from "react";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { Navbar } from "@/components/Navbar";
-import { Badge } from "@/components/ui/badge";
-import { Check } from "lucide-react";
+import { Check, ArrowRight, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
 
 const plans = [
   {
     id: "free",
-    name: "FREE",
-    badge: null,
-    price: "Free forever",
-    priceSubtext: null,
-    description: "Share your thoughts in one of the the world's biggest creative networks.",
+    name: "Free",
+    price: "$0",
+    period: "",
+    description: "Try EasyTerms with one free contract analysis.",
     features: [
-      "3 contracts per month",
+      "1 contract analysis",
       "Basic AI analysis",
-      "5 MB upload limit",
+      "Plain-English summary",
+      "No credit card required",
+    ],
+    ctaLabel: "Current Plan",
+  },
+  {
+    id: "artist",
+    name: "Artist",
+    price: "$29.99",
+    period: "/year",
+    description: "For independent artists and those newer to the industry.",
+    features: [
+      "10 contracts per year",
+      "Full AI analysis",
+      "Industry-specific templates",
+      "Key term flagging & risk alerts",
       "Email support",
     ],
-    cta: "Your current plan",
-    ctaStyle: "outline",
-    illustration: "/gradient1.jpeg",
+    ctaLabel: "Upgrade to Artist",
+    popular: false,
   },
   {
-    id: "plus",
-    name: "PLUS",
-    badge: { text: "BEST VALUE", color: "bg-purple-500" },
-    price: "$12",
-    priceSubtext: "/month",
-    description: "Plan for content creators and heavy users. Best for looking for new opportunities.",
+    id: "pro",
+    name: "Pro",
+    price: "$79.99",
+    period: "/year",
+    description: "For managers, agents, and professionals who handle contracts regularly.",
     features: [
-      "Everything in free plan",
-      "Analytic boards",
-      "Edit any posts",
-      "Longer posts",
-      "10 MB upload limit",
-      "Creator subscriptions",
+      "Unlimited contracts",
+      "Everything in Artist, plus:",
+      "Negotiation suggestions",
+      "Redlining tools",
+      "Contract comparisons",
+      "AI chatbot for follow-up questions",
+      "In-app contract signing",
+      "Pre-send contract review",
+      "Email support",
     ],
-    cta: "Get 1 month free",
-    ctaStyle: "primary",
-    illustration: "/gradient2.jpeg",
-  },
-  {
-    id: "premium",
-    name: "PREMIUM",
-    badge: { text: "MOST POPULAR", color: "bg-neutral-900" },
-    price: "$18",
-    priceSubtext: "/month",
-    description: "Build for premium users that looking for the best experience. Best for top voices, founders and influencers.",
-    features: [
-      "Everything in free plan",
-      "Verified checkmark",
-      "Analytic boards",
-      "Edit any posts",
-      "Longer posts",
-      "No advertisements",
-      "40 MB upload limit",
-      "Creator subscriptions",
-    ],
-    cta: "Get 1 month free",
-    ctaStyle: "primary",
-    illustration: "/gradient1.jpeg",
-  },
-  {
-    id: "team",
-    name: "TEAM",
-    badge: null,
-    price: "$10",
-    priceSubtext: "/user/month",
-    description: "Team premium plan for medium to large teams, including job posting and freelancer searching.",
-    features: [
-      "Everything in free plan",
-      "Team verified checkmark",
-      "Team analytic boards",
-      "Edit any posts",
-      "Custom domain",
-      "Longer posts",
-      "No advertisements",
-      "100 MB upload limit",
-      "Verified all users",
-      "Share projects privately",
-    ],
-    cta: "Contact sales",
-    ctaStyle: "outline",
-    illustration: "/gradient2.jpeg",
+    ctaLabel: "Upgrade to Pro",
+    popular: true,
   },
 ];
 
 export default function BillingPage() {
   const { profile } = useAuth();
+  const router = useRouter();
+  const [loading, setLoading] = useState<string | null>(null);
   const currentTier = profile?.subscription_tier || "free";
 
+  const handleSubscribe = async (planId: string) => {
+    if (planId === "free" || currentTier === planId) return;
+    setLoading(planId);
+    try {
+      const response = await fetch("/api/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ tier: planId }),
+      });
+      const data = await response.json();
+      if (response.ok && data.checkoutUrl) {
+        window.location.href = data.checkoutUrl;
+      } else {
+        throw new Error(data.error || "Failed to start checkout");
+      }
+    } catch (error) {
+      console.error("Checkout error:", error);
+      alert("Failed to start checkout. Please try again.");
+    } finally {
+      setLoading(null);
+    }
+  };
+
   return (
-    <div className="min-h-screen bg-[#FAF9F6]">
+    <div className="min-h-screen bg-[#0a0a0a] text-white">
       <Navbar showBorder />
 
-      <main className="max-w-5xl mx-auto px-4 py-8 pt-24">
-        {/* Header */}
+      <main className="max-w-4xl mx-auto px-4 py-8 pt-24">
         <div className="mb-8">
-          <h1 className="text-2xl font-semibold text-neutral-900 mb-2">Billing</h1>
-          <p className="text-neutral-500">Manage your subscription and billing details.</p>
+          <h1 className="text-2xl font-semibold mb-2" style={{ fontFamily: "var(--font-circular)" }}>Billing</h1>
+          <p className="text-white/40 text-sm" style={{ fontFamily: "var(--font-circular)" }}>Manage your subscription and billing details.</p>
         </div>
 
-        {/* Plans */}
-        <div className="space-y-4">
+        <div className="grid md:grid-cols-3 gap-4 mb-8">
           {plans.map((plan) => {
             const isCurrentPlan = currentTier === plan.id;
+            const isLoading = loading === plan.id;
 
             return (
               <div
                 key={plan.id}
                 className={cn(
-                  "bg-white rounded-2xl overflow-hidden",
-                  plan.id === "premium" && "ring-2 ring-neutral-900"
+                  "rounded-2xl border p-6 flex flex-col transition-all",
+                  plan.popular
+                    ? "border-purple-500/30 bg-purple-500/[0.04]"
+                    : "border-white/[0.08] bg-white/[0.02]"
                 )}
               >
-                <div className="flex flex-col lg:flex-row">
-                  {/* Content */}
-                  <div className="flex-1 p-6 lg:p-8">
-                    {/* Plan Header */}
-                    <div className="flex items-center gap-3 mb-4">
-                      <span className="text-xs font-semibold tracking-wider text-neutral-500">
-                        {plan.name}
-                      </span>
-                      {plan.badge && (
-                        <Badge className={cn("text-[10px] font-semibold text-white", plan.badge.color)}>
-                          {plan.badge.text}
-                        </Badge>
-                      )}
-                    </div>
-
-                    {/* Price */}
-                    <div className="mb-3">
-                      <span className="text-2xl lg:text-3xl font-semibold text-neutral-900">
-                        {plan.price}
-                      </span>
-                      {plan.priceSubtext && (
-                        <span className="text-neutral-500">{plan.priceSubtext}</span>
-                      )}
-                    </div>
-
-                    {/* Description */}
-                    <p className="text-sm text-neutral-500 mb-6 max-w-md">
-                      {plan.description}
-                    </p>
-
-                    {/* Features Grid */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-2 mb-6">
-                      {plan.features.map((feature, i) => (
-                        <div key={i} className="flex items-center gap-2">
-                          <div className="w-4 h-4 rounded bg-neutral-900 flex items-center justify-center shrink-0">
-                            <Check className="w-2.5 h-2.5 text-white" strokeWidth={3} />
-                          </div>
-                          <span className="text-sm text-neutral-700">{feature}</span>
-                        </div>
-                      ))}
-                    </div>
-
-                    {/* CTA Button */}
-                    <button
-                      className={cn(
-                        "px-5 py-2.5 text-sm font-medium rounded-full transition-colors",
-                        plan.ctaStyle === "primary"
-                          ? "bg-neutral-900 text-white hover:bg-neutral-800"
-                          : "bg-white text-neutral-900 border border-neutral-300 hover:bg-neutral-50",
-                        isCurrentPlan && "cursor-default"
-                      )}
-                    >
-                      {isCurrentPlan ? "Your current plan" : plan.cta}
-                    </button>
-                  </div>
-
-                  {/* Illustration */}
-                  <div className="hidden lg:block w-72 shrink-0">
-                    <div className="h-full relative overflow-hidden rounded-r-2xl">
-                      <img
-                        src={plan.illustration}
-                        alt=""
-                        className="absolute inset-0 w-full h-full object-cover"
-                      />
-                      {/* Overlay content could go here */}
-                      <div className="absolute inset-0 bg-gradient-to-br from-black/10 to-transparent" />
-                    </div>
-                  </div>
+                <div className="flex items-center justify-between mb-4">
+                  <span className="text-sm font-semibold text-white" style={{ fontFamily: "var(--font-circular)" }}>
+                    {plan.name}
+                  </span>
+                  {plan.popular && (
+                    <span className="text-[10px] font-bold text-purple-400 uppercase tracking-wider px-2 py-1 rounded-full bg-purple-500/10 border border-purple-500/20" style={{ fontFamily: "var(--font-circular)" }}>
+                      Popular
+                    </span>
+                  )}
+                  {isCurrentPlan && (
+                    <span className="text-[10px] font-bold text-white/40 uppercase tracking-wider px-2 py-1 rounded-full bg-white/[0.06] border border-white/[0.08]" style={{ fontFamily: "var(--font-circular)" }}>
+                      Current
+                    </span>
+                  )}
                 </div>
+
+                <div className="mb-4">
+                  <span className="text-3xl font-bold text-white" style={{ fontFamily: "var(--font-circular)" }}>
+                    {plan.price}
+                  </span>
+                  {plan.period && (
+                    <span className="text-sm text-white/30" style={{ fontFamily: "var(--font-circular)" }}>{plan.period}</span>
+                  )}
+                </div>
+
+                <p className="text-sm text-white/40 mb-6" style={{ fontFamily: "var(--font-circular)" }}>
+                  {plan.description}
+                </p>
+
+                <div className="space-y-3 flex-1 mb-6">
+                  {plan.features.map((feature, i) => (
+                    <div key={i} className="flex items-start gap-3">
+                      <div className={cn(
+                        "w-5 h-5 rounded-md flex items-center justify-center shrink-0 mt-0.5",
+                        plan.popular ? "bg-purple-500/20" : "bg-white/[0.08]"
+                      )}>
+                        <Check className={cn("w-3 h-3", plan.popular ? "text-purple-400" : "text-white/50")} strokeWidth={3} />
+                      </div>
+                      <span className="text-sm text-white/60" style={{ fontFamily: "var(--font-circular)" }}>{feature}</span>
+                    </div>
+                  ))}
+                </div>
+
+                <button
+                  onClick={() => handleSubscribe(plan.id)}
+                  disabled={isCurrentPlan || isLoading}
+                  className={cn(
+                    "w-full py-3 text-sm font-semibold rounded-xl transition-all flex items-center justify-center gap-2",
+                    isCurrentPlan
+                      ? "bg-white/[0.06] text-white/30 cursor-default"
+                      : plan.popular
+                        ? "bg-purple-500 text-white hover:bg-purple-600"
+                        : "bg-white text-black hover:bg-white/90"
+                  )}
+                  style={{ fontFamily: "var(--font-circular)" }}
+                >
+                  {isLoading ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : isCurrentPlan ? (
+                    "Current Plan"
+                  ) : (
+                    <>
+                      {plan.ctaLabel}
+                      <ArrowRight className="w-4 h-4" />
+                    </>
+                  )}
+                </button>
               </div>
             );
           })}
         </div>
 
-        {/* Billing Info Section */}
-        <div className="mt-8 bg-white rounded-2xl p-6 lg:p-8">
-          <h2 className="text-lg font-semibold text-neutral-900 mb-4">Payment Method</h2>
-          <p className="text-sm text-neutral-500 mb-4">
-            No payment method on file. Add a payment method to upgrade your plan.
-          </p>
-          <button className="px-5 py-2.5 text-sm font-medium rounded-full bg-white text-neutral-900 border border-neutral-300 hover:bg-neutral-50 transition-colors">
-            Add payment method
-          </button>
-        </div>
-
-        {/* Billing History */}
-        <div className="mt-4 bg-white rounded-2xl p-6 lg:p-8">
-          <h2 className="text-lg font-semibold text-neutral-900 mb-4">Billing History</h2>
-          <p className="text-sm text-neutral-500">
+        <div className="rounded-2xl border border-white/[0.08] bg-white/[0.02] p-6">
+          <h2 className="text-lg font-semibold mb-3" style={{ fontFamily: "var(--font-circular)" }}>Billing History</h2>
+          <p className="text-sm text-white/40" style={{ fontFamily: "var(--font-circular)" }}>
             No billing history yet. Your invoices will appear here once you subscribe to a paid plan.
           </p>
         </div>

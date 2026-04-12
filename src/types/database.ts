@@ -3,7 +3,7 @@ export interface Profile {
   email: string;
   full_name: string | null;
   avatar_url: string | null;
-  subscription_tier: "free" | "pro" | "team";
+  subscription_tier: "free" | "artist" | "pro";
   contracts_this_month: number;
   created_at: string;
   updated_at: string;

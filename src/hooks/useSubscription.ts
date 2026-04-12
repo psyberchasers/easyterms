@@ -7,8 +7,8 @@ export interface SubscriptionStatus {
   tier: SubscriptionTier;
   tierName: string;
   isLoading: boolean;
+  isArtist: boolean;
   isPro: boolean;
-  isTeam: boolean;
   isFree: boolean;
   contractsRemaining: number | null; // null = unlimited
   canAnalyze: boolean;
@@ -23,21 +23,22 @@ export function useSubscription(): SubscriptionStatus {
   const tierConfig = SUBSCRIPTION_TIERS[tier];
   const contractsThisMonth = profile?.contracts_this_month || 0;
 
+  const isArtist = tier === "artist";
   const isPro = tier === "pro";
-  const isTeam = tier === "team";
   const isFree = tier === "free";
 
   // Calculate contracts remaining
-  const limit = tierConfig.contractsPerMonth;
-  const contractsRemaining = limit === -1 ? null : Math.max(0, limit - contractsThisMonth);
-  const canAnalyze = canAnalyzeMore(tier, contractsThisMonth);
+  const contractsUsed = profile?.contracts_this_month || 0;
+  const limit = tierConfig.contractsPerYear;
+  const contractsRemaining = limit === -1 ? null : Math.max(0, limit - contractsUsed);
+  const canAnalyze = canAnalyzeMore(tier, contractsUsed);
 
   return {
     tier,
     tierName: tierConfig.name,
     isLoading: loading,
+    isArtist,
     isPro,
-    isTeam,
     isFree,
     contractsRemaining,
     canAnalyze,
@@ -55,16 +56,14 @@ export function useSubscription(): SubscriptionStatus {
  * - "calendar" - Calendar & alerts
  * - "export" - PDF export
  * - "dashboard" - Portfolio dashboard
- * - "team" - Team features (shared workspace, etc.)
  */
 export const FEATURE_NAMES = {
   COMPARISON: "comparison",
-  FINANCIAL: "financial",
   NEGOTIATION: "negotiation",
-  VERSIONS: "versions",
-  CALENDAR: "calendar",
-  EXPORT: "export",
-  DASHBOARD: "dashboard",
-  TEAM: "team",
+  REDLINING: "redlining",
+  CHATBOT: "chatbot",
+  SIGNING: "signing",
+  PRESEND: "presend",
+  TEMPLATES: "templates",
 } as const;
 

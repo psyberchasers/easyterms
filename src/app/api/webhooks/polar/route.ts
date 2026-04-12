@@ -44,10 +44,10 @@ export async function POST(request: NextRequest) {
 
         // Determine tier based on product
         let tier: SubscriptionTier = "free";
-        if (subscription.product_id === process.env.POLAR_PRO_PRODUCT_ID) {
+        if (subscription.product_id === process.env.POLAR_ARTIST_PRODUCT_ID) {
+          tier = "artist";
+        } else if (subscription.product_id === process.env.POLAR_PRO_PRODUCT_ID) {
           tier = "pro";
-        } else if (subscription.product_id === process.env.POLAR_TEAM_PRODUCT_ID) {
-          tier = "team";
         }
 
         // Update user's subscription tier

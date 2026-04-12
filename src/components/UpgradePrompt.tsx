@@ -25,34 +25,34 @@ const FEATURE_DETAILS: Record<string, { title: string; description: string; icon
     description: "Compare multiple contracts side-by-side and see exactly what changed between versions.",
     icon: Lock,
   },
-  [FEATURE_NAMES.FINANCIAL]: {
-    title: "Financial Calculator",
-    description: "Calculate streaming royalties, break-even points, and sync licensing projections.",
-    icon: Lock,
-  },
   [FEATURE_NAMES.NEGOTIATION]: {
-    title: "Negotiation Assistant",
-    description: "Get AI-powered counter-offer suggestions and template emails for negotiations.",
+    title: "Negotiation Suggestions",
+    description: "Get AI-powered counter-offer suggestions and negotiation talking points.",
     icon: Lock,
   },
-  [FEATURE_NAMES.VERSIONS]: {
-    title: "Version Tracking",
-    description: "Track changes across contract versions and monitor negotiation progress.",
+  [FEATURE_NAMES.REDLINING]: {
+    title: "Redlining Tools",
+    description: "Mark up contracts with suggested changes and track revisions.",
     icon: Lock,
   },
-  [FEATURE_NAMES.CALENDAR]: {
-    title: "Calendar & Alerts",
-    description: "Never miss a deadline with automatic date extraction and calendar integration.",
+  [FEATURE_NAMES.CHATBOT]: {
+    title: "AI Chatbot",
+    description: "Ask follow-up questions about any contract or clause in plain English.",
     icon: Lock,
   },
-  [FEATURE_NAMES.EXPORT]: {
-    title: "PDF Export",
-    description: "Generate professional PDF reports to share with your lawyer or team.",
+  [FEATURE_NAMES.SIGNING]: {
+    title: "In-App Signing",
+    description: "Send contracts and collect signatures directly within EasyTerms.",
     icon: Lock,
   },
-  [FEATURE_NAMES.DASHBOARD]: {
-    title: "Portfolio Dashboard",
-    description: "Get a complete overview of all your contracts with risk distribution and stats.",
+  [FEATURE_NAMES.PRESEND]: {
+    title: "Pre-Send Review",
+    description: "Run contracts through AI review before sending to flag unusual clauses or missing terms.",
+    icon: Lock,
+  },
+  [FEATURE_NAMES.TEMPLATES]: {
+    title: "Contract Templates",
+    description: "Access professionally crafted templates built for the music industry.",
     icon: Lock,
   },
 };
@@ -90,9 +90,9 @@ export function UpgradePrompt({ feature, open, onOpenChange }: UpgradePromptProp
             <ul className="space-y-2">
               {[
                 "Unlimited contract analysis",
-                "All premium features",
-                "Version tracking & calendar",
-                "Financial projections",
+                "AI chatbot for follow-up questions",
+                "Negotiation suggestions & redlining",
+                "In-app contract signing",
               ].map((benefit, i) => (
                 <li key={i} className="text-sm flex items-center gap-2 text-muted-foreground">
                   <Check className="w-4 h-4 text-green-500" />
@@ -104,7 +104,7 @@ export function UpgradePrompt({ feature, open, onOpenChange }: UpgradePromptProp
 
           <div className="flex items-center justify-between">
             <div>
-              <p className="font-semibold">$19/month</p>
+              <p className="font-semibold">$79.99/year</p>
               <p className="text-xs text-muted-foreground">Cancel anytime</p>
             </div>
             <Link href="/pricing">

@@ -12,7 +12,7 @@ export async function POST(request: NextRequest) {
 
   const { tier } = await request.json();
 
-  if (!tier || !["pro", "team"].includes(tier)) {
+  if (!tier || !["artist", "pro"].includes(tier)) {
     return NextResponse.json({ error: "Invalid tier" }, { status: 400 });
   }
 

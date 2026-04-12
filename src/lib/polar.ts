@@ -136,41 +136,46 @@ export function verifyWebhookSignature(
 
 /**
  * Subscription tier mapping
+ * Matches pricing page: Free / Artist ($29.99/yr) / Pro ($79.99/yr)
  */
 export const SUBSCRIPTION_TIERS = {
   free: {
     name: "Free",
-    contractsPerMonth: 3,
-    features: ["Basic analysis", "3 contracts/month", "No save/export"],
+    contractsPerYear: 1,
+    features: [
+      "1 contract analysis",
+      "Basic AI analysis",
+      "Plain-English summary",
+    ],
+  },
+  artist: {
+    name: "Artist",
+    productId: process.env.POLAR_ARTIST_PRODUCT_ID || "",
+    price: 2999, // $29.99/year in cents
+    contractsPerYear: 10,
+    features: [
+      "10 contracts per year",
+      "Full AI analysis",
+      "Industry-specific templates",
+      "Key term flagging & risk alerts",
+      "Email support",
+    ],
   },
   pro: {
     name: "Pro",
     productId: process.env.POLAR_PRO_PRODUCT_ID || "",
-    price: 1900, // $19/month in cents
-    contractsPerMonth: -1, // unlimited
+    price: 7999, // $79.99/year in cents
+    contractsPerYear: -1, // unlimited
     features: [
       "Unlimited contracts",
-      "Contract comparison",
-      "Financial projections",
+      "Everything in Artist, plus:",
       "Negotiation suggestions",
-      "Version tracking",
-      "Calendar alerts",
-      "PDF export",
-      "Portfolio dashboard",
-    ],
-  },
-  team: {
-    name: "Team",
-    productId: process.env.POLAR_TEAM_PRODUCT_ID || "",
-    price: 4900, // $49/month in cents
-    contractsPerMonth: -1,
-    features: [
-      "Everything in Pro",
-      "5 team members",
-      "Shared workspace",
-      "Lawyer collaboration",
-      "Priority support",
-      "Custom branding",
+      "Redlining tools",
+      "Contract comparisons",
+      "AI chatbot for follow-up questions",
+      "In-app contract signing",
+      "Pre-send contract review",
+      "Email support",
     ],
   },
 } as const;
@@ -183,12 +188,17 @@ export type SubscriptionTier = keyof typeof SUBSCRIPTION_TIERS;
 export function hasFeatureAccess(tier: SubscriptionTier, feature: string): boolean {
   const tierConfig = SUBSCRIPTION_TIERS[tier];
   if (!tierConfig) return false;
-  
-  // Free tier gets basic access
+
+  // Free tier gets basic access only
   if (tier === "free") {
-    return !["comparison", "financial", "negotiation", "versions", "calendar", "export", "dashboard"].includes(feature);
+    return !["comparison", "negotiation", "redlining", "chatbot", "signing", "presend", "templates"].includes(feature);
   }
-  
+
+  // Artist tier doesn't get pro-only features
+  if (tier === "artist") {
+    return !["comparison", "negotiation", "redlining", "chatbot", "signing", "presend"].includes(feature);
+  }
+
   return true;
 }
 
@@ -196,7 +206,7 @@ export function hasFeatureAccess(tier: SubscriptionTier, feature: string): boole
  * Check if user can analyze more contracts
  */
 export function canAnalyzeMore(tier: SubscriptionTier, currentCount: number): boolean {
-  const limit = SUBSCRIPTION_TIERS[tier].contractsPerMonth;
+  const limit = SUBSCRIPTION_TIERS[tier].contractsPerYear;
   if (limit === -1) return true;
   return currentCount < limit;
 }
