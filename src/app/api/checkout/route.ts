@@ -22,19 +22,12 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    // Get or create Polar customer ID
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("polar_customer_id")
-      .eq("id", user.id)
-      .single();
-
     const successUrl = `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/dashboard?checkout=success`;
 
     const checkout = await createCheckoutSession(
       tierConfig.productId,
       successUrl,
-      profile?.polar_customer_id,
+      user.email,
       { user_id: user.id }
     );
 
@@ -47,8 +40,3 @@ export async function POST(request: NextRequest) {
     );
   }
 }
-
-
-
-
-

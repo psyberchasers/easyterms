@@ -37,26 +37,31 @@ const POLAR_API_URL = "https://api.polar.sh/v1";
 export async function createCheckoutSession(
   productId: string,
   successUrl: string,
-  customerId?: string,
+  customerEmail?: string,
   metadata?: Record<string, string>
 ): Promise<PolarCheckoutSession> {
-  const response = await fetch(`${POLAR_API_URL}/checkouts`, {
+  const body: Record<string, unknown> = {
+    products: [productId],
+    success_url: successUrl,
+    metadata,
+  };
+  if (customerEmail) {
+    body.customer_email = customerEmail;
+  }
+
+  const response = await fetch(`${POLAR_API_URL}/checkouts/`, {
     method: "POST",
     headers: {
       "Authorization": `Bearer ${process.env.POLAR_ACCESS_TOKEN}`,
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({
-      product_id: productId,
-      success_url: successUrl,
-      customer_id: customerId,
-      metadata,
-    }),
+    body: JSON.stringify(body),
   });
 
   if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.message || "Failed to create checkout session");
+    const errorBody = await response.text();
+    console.error("Polar checkout error:", response.status, errorBody);
+    throw new Error(`Polar checkout failed (${response.status}): ${errorBody}`);
   }
 
   return response.json();
