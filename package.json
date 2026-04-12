@@ -66,6 +66,7 @@
     "react-use-measure": "^2.1.7",
     "scanbot-web-sdk": "^8.0.0",
     "sonner": "^2.0.7",
+    "standardwebhooks": "^1.0.0",
     "tailwind-merge": "^3.4.0",
     "unpdf": "^1.4.0"
   },

@@ -119,25 +119,7 @@ export async function cancelSubscription(subscriptionId: string): Promise<void> 
   }
 }
 
-/**
- * Verify Polar webhook signature
- */
-export function verifyWebhookSignature(
-  payload: string,
-  signature: string,
-  secret: string
-): boolean {
-  const crypto = require("crypto");
-  const expectedSignature = crypto
-    .createHmac("sha256", secret)
-    .update(payload)
-    .digest("hex");
-  
-  return crypto.timingSafeEqual(
-    Buffer.from(signature),
-    Buffer.from(expectedSignature)
-  );
-}
+// Webhook verification is handled by standardwebhooks package in the webhook route
 
 /**
  * Subscription tier mapping

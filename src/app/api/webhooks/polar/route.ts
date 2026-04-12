@@ -1,26 +1,23 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { verifyWebhookSignature, SubscriptionTier } from "@/lib/polar";
-
-/**
- * Polar Webhook Handler
- * 
- * Events handled:
- * - subscription.created: New subscription activated
- * - subscription.updated: Subscription plan changed
- * - subscription.canceled: Subscription canceled
- * - checkout.completed: Checkout session completed
- */
+import { SubscriptionTier } from "@/lib/polar";
+import { Webhook } from "standardwebhooks";
 
 export async function POST(request: NextRequest) {
   const body = await request.text();
-  const signature = request.headers.get("x-polar-signature") || "";
 
-  // Verify webhook signature
+  // Verify webhook signature using Standard Webhooks
   if (process.env.POLAR_WEBHOOK_SECRET) {
-    const isValid = verifyWebhookSignature(body, signature, process.env.POLAR_WEBHOOK_SECRET);
-    if (!isValid) {
-      console.error("Invalid Polar webhook signature");
+    try {
+      const wh = new Webhook(btoa(process.env.POLAR_WEBHOOK_SECRET));
+      const headers = {
+        "webhook-id": request.headers.get("webhook-id") || "",
+        "webhook-timestamp": request.headers.get("webhook-timestamp") || "",
+        "webhook-signature": request.headers.get("webhook-signature") || "",
+      };
+      wh.verify(body, headers);
+    } catch (err) {
+      console.error("Invalid Polar webhook signature:", err);
       return NextResponse.json({ error: "Invalid signature" }, { status: 401 });
     }
   }
@@ -36,7 +33,7 @@ export async function POST(request: NextRequest) {
       case "subscription.updated": {
         const subscription = event.data;
         const userId = subscription.metadata?.user_id;
-        
+
         if (!userId) {
           console.error("No user_id in subscription metadata");
           break;
@@ -71,10 +68,9 @@ export async function POST(request: NextRequest) {
       case "subscription.canceled": {
         const subscription = event.data;
         const userId = subscription.metadata?.user_id;
-        
+
         if (!userId) break;
 
-        // Downgrade to free tier
         const { error } = await supabase
           .from("profiles")
           .update({
@@ -95,7 +91,6 @@ export async function POST(request: NextRequest) {
       case "checkout.completed": {
         const checkout = event.data;
         console.log("Checkout completed:", checkout.id);
-        // Subscription events will handle the actual update
         break;
       }
 
@@ -112,8 +107,3 @@ export async function POST(request: NextRequest) {
     );
   }
 }
-
-
-
-
-
